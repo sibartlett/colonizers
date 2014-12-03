@@ -7,7 +7,7 @@
   "description": "",
   "main": "server/index.js",
   "scripts": {
-    "start": "node server/index.js | ./node_modules/.bin/bunyan -o short"
+    "start": "node server/index.js | bunyan -o short"
   },
   "engines": {
     "node": "0.10.x"
