@@ -1,0 +1,38 @@
+<div class="players" data-bind="foreach: players">
+
+  <div class="player">
+    <h4>
+      <img class="avatar" data-bind="attr: { src: user.avatarUrl }" />
+      <span data-bind="text: user.name"></span>
+      <span class="icon-star" data-bind="text: player.victoryPoints.public"></span>
+    </h4>
+    <div class="well well-sm">
+      <div class="row">
+        <div class="col-xs-3" title="Resource Cards">
+          <p>
+            <span class="icon-gift"></span>
+            <span class="badge" data-bind="text: player.resources.total"></span>
+          </p>
+        </div>
+        <div class="col-xs-3" title="Development Cards">
+          <p>
+            <span class="icon-hammer"></span>
+            <span class="badge" data-bind="text: player.developmentCards.total"></span>
+          </p>
+        </div>
+        <div class="col-xs-3" title="Knights">
+          <p>
+            <span class="icon-shield"></span>
+            <span class="badge" data-bind="text: player.knightsPlayed"></span>
+          </p>
+        </div>
+        <div class="col-xs-3" title="Longest Road">
+          <p>
+            <span class="icon-road"></span>
+            <span class="badge" data-bind="text: player.longestRoad"></span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

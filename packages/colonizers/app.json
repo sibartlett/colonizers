@@ -1,0 +1,14 @@
+{
+  "name": "Colonizers",
+  "description": "",
+  "repository": "https://github.com/sibartlett/colonizers",
+  "addons": [
+    "mongohq"
+  ],
+  "env": {
+    "session:secret": {
+      "description": "Session cookies are signed with this secret to prevent tampering",
+      "generator": "secret"
+    }
+  }
+}

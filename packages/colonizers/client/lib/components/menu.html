@@ -1,0 +1,20 @@
+<div>
+  <button type="button"
+          class="btn btn-default btn-block"
+          data-bind="
+          click: toggleNotifications,
+          text: notificationsText
+          visible: notifications.isSupported
+          "
+          >
+  </button>
+
+  <button type="button"
+          class="btn btn-default btn-block"
+          data-bind="click: toggleFullscreen, visible: fullScreen"
+          >
+    Toggle full screen
+  </button>
+
+  <a href="/lobby" class="btn btn-default btn-block">Back to lobby</a>
+</div>
