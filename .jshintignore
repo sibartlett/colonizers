@@ -1,0 +1,6 @@
+node_modules
+client/dist/*
+client/lib/theme.js
+client/lib/components/d6-images.js
+server/public/site.js
+temp
