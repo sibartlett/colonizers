@@ -240,10 +240,10 @@ BuildModalModel.prototype.onBuild = function(data, next) {
   if (thisPlayer) {
     if (thisPlayer.id === data.playerId) {
       if (data.buildType === 'edge') {
-        this.allowanceRoads(this.allowanceRoads - 1);
+        this.allowanceRoads = this.allowanceRoads - 1;
       }
       if (data.buildType === 'corner') {
-        this.allowanceSettlements(this.allowanceSettlements - 1);
+        this.allowanceSettlements = this.allowanceSettlements - 1;
       }
     }
   }
