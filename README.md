@@ -1,7 +1,6 @@
 # Colonizers
 
-A HTML5 multiplayer game,
-based on the popular board game "The Settlers of Catan" by Klaus Teuber.
+A HTML5 multiplayer game, based on the popular board game ["The Settlers of Catan"](http://en.wikipedia.org/wiki/The_Settlers_of_Catan) by Klaus Teuber.
 
 Works across multiple devices (desktops, tablets, and mobile phones).
 
