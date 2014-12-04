@@ -51,12 +51,12 @@ function UserInterface(socket, emitterQueue, notifications, factory) {
     onBuildSettlement: this.onBuildSettlement
   };
 
-  this.viewModel.subscribe('myTurn', function(myTurn) {
-    if (myTurn) {
-      return this.onTurnStart();
-    } else {
-      return this.onTurnEnd();
-    }
+  this.viewModel.subscribe('turn', function() {
+    this.onTurnEnd();
+
+    // TODO: Maybe there's a better way to do this?
+    // This method call needs to be delayed to allow model to update first
+    setTimeout(this.onTurnStart.bind(this), 10);
   }.bind(this));
 
   this.socket.on('room_users', function(users) {
@@ -89,6 +89,10 @@ UserInterface.prototype.bind = function() {
 UserInterface.prototype.onTurnStart = function() {
   var ownedCorners,
       ownedEdges;
+
+  if (!this.viewModel.myTurn) {
+    return;
+  }
 
   if (this.game.phase === 'setup') {
     ownedCorners = this.game.board.corners.query({
