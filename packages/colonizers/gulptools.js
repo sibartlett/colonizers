@@ -13,39 +13,6 @@ var _ = require('underscore'),
     replace = require('gulp-replace'),
     mold = require('mold-source-map');
 
-function readPackageFile() {
-  var file = __dirname + '/package.json',
-      data = fs.readFileSync(file, 'utf8');
-
-  return JSON.parse(data);
-}
-
-function getBrowserDependencies() {
-  var pkgFile = readPackageFile(),
-      dependencies = pkgFile.dependencies,
-      result = [],
-      dep,
-      value;
-
-  for (dep in pkgFile.browser) {
-    value = pkgFile.browser[dep];
-    if (!value) {
-      dependencies[dep] = false;
-    }
-  }
-
-  result = [];
-  for (dep in dependencies) {
-    value = dependencies[dep];
-    if (value) {
-      result.push(dep);
-    }
-  }
-  result.sort();
-
-  return result;
-}
-
 function bundleJqueryPlugins(paths) {
   var head = 'var jQuery = require(\'jquery\'),\n    $ = jQuery;\n\n',
       foot = '\n\nmodule.exports = jQuery;\n';
@@ -133,8 +100,6 @@ function bundle(opts) {
 }
 
 module.exports = {
-  readPackageFile: readPackageFile,
-  getBrowserDependencies: getBrowserDependencies,
   bundleJqueryPlugins: bundleJqueryPlugins,
   bundle: bundle
 };

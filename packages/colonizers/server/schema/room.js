@@ -11,6 +11,7 @@ UserId = {
 };
 
 RoomSchema = new Schema({
+  created: { type: Date, default: Date.now },
   owner: UserId,
   users: [UserId],
   numPlayers: Number,
