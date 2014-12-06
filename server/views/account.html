@@ -10,15 +10,15 @@
         <form role="form" method="post" action="/account">
           <div class="form-group">
             <label for="username">Username</label>
-            <input type="text" class="form-control" id="username" name="username" placeholder="john.smith" value="{{{ user.username }}}">
+            <input type="text" class="form-control" id="username" name="username" placeholder="john.smith" value="{{ user.username }}">
           </div>
           <div class="form-group">
             <label for="name">Name</label>
-            <input type="text" class="form-control" id="name" name="name" placeholder="John Smith" value="{{{ user.name }}}">
+            <input type="text" class="form-control" id="name" name="name" placeholder="John Smith" value="{{ user.name }}">
           </div>
           <div class="form-group">
             <label for="email">Email</label>
-            <input type="text" class="form-control" id="email" name="email" placeholder="john.smith@example.com" value="{{{ user.email }}}">
+            <input type="text" class="form-control" id="email" name="email" placeholder="john.smith@example.com" value="{{ user.email }}">
           </div>
           <div class="form-group">
             <label for="password">Password</label>
