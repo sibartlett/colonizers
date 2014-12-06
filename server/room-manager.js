@@ -23,7 +23,8 @@ RoomManager.prototype.getRooms = function(cb) {
   this.db.model('Room')
     .find({})
     .populate('users', '_id, name')
-    .select('_id gameOptions')
+    .sort('-created')
+    .select('_id created gameOptions')
     .exec(onExec.bind(this));
 };
 

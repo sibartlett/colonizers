@@ -30,6 +30,7 @@
     "jquery-mousewheel": "^3.1.12",
     "kinetic": "^5.0.6",
     "knockout": "^3.2.0",
+    "moment": "^2.8.4",
     "mongoose": "~3.8.20",
     "nconf": "^0.7.1",
     "node-uuid": "^1.4.1",
@@ -57,25 +58,5 @@
     "stringify": "^3.0.0",
     "vinyl-source-stream": "^1.0.0",
     "watchify": "^2.1.1"
-  },
-  "browser": {
-    "body-parser": false,
-    "bootstrap": false,
-    "bunyan": false,
-    "chance": false,
-    "connect-mongo": false,
-    "cookie-parser": false,
-    "express": false,
-    "express-session": false,
-    "hogan-express": false,
-    "jasny-bootstrap": false,
-    "mongoose": false,
-    "nconf": false,
-    "node-uuid": false,
-    "passport": false,
-    "passport-local": false,
-    "passport.socketio": false,
-    "promise": false,
-    "socket.io": false
   }
 }

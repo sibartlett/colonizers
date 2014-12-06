@@ -4,9 +4,23 @@ var gulp = require('gulp'),
     gulptools = require('./gulptools'),
     jshint = require('gulp-jshint'),
     jscs = require('gulp-jscs'),
-    less = require('gulp-less');
+    less = require('gulp-less'),
+    clientDependencies;
 
 // Client
+
+clientDependencies = [
+  'async',
+  'component-emitter',
+  'hammerjs',
+  'jquery',
+  'jquery-mousewheel',
+  'kinetic',
+  'knockout',
+  'screenfull',
+  'socket.io-client',
+  'underscore'
+];
 
 gulp.task('client-styles', function() {
   return gulp.src(['./client/less/game.less'])
@@ -28,7 +42,7 @@ gulp.task('client-jquery-plugins', function() {
 gulp.task('client-lib', ['client-jquery-plugins'], function() {
   return gulptools.bundle({
     dest: './client/dist/lib.js',
-    require: gulptools.getBrowserDependencies(),
+    require: clientDependencies,
     jquery: './temp/jquery-plugins.js',
     options: {
       debug: true
@@ -40,7 +54,7 @@ function buildClient(watch) {
   return gulptools.bundle({
     file: './client/lib/index.js',
     dest: './client/dist/room.js',
-    exclude: gulptools.getBrowserDependencies().concat(['jquery-plugins']),
+    exclude: clientDependencies.concat(['jquery-plugins']),
     watch: watch,
     options: {
       debug: true
@@ -51,6 +65,10 @@ function buildClient(watch) {
 gulp.task('client-script', function() {
   return buildClient();
 });
+
+gulp.task('client', ['client-script', 'client-lib', 'client-styles']);
+
+// Site
 
 gulp.task('site-styles', function() {
   return gulp.src(['./server/less/site.less'])
@@ -75,6 +93,8 @@ gulp.task('site-script', ['site-jquery-plugins'], function() {
 });
 
 gulp.task('site', ['site-script', 'site-styles']);
+
+// Code quality
 
 gulp.task('hint', function() {
   return gulp.src([
@@ -103,7 +123,5 @@ gulp.task('watch', ['client-lib'], function() {
   buildClient(true);
   return gulp.watch(['client/*.less'], ['client-styles']);
 });
-
-gulp.task('client', ['client-script', 'client-lib', 'client-styles']);
 
 gulp.task('default', ['client']);
