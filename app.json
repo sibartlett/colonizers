@@ -3,7 +3,7 @@
   "description": "A game based on \"The Settlers of Catan\" by Klaus Teuber.",
   "repository": "https://github.com/sibartlett/colonizers",
   "addons": [
-    "mongohq"
+    "mongolab"
   ],
   "env": {
     "session:secret": {
