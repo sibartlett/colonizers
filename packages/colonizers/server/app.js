@@ -66,11 +66,9 @@ App.prototype.createConfig = function(configFile) {
 
 App.prototype.createDbConnection = function(cb) {
   // Try looking for Heroku database connection first
-  var dbUrl = this.config.get('MONGOHQ_URL');
-
-  if (!dbUrl) {
-    dbUrl = this.config.get('database:mongo');
-  }
+  var dbUrl = this.config.get('MONGOHQ_URL') ||
+              this.config.get('MONGOLAB_URI') ||
+              this.config.get('database:mongo');
 
   this.db = mongoose.createConnection(dbUrl, function(err) {
     this.db.model('Room', RoomSchema);
