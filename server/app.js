@@ -78,13 +78,8 @@ App.prototype.createDbConnection = function(cb) {
 };
 
 App.prototype.createSessionStore = function(session) {
-  var MongoStore = require('connect-mongo')(session),
-      opts = {},
-      key = 'mongoose_connection';
-
-  opts[key] = this.db;
-
-  return new MongoStore(opts);
+  var MongoStore = require('connect-mongo')(session);
+  return new MongoStore({ mongooseConnection: this.db });
 };
 
 App.prototype.getBunyanLogger = function() {

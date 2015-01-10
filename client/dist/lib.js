@@ -4,69 +4,39 @@ require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof requ
 // shim for using process in browser
 
 var process = module.exports = {};
+var queue = [];
+var draining = false;
 
-process.nextTick = (function () {
-    var canSetImmediate = typeof window !== 'undefined'
-    && window.setImmediate;
-    var canMutationObserver = typeof window !== 'undefined'
-    && window.MutationObserver;
-    var canPost = typeof window !== 'undefined'
-    && window.postMessage && window.addEventListener
-    ;
-
-    if (canSetImmediate) {
-        return function (f) { return window.setImmediate(f) };
+function drainQueue() {
+    if (draining) {
+        return;
     }
-
-    var queue = [];
-
-    if (canMutationObserver) {
-        var hiddenDiv = document.createElement("div");
-        var observer = new MutationObserver(function () {
-            var queueList = queue.slice();
-            queue.length = 0;
-            queueList.forEach(function (fn) {
-                fn();
-            });
-        });
-
-        observer.observe(hiddenDiv, { attributes: true });
-
-        return function nextTick(fn) {
-            if (!queue.length) {
-                hiddenDiv.setAttribute('yes', 'no');
-            }
-            queue.push(fn);
-        };
+    draining = true;
+    var currentQueue;
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        var i = -1;
+        while (++i < len) {
+            currentQueue[i]();
+        }
+        len = queue.length;
     }
-
-    if (canPost) {
-        window.addEventListener('message', function (ev) {
-            var source = ev.source;
-            if ((source === window || source === null) && ev.data === 'process-tick') {
-                ev.stopPropagation();
-                if (queue.length > 0) {
-                    var fn = queue.shift();
-                    fn();
-                }
-            }
-        }, true);
-
-        return function nextTick(fn) {
-            queue.push(fn);
-            window.postMessage('process-tick', '*');
-        };
+    draining = false;
+}
+process.nextTick = function (fun) {
+    queue.push(fun);
+    if (!draining) {
+        setTimeout(drainQueue, 0);
     }
-
-    return function nextTick(fn) {
-        setTimeout(fn, 0);
-    };
-})();
+};
 
 process.title = 'browser';
 process.browser = true;
 process.env = {};
 process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
 
 function noop() {}
 
@@ -87,6 +57,7 @@ process.cwd = function () { return '/' };
 process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
+process.umask = function() { return 0; };
 
 },{}],3:[function(require,module,exports){
 
@@ -1141,6 +1112,7 @@ function url(uri, loc){
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"debug":10,"parseuri":42}],8:[function(require,module,exports){
 /**
  * Slice reference.
@@ -2174,6 +2146,7 @@ Socket.prototype.filterUpgrades = function (upgrades) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"./transport":14,"./transports":15,"component-emitter":"component-emitter","debug":22,"engine.io-parser":25,"indexof":40,"parsejson":34,"parseqs":35,"parseuri":36}],14:[function(require,module,exports){
 /**
  * Module dependencies.
@@ -2383,6 +2356,7 @@ function polling(opts){
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"./polling-jsonp":16,"./polling-xhr":17,"./websocket":19,"xmlhttprequest":20}],16:[function(require,module,exports){
 (function (global){
 
@@ -2620,6 +2594,7 @@ JSONPPolling.prototype.doWrite = function (data, fn) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"./polling":18,"component-inherit":21}],17:[function(require,module,exports){
 (function (global){
 /**
@@ -2975,6 +2950,7 @@ function unloadHandler() {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"./polling":18,"component-emitter":"component-emitter","component-inherit":21,"debug":22,"xmlhttprequest":20}],18:[function(require,module,exports){
 /**
  * Module dependencies.
@@ -4530,6 +4506,7 @@ exports.decodePayloadAsBinary = function (data, binaryType, callback) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"./keys":26,"after":27,"arraybuffer.slice":28,"base64-arraybuffer":29,"blob":30,"utf8":31}],26:[function(require,module,exports){
 
 /**
@@ -4726,6 +4703,7 @@ module.exports = (function() {
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{}],31:[function(require,module,exports){
 (function (global){
 /*! http://mths.be/utf8js v2.0.0 by @mathias */
@@ -4969,6 +4947,7 @@ module.exports = (function() {
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{}],32:[function(require,module,exports){
 
 /**
@@ -5039,6 +5018,7 @@ module.exports = function parsejson(data) {
   }
 };
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{}],35:[function(require,module,exports){
 /**
  * Compiles a querystring
@@ -5226,6 +5206,7 @@ function hasBinary(data) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"isarray":39}],39:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
@@ -5499,6 +5480,7 @@ exports.removeBlobs = function(data, callback) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"./is-buffer":45,"isarray":46}],44:[function(require,module,exports){
 
 /**
@@ -5914,9 +5896,10 @@ function isBuf(obj) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{}],46:[function(require,module,exports){
-module.exports=require(39)
-},{"/Users/simon/code/colonizers/node_modules/socket.io-client/node_modules/has-binary/node_modules/isarray/index.js":39}],47:[function(require,module,exports){
+arguments[4][39][0].apply(exports,arguments)
+},{"dup":39}],47:[function(require,module,exports){
 /*! JSON v3.2.6 | http://bestiejs.github.io/json3 | Copyright 2012-2013, Kit Cambridge | http://kit.mit-license.org */
 ;(function (window) {
   // Convenience aliases.
@@ -7921,9 +7904,10 @@ function toArray(list, index) {
 }());
 
 }).call(this,require('_process'))
+
 },{"_process":2}],"component-emitter":[function(require,module,exports){
-module.exports=require(9)
-},{"/Users/simon/code/colonizers/node_modules/socket.io-client/node_modules/component-emitter/index.js":9}],"hammerjs":[function(require,module,exports){
+arguments[4][9][0].apply(exports,arguments)
+},{"dup":9}],"hammerjs":[function(require,module,exports){
 /*! Hammer.JS - v2.0.4 - 2014-09-28
  * http://hammerjs.github.io/
  *
@@ -11529,7 +11513,7 @@ module.exports = jQuery;
 
 },{"jquery":"jquery"}],"jquery":[function(require,module,exports){
 /*!
- * jQuery JavaScript Library v2.1.1
+ * jQuery JavaScript Library v2.1.3
  * http://jquery.com/
  *
  * Includes Sizzle.js
@@ -11539,19 +11523,19 @@ module.exports = jQuery;
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2014-05-01T17:11Z
+ * Date: 2014-12-18T15:11Z
  */
 
 (function( global, factory ) {
 
 	if ( typeof module === "object" && typeof module.exports === "object" ) {
-		// For CommonJS and CommonJS-like environments where a proper window is present,
-		// execute the factory and get jQuery
-		// For environments that do not inherently posses a window with a document
-		// (such as Node.js), expose a jQuery-making factory as module.exports
-		// This accentuates the need for the creation of a real window
+		// For CommonJS and CommonJS-like environments where a proper `window`
+		// is present, execute the factory and get jQuery.
+		// For environments that do not have a `window` with a `document`
+		// (such as Node.js), expose a factory as module.exports.
+		// This accentuates the need for the creation of a real `window`.
 		// e.g. var jQuery = require("jquery")(window);
-		// See ticket #14549 for more info
+		// See ticket #14549 for more info.
 		module.exports = global.document ?
 			factory( global, true ) :
 			function( w ) {
@@ -11567,10 +11551,10 @@ module.exports = jQuery;
 // Pass this if window is not defined yet
 }(typeof window !== "undefined" ? window : this, function( window, noGlobal ) {
 
-// Can't do this because several apps including ASP.NET trace
+// Support: Firefox 18+
+// Can't be in strict mode, several libs including ASP.NET trace
 // the stack via arguments.caller.callee and Firefox dies if
 // you try to trace through "use strict" call chains. (#13335)
-// Support: Firefox 18+
 //
 
 var arr = [];
@@ -11597,7 +11581,7 @@ var
 	// Use the correct document accordingly with window argument (sandbox)
 	document = window.document,
 
-	version = "2.1.1",
+	version = "2.1.3",
 
 	// Define a local copy of jQuery
 	jQuery = function( selector, context ) {
@@ -11715,7 +11699,7 @@ jQuery.extend = jQuery.fn.extend = function() {
 	if ( typeof target === "boolean" ) {
 		deep = target;
 
-		// skip the boolean and the target
+		// Skip the boolean and the target
 		target = arguments[ i ] || {};
 		i++;
 	}
@@ -11725,7 +11709,7 @@ jQuery.extend = jQuery.fn.extend = function() {
 		target = {};
 	}
 
-	// extend jQuery itself if only one argument is passed
+	// Extend jQuery itself if only one argument is passed
 	if ( i === length ) {
 		target = this;
 		i--;
@@ -11782,9 +11766,6 @@ jQuery.extend({
 
 	noop: function() {},
 
-	// See test/unit/core.js for details concerning isFunction.
-	// Since version 1.3, DOM methods and functions like alert
-	// aren't supported. They return false on IE (#2968).
 	isFunction: function( obj ) {
 		return jQuery.type(obj) === "function";
 	},
@@ -11799,7 +11780,8 @@ jQuery.extend({
 		// parseFloat NaNs numeric-cast false positives (null|true|false|"")
 		// ...but misinterprets leading-number strings, particularly hex literals ("0x...")
 		// subtraction forces infinities to NaN
-		return !jQuery.isArray( obj ) && obj - parseFloat( obj ) >= 0;
+		// adding 1 corrects loss of precision from parseFloat (#15100)
+		return !jQuery.isArray( obj ) && (obj - parseFloat( obj ) + 1) >= 0;
 	},
 
 	isPlainObject: function( obj ) {
@@ -11833,7 +11815,7 @@ jQuery.extend({
 		if ( obj == null ) {
 			return obj + "";
 		}
-		// Support: Android < 4.0, iOS < 6 (functionish RegExp)
+		// Support: Android<4.0, iOS<6 (functionish RegExp)
 		return typeof obj === "object" || typeof obj === "function" ?
 			class2type[ toString.call(obj) ] || "object" :
 			typeof obj;
@@ -11863,6 +11845,7 @@ jQuery.extend({
 	},
 
 	// Convert dashed to camelCase; used by the css and data modules
+	// Support: IE9-11+
 	// Microsoft forgot to hump their vendor prefix (#9572)
 	camelCase: function( string ) {
 		return string.replace( rmsPrefix, "ms-" ).replace( rdashAlpha, fcamelCase );
@@ -12078,14 +12061,14 @@ function isArraylike( obj ) {
 }
 var Sizzle =
 /*!
- * Sizzle CSS Selector Engine v1.10.19
+ * Sizzle CSS Selector Engine v2.2.0-pre
  * http://sizzlejs.com/
  *
- * Copyright 2013 jQuery Foundation, Inc. and other contributors
+ * Copyright 2008, 2014 jQuery Foundation, Inc. and other contributors
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2014-04-18
+ * Date: 2014-12-16
  */
 (function( window ) {
 
@@ -12112,7 +12095,7 @@ var i,
 	contains,
 
 	// Instance-specific data
-	expando = "sizzle" + -(new Date()),
+	expando = "sizzle" + 1 * new Date(),
 	preferredDoc = window.document,
 	dirruns = 0,
 	done = 0,
@@ -12127,7 +12110,6 @@ var i,
 	},
 
 	// General-purpose constants
-	strundefined = typeof undefined,
 	MAX_NEGATIVE = 1 << 31,
 
 	// Instance methods
@@ -12137,12 +12119,13 @@ var i,
 	push_native = arr.push,
 	push = arr.push,
 	slice = arr.slice,
-	// Use a stripped-down indexOf if we can't use a native one
-	indexOf = arr.indexOf || function( elem ) {
+	// Use a stripped-down indexOf as it's faster than native
+	// http://jsperf.com/thor-indexof-vs-for/5
+	indexOf = function( list, elem ) {
 		var i = 0,
-			len = this.length;
+			len = list.length;
 		for ( ; i < len; i++ ) {
-			if ( this[i] === elem ) {
+			if ( list[i] === elem ) {
 				return i;
 			}
 		}
@@ -12182,6 +12165,7 @@ var i,
 		")\\)|)",
 
 	// Leading and non-escaped trailing whitespace, capturing some non-whitespace characters preceding the latter
+	rwhitespace = new RegExp( whitespace + "+", "g" ),
 	rtrim = new RegExp( "^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$", "g" ),
 
 	rcomma = new RegExp( "^" + whitespace + "*," + whitespace + "*" ),
@@ -12233,6 +12217,14 @@ var i,
 				String.fromCharCode( high + 0x10000 ) :
 				// Supplemental Plane codepoint (surrogate pair)
 				String.fromCharCode( high >> 10 | 0xD800, high & 0x3FF | 0xDC00 );
+	},
+
+	// Used for iframes
+	// See setDocument()
+	// Removing the function wrapper causes a "Permission Denied"
+	// error in IE
+	unloadHandler = function() {
+		setDocument();
 	};
 
 // Optimize for push.apply( _, NodeList )
@@ -12275,19 +12267,18 @@ function Sizzle( selector, context, results, seed ) {
 
 	context = context || document;
 	results = results || [];
+	nodeType = context.nodeType;
 
-	if ( !selector || typeof selector !== "string" ) {
+	if ( typeof selector !== "string" || !selector ||
+		nodeType !== 1 && nodeType !== 9 && nodeType !== 11 ) {
+
 		return results;
 	}
 
-	if ( (nodeType = context.nodeType) !== 1 && nodeType !== 9 ) {
-		return [];
-	}
+	if ( !seed && documentIsHTML ) {
 
-	if ( documentIsHTML && !seed ) {
-
-		// Shortcuts
-		if ( (match = rquickExpr.exec( selector )) ) {
+		// Try to shortcut find operations when possible (e.g., not under DocumentFragment)
+		if ( nodeType !== 11 && (match = rquickExpr.exec( selector )) ) {
 			// Speed-up: Sizzle("#ID")
 			if ( (m = match[1]) ) {
 				if ( nodeType === 9 ) {
@@ -12319,7 +12310,7 @@ function Sizzle( selector, context, results, seed ) {
 				return results;
 
 			// Speed-up: Sizzle(".CLASS")
-			} else if ( (m = match[3]) && support.getElementsByClassName && context.getElementsByClassName ) {
+			} else if ( (m = match[3]) && support.getElementsByClassName ) {
 				push.apply( results, context.getElementsByClassName( m ) );
 				return results;
 			}
@@ -12329,7 +12320,7 @@ function Sizzle( selector, context, results, seed ) {
 		if ( support.qsa && (!rbuggyQSA || !rbuggyQSA.test( selector )) ) {
 			nid = old = expando;
 			newContext = context;
-			newSelector = nodeType === 9 && selector;
+			newSelector = nodeType !== 1 && selector;
 
 			// qSA works strangely on Element-rooted queries
 			// We can work around this by specifying an extra ID on the root
@@ -12516,7 +12507,7 @@ function createPositionalPseudo( fn ) {
  * @returns {Element|Object|Boolean} The input node if acceptable, otherwise a falsy value
  */
 function testContext( context ) {
-	return context && typeof context.getElementsByTagName !== strundefined && context;
+	return context && typeof context.getElementsByTagName !== "undefined" && context;
 }
 
 // Expose support vars for convenience
@@ -12540,9 +12531,8 @@ isXML = Sizzle.isXML = function( elem ) {
  * @returns {Object} Returns the current document
  */
 setDocument = Sizzle.setDocument = function( node ) {
-	var hasCompare,
-		doc = node ? node.ownerDocument || node : preferredDoc,
-		parent = doc.defaultView;
+	var hasCompare, parent,
+		doc = node ? node.ownerDocument || node : preferredDoc;
 
 	// If no document and documentElement is available, return
 	if ( doc === document || doc.nodeType !== 9 || !doc.documentElement ) {
@@ -12552,9 +12542,7 @@ setDocument = Sizzle.setDocument = function( node ) {
 	// Set our document
 	document = doc;
 	docElem = doc.documentElement;
-
-	// Support tests
-	documentIsHTML = !isXML( doc );
+	parent = doc.defaultView;
 
 	// Support: IE>8
 	// If iframe document is assigned to "document" variable and if iframe has been reloaded,
@@ -12563,21 +12551,22 @@ setDocument = Sizzle.setDocument = function( node ) {
 	if ( parent && parent !== parent.top ) {
 		// IE11 does not have attachEvent, so all must suffer
 		if ( parent.addEventListener ) {
-			parent.addEventListener( "unload", function() {
-				setDocument();
-			}, false );
+			parent.addEventListener( "unload", unloadHandler, false );
 		} else if ( parent.attachEvent ) {
-			parent.attachEvent( "onunload", function() {
-				setDocument();
-			});
+			parent.attachEvent( "onunload", unloadHandler );
 		}
 	}
+
+	/* Support tests
+	---------------------------------------------------------------------- */
+	documentIsHTML = !isXML( doc );
 
 	/* Attributes
 	---------------------------------------------------------------------- */
 
 	// Support: IE<8
-	// Verify that getAttribute really returns attributes and not properties (excepting IE8 booleans)
+	// Verify that getAttribute really returns attributes and not properties
+	// (excepting IE8 booleans)
 	support.attributes = assert(function( div ) {
 		div.className = "i";
 		return !div.getAttribute("className");
@@ -12592,17 +12581,8 @@ setDocument = Sizzle.setDocument = function( node ) {
 		return !div.getElementsByTagName("*").length;
 	});
 
-	// Check if getElementsByClassName can be trusted
-	support.getElementsByClassName = rnative.test( doc.getElementsByClassName ) && assert(function( div ) {
-		div.innerHTML = "<div class='a'></div><div class='a i'></div>";
-
-		// Support: Safari<4
-		// Catch class over-caching
-		div.firstChild.className = "i";
-		// Support: Opera<10
-		// Catch gEBCN failure to find non-leading classes
-		return div.getElementsByClassName("i").length === 2;
-	});
+	// Support: IE<9
+	support.getElementsByClassName = rnative.test( doc.getElementsByClassName );
 
 	// Support: IE<10
 	// Check if getElementById returns elements by name
@@ -12616,7 +12596,7 @@ setDocument = Sizzle.setDocument = function( node ) {
 	// ID find and filter
 	if ( support.getById ) {
 		Expr.find["ID"] = function( id, context ) {
-			if ( typeof context.getElementById !== strundefined && documentIsHTML ) {
+			if ( typeof context.getElementById !== "undefined" && documentIsHTML ) {
 				var m = context.getElementById( id );
 				// Check parentNode to catch when Blackberry 4.6 returns
 				// nodes that are no longer in the document #6963
@@ -12637,7 +12617,7 @@ setDocument = Sizzle.setDocument = function( node ) {
 		Expr.filter["ID"] =  function( id ) {
 			var attrId = id.replace( runescape, funescape );
 			return function( elem ) {
-				var node = typeof elem.getAttributeNode !== strundefined && elem.getAttributeNode("id");
+				var node = typeof elem.getAttributeNode !== "undefined" && elem.getAttributeNode("id");
 				return node && node.value === attrId;
 			};
 		};
@@ -12646,14 +12626,20 @@ setDocument = Sizzle.setDocument = function( node ) {
 	// Tag
 	Expr.find["TAG"] = support.getElementsByTagName ?
 		function( tag, context ) {
-			if ( typeof context.getElementsByTagName !== strundefined ) {
+			if ( typeof context.getElementsByTagName !== "undefined" ) {
 				return context.getElementsByTagName( tag );
+
+			// DocumentFragment nodes don't have gEBTN
+			} else if ( support.qsa ) {
+				return context.querySelectorAll( tag );
 			}
 		} :
+
 		function( tag, context ) {
 			var elem,
 				tmp = [],
 				i = 0,
+				// By happy coincidence, a (broken) gEBTN appears on DocumentFragment nodes too
 				results = context.getElementsByTagName( tag );
 
 			// Filter out possible comments
@@ -12671,7 +12657,7 @@ setDocument = Sizzle.setDocument = function( node ) {
 
 	// Class
 	Expr.find["CLASS"] = support.getElementsByClassName && function( className, context ) {
-		if ( typeof context.getElementsByClassName !== strundefined && documentIsHTML ) {
+		if ( documentIsHTML ) {
 			return context.getElementsByClassName( className );
 		}
 	};
@@ -12700,13 +12686,15 @@ setDocument = Sizzle.setDocument = function( node ) {
 			// setting a boolean content attribute,
 			// since its presence should be enough
 			// http://bugs.jquery.com/ticket/12359
-			div.innerHTML = "<select msallowclip=''><option selected=''></option></select>";
+			docElem.appendChild( div ).innerHTML = "<a id='" + expando + "'></a>" +
+				"<select id='" + expando + "-\f]' msallowcapture=''>" +
+				"<option selected=''></option></select>";
 
 			// Support: IE8, Opera 11-12.16
 			// Nothing should be selected when empty strings follow ^= or $= or *=
 			// The test attribute must be unknown in Opera but "safe" for WinRT
 			// http://msdn.microsoft.com/en-us/library/ie/hh465388.aspx#attribute_section
-			if ( div.querySelectorAll("[msallowclip^='']").length ) {
+			if ( div.querySelectorAll("[msallowcapture^='']").length ) {
 				rbuggyQSA.push( "[*^$]=" + whitespace + "*(?:''|\"\")" );
 			}
 
@@ -12716,11 +12704,23 @@ setDocument = Sizzle.setDocument = function( node ) {
 				rbuggyQSA.push( "\\[" + whitespace + "*(?:value|" + booleans + ")" );
 			}
 
+			// Support: Chrome<29, Android<4.2+, Safari<7.0+, iOS<7.0+, PhantomJS<1.9.7+
+			if ( !div.querySelectorAll( "[id~=" + expando + "-]" ).length ) {
+				rbuggyQSA.push("~=");
+			}
+
 			// Webkit/Opera - :checked should return selected option elements
 			// http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
 			// IE8 throws error here and will not see later tests
 			if ( !div.querySelectorAll(":checked").length ) {
 				rbuggyQSA.push(":checked");
+			}
+
+			// Support: Safari 8+, iOS 8+
+			// https://bugs.webkit.org/show_bug.cgi?id=136851
+			// In-page `selector#id sibing-combinator selector` fails
+			if ( !div.querySelectorAll( "a#" + expando + "+*" ).length ) {
+				rbuggyQSA.push(".#.+[+~]");
 			}
 		});
 
@@ -12838,7 +12838,7 @@ setDocument = Sizzle.setDocument = function( node ) {
 
 			// Maintain original order
 			return sortInput ?
-				( indexOf.call( sortInput, a ) - indexOf.call( sortInput, b ) ) :
+				( indexOf( sortInput, a ) - indexOf( sortInput, b ) ) :
 				0;
 		}
 
@@ -12865,7 +12865,7 @@ setDocument = Sizzle.setDocument = function( node ) {
 				aup ? -1 :
 				bup ? 1 :
 				sortInput ?
-				( indexOf.call( sortInput, a ) - indexOf.call( sortInput, b ) ) :
+				( indexOf( sortInput, a ) - indexOf( sortInput, b ) ) :
 				0;
 
 		// If the nodes are siblings, we can do a quick check
@@ -12928,7 +12928,7 @@ Sizzle.matchesSelector = function( elem, expr ) {
 					elem.document && elem.document.nodeType !== 11 ) {
 				return ret;
 			}
-		} catch(e) {}
+		} catch (e) {}
 	}
 
 	return Sizzle( expr, document, null, [ elem ] ).length > 0;
@@ -13147,7 +13147,7 @@ Expr = Sizzle.selectors = {
 			return pattern ||
 				(pattern = new RegExp( "(^|" + whitespace + ")" + className + "(" + whitespace + "|$)" )) &&
 				classCache( className, function( elem ) {
-					return pattern.test( typeof elem.className === "string" && elem.className || typeof elem.getAttribute !== strundefined && elem.getAttribute("class") || "" );
+					return pattern.test( typeof elem.className === "string" && elem.className || typeof elem.getAttribute !== "undefined" && elem.getAttribute("class") || "" );
 				});
 		},
 
@@ -13169,7 +13169,7 @@ Expr = Sizzle.selectors = {
 					operator === "^=" ? check && result.indexOf( check ) === 0 :
 					operator === "*=" ? check && result.indexOf( check ) > -1 :
 					operator === "$=" ? check && result.slice( -check.length ) === check :
-					operator === "~=" ? ( " " + result + " " ).indexOf( check ) > -1 :
+					operator === "~=" ? ( " " + result.replace( rwhitespace, " " ) + " " ).indexOf( check ) > -1 :
 					operator === "|=" ? result === check || result.slice( 0, check.length + 1 ) === check + "-" :
 					false;
 			};
@@ -13289,7 +13289,7 @@ Expr = Sizzle.selectors = {
 							matched = fn( seed, argument ),
 							i = matched.length;
 						while ( i-- ) {
-							idx = indexOf.call( seed, matched[i] );
+							idx = indexOf( seed, matched[i] );
 							seed[ idx ] = !( matches[ idx ] = matched[i] );
 						}
 					}) :
@@ -13328,6 +13328,8 @@ Expr = Sizzle.selectors = {
 				function( elem, context, xml ) {
 					input[0] = elem;
 					matcher( input, null, xml, results );
+					// Don't keep the element (issue #299)
+					input[0] = null;
 					return !results.pop();
 				};
 		}),
@@ -13339,6 +13341,7 @@ Expr = Sizzle.selectors = {
 		}),
 
 		"contains": markFunction(function( text ) {
+			text = text.replace( runescape, funescape );
 			return function( elem ) {
 				return ( elem.textContent || elem.innerText || getText( elem ) ).indexOf( text ) > -1;
 			};
@@ -13760,7 +13763,7 @@ function setMatcher( preFilter, selector, matcher, postFilter, postFinder, postS
 				i = matcherOut.length;
 				while ( i-- ) {
 					if ( (elem = matcherOut[i]) &&
-						(temp = postFinder ? indexOf.call( seed, elem ) : preMap[i]) > -1 ) {
+						(temp = postFinder ? indexOf( seed, elem ) : preMap[i]) > -1 ) {
 
 						seed[temp] = !(results[temp] = elem);
 					}
@@ -13795,13 +13798,16 @@ function matcherFromTokens( tokens ) {
 			return elem === checkContext;
 		}, implicitRelative, true ),
 		matchAnyContext = addCombinator( function( elem ) {
-			return indexOf.call( checkContext, elem ) > -1;
+			return indexOf( checkContext, elem ) > -1;
 		}, implicitRelative, true ),
 		matchers = [ function( elem, context, xml ) {
-			return ( !leadingRelative && ( xml || context !== outermostContext ) ) || (
+			var ret = ( !leadingRelative && ( xml || context !== outermostContext ) ) || (
 				(checkContext = context).nodeType ?
 					matchContext( elem, context, xml ) :
 					matchAnyContext( elem, context, xml ) );
+			// Avoid hanging onto element (issue #299)
+			checkContext = null;
+			return ret;
 		} ];
 
 	for ( ; i < len; i++ ) {
@@ -14051,7 +14057,7 @@ select = Sizzle.select = function( selector, context, results, seed ) {
 // Sort stability
 support.sortStable = expando.split("").sort( sortOrder ).join("") === expando;
 
-// Support: Chrome<14
+// Support: Chrome 14-35+
 // Always assume duplicates if they aren't passed to the comparison function
 support.detectDuplicates = !!hasDuplicate;
 
@@ -14260,7 +14266,7 @@ var rootjQuery,
 				if ( match[1] ) {
 					context = context instanceof jQuery ? context[0] : context;
 
-					// scripts is true for back-compat
+					// Option to run scripts is true for back-compat
 					// Intentionally let the error be thrown if parseHTML is not present
 					jQuery.merge( this, jQuery.parseHTML(
 						match[1],
@@ -14288,8 +14294,8 @@ var rootjQuery,
 				} else {
 					elem = document.getElementById( match[2] );
 
-					// Check parentNode to catch when Blackberry 4.6 returns
-					// nodes that are no longer in the document #6963
+					// Support: Blackberry 4.6
+					// gEBID returns nodes no longer in the document (#6963)
 					if ( elem && elem.parentNode ) {
 						// Inject the element directly into the jQuery object
 						this.length = 1;
@@ -14342,7 +14348,7 @@ rootjQuery = jQuery( document );
 
 
 var rparentsprev = /^(?:parents|prev(?:Until|All))/,
-	// methods guaranteed to produce a unique set when starting from a unique set
+	// Methods guaranteed to produce a unique set when starting from a unique set
 	guaranteedUnique = {
 		children: true,
 		contents: true,
@@ -14422,8 +14428,7 @@ jQuery.fn.extend({
 		return this.pushStack( matched.length > 1 ? jQuery.unique( matched ) : matched );
 	},
 
-	// Determine the position of an element within
-	// the matched set of elements
+	// Determine the position of an element within the set
 	index: function( elem ) {
 
 		// No argument, return index in parent
@@ -14431,7 +14436,7 @@ jQuery.fn.extend({
 			return ( this[ 0 ] && this[ 0 ].parentNode ) ? this.first().prevAll().length : -1;
 		}
 
-		// index in selector
+		// Index in selector
 		if ( typeof elem === "string" ) {
 			return indexOf.call( jQuery( elem ), this[ 0 ] );
 		}
@@ -14847,7 +14852,7 @@ jQuery.extend({
 
 			progressValues, progressContexts, resolveContexts;
 
-		// add listeners to Deferred subordinates; treat others as resolved
+		// Add listeners to Deferred subordinates; treat others as resolved
 		if ( length > 1 ) {
 			progressValues = new Array( length );
 			progressContexts = new Array( length );
@@ -14864,7 +14869,7 @@ jQuery.extend({
 			}
 		}
 
-		// if we're not waiting on anything, resolve the master
+		// If we're not waiting on anything, resolve the master
 		if ( !remaining ) {
 			deferred.resolveWith( resolveContexts, resolveValues );
 		}
@@ -14943,7 +14948,7 @@ jQuery.ready.promise = function( obj ) {
 		readyList = jQuery.Deferred();
 
 		// Catch cases where $(document).ready() is called after the browser event has already occurred.
-		// we once tried to use readyState "interactive" here, but it caused issues like the one
+		// We once tried to use readyState "interactive" here, but it caused issues like the one
 		// discovered by ChrisS here: http://bugs.jquery.com/ticket/12282#comment:15
 		if ( document.readyState === "complete" ) {
 			// Handle it asynchronously to allow scripts the opportunity to delay ready
@@ -15037,7 +15042,7 @@ jQuery.acceptData = function( owner ) {
 
 
 function Data() {
-	// Support: Android < 4,
+	// Support: Android<4,
 	// Old WebKit does not have Object.preventExtensions/freeze method,
 	// return new empty object instead with no [[set]] accessor
 	Object.defineProperty( this.cache = {}, 0, {
@@ -15046,7 +15051,7 @@ function Data() {
 		}
 	});
 
-	this.expando = jQuery.expando + Math.random();
+	this.expando = jQuery.expando + Data.uid++;
 }
 
 Data.uid = 1;
@@ -15074,7 +15079,7 @@ Data.prototype = {
 				descriptor[ this.expando ] = { value: unlock };
 				Object.defineProperties( owner, descriptor );
 
-			// Support: Android < 4
+			// Support: Android<4
 			// Fallback to a less secure definition
 			} catch ( e ) {
 				descriptor[ this.expando ] = unlock;
@@ -15214,17 +15219,16 @@ var data_user = new Data();
 
 
 
-/*
-	Implementation Summary
+//	Implementation Summary
+//
+//	1. Enforce API surface and semantic compatibility with 1.9.x branch
+//	2. Improve the module's maintainability by reducing the storage
+//		paths to a single mechanism.
+//	3. Use the same single mechanism to support "private" and "user" data.
+//	4. _Never_ expose "private" data to user code (TODO: Drop _data, _removeData)
+//	5. Avoid exposing implementation details on user objects (eg. expando properties)
+//	6. Provide a clear path for implementation upgrade to WeakMap in 2014
 
-	1. Enforce API surface and semantic compatibility with 1.9.x branch
-	2. Improve the module's maintainability by reducing the storage
-		paths to a single mechanism.
-	3. Use the same single mechanism to support "private" and "user" data.
-	4. _Never_ expose "private" data to user code (TODO: Drop _data, _removeData)
-	5. Avoid exposing implementation details on user objects (eg. expando properties)
-	6. Provide a clear path for implementation upgrade to WeakMap in 2014
-*/
 var rbrace = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
 	rmultiDash = /([A-Z])/g;
 
@@ -15429,7 +15433,7 @@ jQuery.extend({
 				queue.unshift( "inprogress" );
 			}
 
-			// clear up the last queue stop function
+			// Clear up the last queue stop function
 			delete hooks.stop;
 			fn.call( elem, next, hooks );
 		}
@@ -15439,7 +15443,7 @@ jQuery.extend({
 		}
 	},
 
-	// not intended for public consumption - generates a queueHooks object, or returns the current one
+	// Not public - generate a queueHooks object, or return the current one
 	_queueHooks: function( elem, type ) {
 		var key = type + "queueHooks";
 		return data_priv.get( elem, key ) || data_priv.access( elem, key, {
@@ -15469,7 +15473,7 @@ jQuery.fn.extend({
 			this.each(function() {
 				var queue = jQuery.queue( this, type, data );
 
-				// ensure a hooks for this queue
+				// Ensure a hooks for this queue
 				jQuery._queueHooks( this, type );
 
 				if ( type === "fx" && queue[0] !== "inprogress" ) {
@@ -15536,21 +15540,22 @@ var rcheckableType = (/^(?:checkbox|radio)$/i);
 		div = fragment.appendChild( document.createElement( "div" ) ),
 		input = document.createElement( "input" );
 
-	// #11217 - WebKit loses check when the name is after the checked attribute
+	// Support: Safari<=5.1
+	// Check state lost if the name is set (#11217)
 	// Support: Windows Web Apps (WWA)
-	// `name` and `type` need .setAttribute for WWA
+	// `name` and `type` must use .setAttribute for WWA (#14901)
 	input.setAttribute( "type", "radio" );
 	input.setAttribute( "checked", "checked" );
 	input.setAttribute( "name", "t" );
 
 	div.appendChild( input );
 
-	// Support: Safari 5.1, iOS 5.1, Android 4.x, Android 2.3
-	// old WebKit doesn't clone checked state correctly in fragments
+	// Support: Safari<=5.1, Android<4.2
+	// Older WebKit doesn't clone checked state correctly in fragments
 	support.checkClone = div.cloneNode( true ).cloneNode( true ).lastChild.checked;
 
+	// Support: IE<=11+
 	// Make sure textarea (and checkbox) defaultValue is properly cloned
-	// Support: IE9-IE11+
 	div.innerHTML = "<textarea>x</textarea>";
 	support.noCloneChecked = !!div.cloneNode( true ).lastChild.defaultValue;
 })();
@@ -15928,8 +15933,8 @@ jQuery.event = {
 			j = 0;
 			while ( (handleObj = matched.handlers[ j++ ]) && !event.isImmediatePropagationStopped() ) {
 
-				// Triggered event must either 1) have no namespace, or
-				// 2) have namespace(s) a subset or equal to those in the bound event (both can have no namespace).
+				// Triggered event must either 1) have no namespace, or 2) have namespace(s)
+				// a subset or equal to those in the bound event (both can have no namespace).
 				if ( !event.namespace_re || event.namespace_re.test( handleObj.namespace ) ) {
 
 					event.handleObj = handleObj;
@@ -16079,7 +16084,7 @@ jQuery.event = {
 			event.target = document;
 		}
 
-		// Support: Safari 6.0+, Chrome < 28
+		// Support: Safari 6.0+, Chrome<28
 		// Target should not be a text node (#504, #13143)
 		if ( event.target.nodeType === 3 ) {
 			event.target = event.target.parentNode;
@@ -16184,7 +16189,7 @@ jQuery.Event = function( src, props ) {
 		// by a handler lower down the tree; reflect the correct value.
 		this.isDefaultPrevented = src.defaultPrevented ||
 				src.defaultPrevented === undefined &&
-				// Support: Android < 4.0
+				// Support: Android<4.0
 				src.returnValue === false ?
 			returnTrue :
 			returnFalse;
@@ -16274,8 +16279,8 @@ jQuery.each({
 	};
 });
 
-// Create "bubbling" focus and blur events
 // Support: Firefox, Chrome, Safari
+// Create "bubbling" focus and blur events
 if ( !support.focusinBubbles ) {
 	jQuery.each({ focus: "focusin", blur: "focusout" }, function( orig, fix ) {
 
@@ -16428,7 +16433,7 @@ var
 	// We have to close these tags to support XHTML (#13200)
 	wrapMap = {
 
-		// Support: IE 9
+		// Support: IE9
 		option: [ 1, "<select multiple='multiple'>", "</select>" ],
 
 		thead: [ 1, "<table>", "</table>" ],
@@ -16439,7 +16444,7 @@ var
 		_default: [ 0, "", "" ]
 	};
 
-// Support: IE 9
+// Support: IE9
 wrapMap.optgroup = wrapMap.option;
 
 wrapMap.tbody = wrapMap.tfoot = wrapMap.colgroup = wrapMap.caption = wrapMap.thead;
@@ -16529,7 +16534,7 @@ function getAll( context, tag ) {
 		ret;
 }
 
-// Support: IE >= 9
+// Fix IE bugs, see support tests
 function fixInput( src, dest ) {
 	var nodeName = dest.nodeName.toLowerCase();
 
@@ -16549,8 +16554,7 @@ jQuery.extend({
 			clone = elem.cloneNode( true ),
 			inPage = jQuery.contains( elem.ownerDocument, elem );
 
-		// Support: IE >= 9
-		// Fix Cloning issues
+		// Fix IE cloning issues
 		if ( !support.noCloneChecked && ( elem.nodeType === 1 || elem.nodeType === 11 ) &&
 				!jQuery.isXMLDoc( elem ) ) {
 
@@ -16601,8 +16605,8 @@ jQuery.extend({
 
 				// Add nodes directly
 				if ( jQuery.type( elem ) === "object" ) {
-					// Support: QtWebKit
-					// jQuery.merge because push.apply(_, arraylike) throws
+					// Support: QtWebKit, PhantomJS
+					// push.apply(_, arraylike) throws on ancient WebKit
 					jQuery.merge( nodes, elem.nodeType ? [ elem ] : elem );
 
 				// Convert non-html into a text node
@@ -16624,15 +16628,14 @@ jQuery.extend({
 						tmp = tmp.lastChild;
 					}
 
-					// Support: QtWebKit
-					// jQuery.merge because push.apply(_, arraylike) throws
+					// Support: QtWebKit, PhantomJS
+					// push.apply(_, arraylike) throws on ancient WebKit
 					jQuery.merge( nodes, tmp.childNodes );
 
 					// Remember the top-level container
 					tmp = fragment.firstChild;
 
-					// Fixes #12346
-					// Support: Webkit, IE
+					// Ensure the created nodes are orphaned (#12392)
 					tmp.textContent = "";
 				}
 			}
@@ -16994,7 +16997,7 @@ function actualDisplay( name, doc ) {
 		// getDefaultComputedStyle might be reliably used only on attached element
 		display = window.getDefaultComputedStyle && ( style = window.getDefaultComputedStyle( elem[ 0 ] ) ) ?
 
-			// Use of this method is a temporary fix (more like optmization) until something better comes along,
+			// Use of this method is a temporary fix (more like optimization) until something better comes along,
 			// since it was removed from specification and supported only in FF
 			style.display : jQuery.css( elem[ 0 ], "display" );
 
@@ -17044,7 +17047,14 @@ var rmargin = (/^margin/);
 var rnumnonpx = new RegExp( "^(" + pnum + ")(?!px)[a-z%]+$", "i" );
 
 var getStyles = function( elem ) {
-		return elem.ownerDocument.defaultView.getComputedStyle( elem, null );
+		// Support: IE<=11+, Firefox<=30+ (#15098, #14150)
+		// IE throws on elements created in popups
+		// FF meanwhile throws on frame elements through "defaultView.getComputedStyle"
+		if ( elem.ownerDocument.defaultView.opener ) {
+			return elem.ownerDocument.defaultView.getComputedStyle( elem, null );
+		}
+
+		return window.getComputedStyle( elem, null );
 	};
 
 
@@ -17056,7 +17066,7 @@ function curCSS( elem, name, computed ) {
 	computed = computed || getStyles( elem );
 
 	// Support: IE9
-	// getPropertyValue is only needed for .css('filter') in IE9, see #12537
+	// getPropertyValue is only needed for .css('filter') (#12537)
 	if ( computed ) {
 		ret = computed.getPropertyValue( name ) || computed[ name ];
 	}
@@ -17102,15 +17112,13 @@ function addGetHookIf( conditionFn, hookFn ) {
 	return {
 		get: function() {
 			if ( conditionFn() ) {
-				// Hook not needed (or it's not possible to use it due to missing dependency),
-				// remove it.
-				// Since there are no other hooks for marginRight, remove the whole object.
+				// Hook not needed (or it's not possible to use it due
+				// to missing dependency), remove it.
 				delete this.get;
 				return;
 			}
 
 			// Hook needed; redefine it so that the support test is not executed again.
-
 			return (this.get = hookFn).apply( this, arguments );
 		}
 	};
@@ -17127,6 +17135,8 @@ function addGetHookIf( conditionFn, hookFn ) {
 		return;
 	}
 
+	// Support: IE9-11+
+	// Style of cloned element affects source element cloned (#8908)
 	div.style.backgroundClip = "content-box";
 	div.cloneNode( true ).style.backgroundClip = "";
 	support.clearCloneStyle = div.style.backgroundClip === "content-box";
@@ -17159,6 +17169,7 @@ function addGetHookIf( conditionFn, hookFn ) {
 	if ( window.getComputedStyle ) {
 		jQuery.extend( support, {
 			pixelPosition: function() {
+
 				// This test is executed only once but we still do memoizing
 				// since we can use the boxSizingReliable pre-computing.
 				// No need to check if the test was already performed, though.
@@ -17172,6 +17183,7 @@ function addGetHookIf( conditionFn, hookFn ) {
 				return boxSizingReliableVal;
 			},
 			reliableMarginRight: function() {
+
 				// Support: Android 2.3
 				// Check if div with explicit width and no margin-right incorrectly
 				// gets computed margin-right based on width of container. (#3333)
@@ -17193,6 +17205,7 @@ function addGetHookIf( conditionFn, hookFn ) {
 				ret = !parseFloat( window.getComputedStyle( marginDiv, null ).marginRight );
 
 				docElem.removeChild( container );
+				div.removeChild( marginDiv );
 
 				return ret;
 			}
@@ -17224,8 +17237,8 @@ jQuery.swap = function( elem, options, callback, args ) {
 
 
 var
-	// swappable if display is none or starts with table except "table", "table-cell", or "table-caption"
-	// see here for display values: https://developer.mozilla.org/en-US/docs/CSS/display
+	// Swappable if display is none or starts with table except "table", "table-cell", or "table-caption"
+	// See here for display values: https://developer.mozilla.org/en-US/docs/CSS/display
 	rdisplayswap = /^(none|table(?!-c[ea]).+)/,
 	rnumsplit = new RegExp( "^(" + pnum + ")(.*)$", "i" ),
 	rrelNum = new RegExp( "^([+-])=(" + pnum + ")", "i" ),
@@ -17238,15 +17251,15 @@ var
 
 	cssPrefixes = [ "Webkit", "O", "Moz", "ms" ];
 
-// return a css property mapped to a potentially vendor prefixed property
+// Return a css property mapped to a potentially vendor prefixed property
 function vendorPropName( style, name ) {
 
-	// shortcut for names that are not vendor prefixed
+	// Shortcut for names that are not vendor prefixed
 	if ( name in style ) {
 		return name;
 	}
 
-	// check for vendor prefixed names
+	// Check for vendor prefixed names
 	var capName = name[0].toUpperCase() + name.slice(1),
 		origName = name,
 		i = cssPrefixes.length;
@@ -17279,7 +17292,7 @@ function augmentWidthOrHeight( elem, name, extra, isBorderBox, styles ) {
 		val = 0;
 
 	for ( ; i < 4; i += 2 ) {
-		// both box models exclude margin, so add it if we want it
+		// Both box models exclude margin, so add it if we want it
 		if ( extra === "margin" ) {
 			val += jQuery.css( elem, extra + cssExpand[ i ], true, styles );
 		}
@@ -17290,15 +17303,15 @@ function augmentWidthOrHeight( elem, name, extra, isBorderBox, styles ) {
 				val -= jQuery.css( elem, "padding" + cssExpand[ i ], true, styles );
 			}
 
-			// at this point, extra isn't border nor margin, so remove border
+			// At this point, extra isn't border nor margin, so remove border
 			if ( extra !== "margin" ) {
 				val -= jQuery.css( elem, "border" + cssExpand[ i ] + "Width", true, styles );
 			}
 		} else {
-			// at this point, extra isn't content, so add padding
+			// At this point, extra isn't content, so add padding
 			val += jQuery.css( elem, "padding" + cssExpand[ i ], true, styles );
 
-			// at this point, extra isn't content nor padding, so add border
+			// At this point, extra isn't content nor padding, so add border
 			if ( extra !== "padding" ) {
 				val += jQuery.css( elem, "border" + cssExpand[ i ] + "Width", true, styles );
 			}
@@ -17316,7 +17329,7 @@ function getWidthOrHeight( elem, name, extra ) {
 		styles = getStyles( elem ),
 		isBorderBox = jQuery.css( elem, "boxSizing", false, styles ) === "border-box";
 
-	// some non-html elements return undefined for offsetWidth, so check for null/undefined
+	// Some non-html elements return undefined for offsetWidth, so check for null/undefined
 	// svg - https://bugzilla.mozilla.org/show_bug.cgi?id=649285
 	// MathML - https://bugzilla.mozilla.org/show_bug.cgi?id=491668
 	if ( val <= 0 || val == null ) {
@@ -17331,7 +17344,7 @@ function getWidthOrHeight( elem, name, extra ) {
 			return val;
 		}
 
-		// we need the check for style in case a browser which returns unreliable values
+		// Check for style in case a browser which returns unreliable values
 		// for getComputedStyle silently falls back to the reliable elem.style
 		valueIsBorderBox = isBorderBox &&
 			( support.boxSizingReliable() || val === elem.style[ name ] );
@@ -17340,7 +17353,7 @@ function getWidthOrHeight( elem, name, extra ) {
 		val = parseFloat( val ) || 0;
 	}
 
-	// use the active box-sizing model to add/subtract irrelevant styles
+	// Use the active box-sizing model to add/subtract irrelevant styles
 	return ( val +
 		augmentWidthOrHeight(
 			elem,
@@ -17404,12 +17417,14 @@ function showHide( elements, show ) {
 }
 
 jQuery.extend({
+
 	// Add in style property hooks for overriding the default
 	// behavior of getting and setting a style property
 	cssHooks: {
 		opacity: {
 			get: function( elem, computed ) {
 				if ( computed ) {
+
 					// We should always get a number back from opacity
 					var ret = curCSS( elem, "opacity" );
 					return ret === "" ? "1" : ret;
@@ -17437,12 +17452,12 @@ jQuery.extend({
 	// Add in properties whose names you wish to fix before
 	// setting or getting the value
 	cssProps: {
-		// normalize float css property
 		"float": "cssFloat"
 	},
 
 	// Get and set the style property on a DOM Node
 	style: function( elem, name, value, extra ) {
+
 		// Don't set styles on text and comment nodes
 		if ( !elem || elem.nodeType === 3 || elem.nodeType === 8 || !elem.style ) {
 			return;
@@ -17455,33 +17470,32 @@ jQuery.extend({
 
 		name = jQuery.cssProps[ origName ] || ( jQuery.cssProps[ origName ] = vendorPropName( style, origName ) );
 
-		// gets hook for the prefixed version
-		// followed by the unprefixed version
+		// Gets hook for the prefixed version, then unprefixed version
 		hooks = jQuery.cssHooks[ name ] || jQuery.cssHooks[ origName ];
 
 		// Check if we're setting a value
 		if ( value !== undefined ) {
 			type = typeof value;
 
-			// convert relative number strings (+= or -=) to relative numbers. #7345
+			// Convert "+=" or "-=" to relative numbers (#7345)
 			if ( type === "string" && (ret = rrelNum.exec( value )) ) {
 				value = ( ret[1] + 1 ) * ret[2] + parseFloat( jQuery.css( elem, name ) );
 				// Fixes bug #9237
 				type = "number";
 			}
 
-			// Make sure that null and NaN values aren't set. See: #7116
+			// Make sure that null and NaN values aren't set (#7116)
 			if ( value == null || value !== value ) {
 				return;
 			}
 
-			// If a number was passed in, add 'px' to the (except for certain CSS properties)
+			// If a number, add 'px' to the (except for certain CSS properties)
 			if ( type === "number" && !jQuery.cssNumber[ origName ] ) {
 				value += "px";
 			}
 
-			// Fixes #8908, it can be done more correctly by specifying setters in cssHooks,
-			// but it would mean to define eight (for every problematic property) identical functions
+			// Support: IE9-11+
+			// background-* props affect original clone's values
 			if ( !support.clearCloneStyle && value === "" && name.indexOf( "background" ) === 0 ) {
 				style[ name ] = "inherit";
 			}
@@ -17509,8 +17523,7 @@ jQuery.extend({
 		// Make sure that we're working with the right name
 		name = jQuery.cssProps[ origName ] || ( jQuery.cssProps[ origName ] = vendorPropName( elem.style, origName ) );
 
-		// gets hook for the prefixed version
-		// followed by the unprefixed version
+		// Try prefixed name followed by the unprefixed name
 		hooks = jQuery.cssHooks[ name ] || jQuery.cssHooks[ origName ];
 
 		// If a hook was provided get the computed value from there
@@ -17523,12 +17536,12 @@ jQuery.extend({
 			val = curCSS( elem, name, styles );
 		}
 
-		//convert "normal" to computed value
+		// Convert "normal" to computed value
 		if ( val === "normal" && name in cssNormalTransform ) {
 			val = cssNormalTransform[ name ];
 		}
 
-		// Return, converting to number if forced or a qualifier was provided and val looks numeric
+		// Make numeric if forced or a qualifier was provided and val looks numeric
 		if ( extra === "" || extra ) {
 			num = parseFloat( val );
 			return extra === true || jQuery.isNumeric( num ) ? num || 0 : val;
@@ -17541,8 +17554,9 @@ jQuery.each([ "height", "width" ], function( i, name ) {
 	jQuery.cssHooks[ name ] = {
 		get: function( elem, computed, extra ) {
 			if ( computed ) {
-				// certain elements can have dimension info if we invisibly show them
-				// however, it must have a current display style that would benefit from this
+
+				// Certain elements can have dimension info if we invisibly show them
+				// but it must have a current display style that would benefit
 				return rdisplayswap.test( jQuery.css( elem, "display" ) ) && elem.offsetWidth === 0 ?
 					jQuery.swap( elem, cssShow, function() {
 						return getWidthOrHeight( elem, name, extra );
@@ -17570,8 +17584,6 @@ jQuery.each([ "height", "width" ], function( i, name ) {
 jQuery.cssHooks.marginRight = addGetHookIf( support.reliableMarginRight,
 	function( elem, computed ) {
 		if ( computed ) {
-			// WebKit Bug 13343 - getComputedStyle returns wrong value for margin-right
-			// Work around by temporarily setting element display to inline-block
 			return jQuery.swap( elem, { "display": "inline-block" },
 				curCSS, [ elem, "marginRight" ] );
 		}
@@ -17589,7 +17601,7 @@ jQuery.each({
 			var i = 0,
 				expanded = {},
 
-				// assumes a single number if not a string
+				// Assumes a single number if not a string
 				parts = typeof value === "string" ? value.split(" ") : [ value ];
 
 			for ( ; i < 4; i++ ) {
@@ -17712,17 +17724,18 @@ Tween.propHooks = {
 				return tween.elem[ tween.prop ];
 			}
 
-			// passing an empty string as a 3rd parameter to .css will automatically
-			// attempt a parseFloat and fallback to a string if the parse fails
-			// so, simple values such as "10px" are parsed to Float.
-			// complex values such as "rotate(1rad)" are returned as is.
+			// Passing an empty string as a 3rd parameter to .css will automatically
+			// attempt a parseFloat and fallback to a string if the parse fails.
+			// Simple values such as "10px" are parsed to Float;
+			// complex values such as "rotate(1rad)" are returned as-is.
 			result = jQuery.css( tween.elem, tween.prop, "" );
 			// Empty strings, null, undefined and "auto" are converted to 0.
 			return !result || result === "auto" ? 0 : result;
 		},
 		set: function( tween ) {
-			// use step hook for back compat - use cssHook if its there - use .style if its
-			// available and use plain properties where available
+			// Use step hook for back compat.
+			// Use cssHook if its there.
+			// Use .style if available and use plain properties where available.
 			if ( jQuery.fx.step[ tween.prop ] ) {
 				jQuery.fx.step[ tween.prop ]( tween );
 			} else if ( tween.elem.style && ( tween.elem.style[ jQuery.cssProps[ tween.prop ] ] != null || jQuery.cssHooks[ tween.prop ] ) ) {
@@ -17736,7 +17749,6 @@ Tween.propHooks = {
 
 // Support: IE9
 // Panic based approach to setting things on disconnected nodes
-
 Tween.propHooks.scrollTop = Tween.propHooks.scrollLeft = {
 	set: function( tween ) {
 		if ( tween.elem.nodeType && tween.elem.parentNode ) {
@@ -17792,16 +17804,16 @@ var
 				start = +target || 1;
 
 				do {
-					// If previous iteration zeroed out, double until we get *something*
-					// Use a string for doubling factor so we don't accidentally see scale as unchanged below
+					// If previous iteration zeroed out, double until we get *something*.
+					// Use string for doubling so we don't accidentally see scale as unchanged below
 					scale = scale || ".5";
 
 					// Adjust and apply
 					start = start / scale;
 					jQuery.style( tween.elem, prop, start + unit );
 
-				// Update scale, tolerating zero or NaN from tween.cur()
-				// And breaking the loop if scale is unchanged or perfect, or if we've just had enough
+				// Update scale, tolerating zero or NaN from tween.cur(),
+				// break the loop if scale is unchanged or perfect, or if we've just had enough
 				} while ( scale !== (scale = tween.cur() / target) && scale !== 1 && --maxIterations );
 			}
 
@@ -17833,8 +17845,8 @@ function genFx( type, includeWidth ) {
 		i = 0,
 		attrs = { height: type };
 
-	// if we include width, step value is 1 to do all cssExpand values,
-	// if we don't include width, step value is 2 to skip over Left and Right
+	// If we include width, step value is 1 to do all cssExpand values,
+	// otherwise step value is 2 to skip over Left and Right
 	includeWidth = includeWidth ? 1 : 0;
 	for ( ; i < 4 ; i += 2 - includeWidth ) {
 		which = cssExpand[ i ];
@@ -17856,7 +17868,7 @@ function createTween( value, prop, animation ) {
 	for ( ; index < length; index++ ) {
 		if ( (tween = collection[ index ].call( animation, prop, value )) ) {
 
-			// we're done with this property
+			// We're done with this property
 			return tween;
 		}
 	}
@@ -17871,7 +17883,7 @@ function defaultPrefilter( elem, props, opts ) {
 		hidden = elem.nodeType && isHidden( elem ),
 		dataShow = data_priv.get( elem, "fxshow" );
 
-	// handle queue: false promises
+	// Handle queue: false promises
 	if ( !opts.queue ) {
 		hooks = jQuery._queueHooks( elem, "fx" );
 		if ( hooks.unqueued == null ) {
@@ -17886,8 +17898,7 @@ function defaultPrefilter( elem, props, opts ) {
 		hooks.unqueued++;
 
 		anim.always(function() {
-			// doing this makes sure that the complete handler will be called
-			// before this completes
+			// Ensure the complete handler is called before this completes
 			anim.always(function() {
 				hooks.unqueued--;
 				if ( !jQuery.queue( elem, "fx" ).length ) {
@@ -17897,7 +17908,7 @@ function defaultPrefilter( elem, props, opts ) {
 		});
 	}
 
-	// height/width overflow pass
+	// Height/width overflow pass
 	if ( elem.nodeType === 1 && ( "height" in props || "width" in props ) ) {
 		// Make sure that nothing sneaks out
 		// Record all 3 overflow attributes because IE9-10 do not
@@ -17959,7 +17970,7 @@ function defaultPrefilter( elem, props, opts ) {
 			dataShow = data_priv.access( elem, "fxshow", {} );
 		}
 
-		// store state if its toggle - enables .stop().toggle() to "reverse"
+		// Store state if its toggle - enables .stop().toggle() to "reverse"
 		if ( toggle ) {
 			dataShow.hidden = !hidden;
 		}
@@ -18019,8 +18030,8 @@ function propFilter( props, specialEasing ) {
 			value = hooks.expand( value );
 			delete props[ name ];
 
-			// not quite $.extend, this wont overwrite keys already present.
-			// also - reusing 'index' from above because we have the correct "name"
+			// Not quite $.extend, this won't overwrite existing keys.
+			// Reusing 'index' because we have the correct "name"
 			for ( index in value ) {
 				if ( !( index in props ) ) {
 					props[ index ] = value[ index ];
@@ -18039,7 +18050,7 @@ function Animation( elem, properties, options ) {
 		index = 0,
 		length = animationPrefilters.length,
 		deferred = jQuery.Deferred().always( function() {
-			// don't match elem in the :animated selector
+			// Don't match elem in the :animated selector
 			delete tick.elem;
 		}),
 		tick = function() {
@@ -18048,7 +18059,8 @@ function Animation( elem, properties, options ) {
 			}
 			var currentTime = fxNow || createFxNow(),
 				remaining = Math.max( 0, animation.startTime + animation.duration - currentTime ),
-				// archaic crash bug won't allow us to use 1 - ( 0.5 || 0 ) (#12497)
+				// Support: Android 2.3
+				// Archaic crash bug won't allow us to use `1 - ( 0.5 || 0 )` (#12497)
 				temp = remaining / animation.duration || 0,
 				percent = 1 - temp,
 				index = 0,
@@ -18084,7 +18096,7 @@ function Animation( elem, properties, options ) {
 			},
 			stop: function( gotoEnd ) {
 				var index = 0,
-					// if we are going to the end, we want to run all the tweens
+					// If we are going to the end, we want to run all the tweens
 					// otherwise we skip this part
 					length = gotoEnd ? animation.tweens.length : 0;
 				if ( stopped ) {
@@ -18095,8 +18107,7 @@ function Animation( elem, properties, options ) {
 					animation.tweens[ index ].run( 1 );
 				}
 
-				// resolve when we played the last frame
-				// otherwise, reject
+				// Resolve when we played the last frame; otherwise, reject
 				if ( gotoEnd ) {
 					deferred.resolveWith( elem, [ animation, gotoEnd ] );
 				} else {
@@ -18178,7 +18189,7 @@ jQuery.speed = function( speed, easing, fn ) {
 	opt.duration = jQuery.fx.off ? 0 : typeof opt.duration === "number" ? opt.duration :
 		opt.duration in jQuery.fx.speeds ? jQuery.fx.speeds[ opt.duration ] : jQuery.fx.speeds._default;
 
-	// normalize opt.queue - true/undefined/null -> "fx"
+	// Normalize opt.queue - true/undefined/null -> "fx"
 	if ( opt.queue == null || opt.queue === true ) {
 		opt.queue = "fx";
 	}
@@ -18202,10 +18213,10 @@ jQuery.speed = function( speed, easing, fn ) {
 jQuery.fn.extend({
 	fadeTo: function( speed, to, easing, callback ) {
 
-		// show any hidden elements after setting opacity to 0
+		// Show any hidden elements after setting opacity to 0
 		return this.filter( isHidden ).css( "opacity", 0 ).show()
 
-			// animate to the value specified
+			// Animate to the value specified
 			.end().animate({ opacity: to }, speed, easing, callback );
 	},
 	animate: function( prop, speed, easing, callback ) {
@@ -18268,9 +18279,9 @@ jQuery.fn.extend({
 				}
 			}
 
-			// start the next in the queue if the last step wasn't forced
-			// timers currently will call their complete callbacks, which will dequeue
-			// but only if they were gotoEnd
+			// Start the next in the queue if the last step wasn't forced.
+			// Timers currently will call their complete callbacks, which
+			// will dequeue but only if they were gotoEnd.
 			if ( dequeue || !gotoEnd ) {
 				jQuery.dequeue( this, type );
 			}
@@ -18288,17 +18299,17 @@ jQuery.fn.extend({
 				timers = jQuery.timers,
 				length = queue ? queue.length : 0;
 
-			// enable finishing flag on private data
+			// Enable finishing flag on private data
 			data.finish = true;
 
-			// empty the queue first
+			// Empty the queue first
 			jQuery.queue( this, type, [] );
 
 			if ( hooks && hooks.stop ) {
 				hooks.stop.call( this, true );
 			}
 
-			// look for any active animations, and finish them
+			// Look for any active animations, and finish them
 			for ( index = timers.length; index--; ) {
 				if ( timers[ index ].elem === this && timers[ index ].queue === type ) {
 					timers[ index ].anim.stop( true );
@@ -18306,14 +18317,14 @@ jQuery.fn.extend({
 				}
 			}
 
-			// look for any animations in the old queue and finish them
+			// Look for any animations in the old queue and finish them
 			for ( index = 0; index < length; index++ ) {
 				if ( queue[ index ] && queue[ index ].finish ) {
 					queue[ index ].finish.call( this );
 				}
 			}
 
-			// turn off finishing flag
+			// Turn off finishing flag
 			delete data.finish;
 		});
 	}
@@ -18416,21 +18427,21 @@ jQuery.fn.delay = function( time, type ) {
 
 	input.type = "checkbox";
 
-	// Support: iOS 5.1, Android 4.x, Android 2.3
-	// Check the default checkbox/radio value ("" on old WebKit; "on" elsewhere)
+	// Support: iOS<=5.1, Android<=4.2+
+	// Default value for a checkbox should be "on"
 	support.checkOn = input.value !== "";
 
-	// Must access the parent to make an option select properly
-	// Support: IE9, IE10
+	// Support: IE<=11+
+	// Must access selectedIndex to make default options select
 	support.optSelected = opt.selected;
 
-	// Make sure that the options inside disabled selects aren't marked as disabled
-	// (WebKit marks them as disabled)
+	// Support: Android<=2.3
+	// Options inside disabled selects are incorrectly marked as disabled
 	select.disabled = true;
 	support.optDisabled = !opt.disabled;
 
-	// Check if an input maintains its value after becoming a radio
-	// Support: IE9, IE10
+	// Support: IE<=11+
+	// An input loses its value after becoming a radio
 	input = document.createElement( "input" );
 	input.value = "t";
 	input.type = "radio";
@@ -18527,8 +18538,6 @@ jQuery.extend({
 			set: function( elem, value ) {
 				if ( !support.radioValue && value === "radio" &&
 					jQuery.nodeName( elem, "input" ) ) {
-					// Setting the type on a radio button after the value resets the value in IE6-9
-					// Reset value to default in case type is set after value during creation
 					var val = elem.value;
 					elem.setAttribute( "type", value );
 					if ( val ) {
@@ -18598,7 +18607,7 @@ jQuery.extend({
 		var ret, hooks, notxml,
 			nType = elem.nodeType;
 
-		// don't get/set properties on text, comment and attribute nodes
+		// Don't get/set properties on text, comment and attribute nodes
 		if ( !elem || nType === 3 || nType === 8 || nType === 2 ) {
 			return;
 		}
@@ -18634,8 +18643,6 @@ jQuery.extend({
 	}
 });
 
-// Support: IE9+
-// Selectedness for an option in an optgroup can be inaccurate
 if ( !support.optSelected ) {
 	jQuery.propHooks.selected = {
 		get: function( elem ) {
@@ -18743,7 +18750,7 @@ jQuery.fn.extend({
 						}
 					}
 
-					// only assign if different to avoid unneeded rendering.
+					// Only assign if different to avoid unneeded rendering.
 					finalValue = value ? jQuery.trim( cur ) : "";
 					if ( elem.className !== finalValue ) {
 						elem.className = finalValue;
@@ -18770,14 +18777,14 @@ jQuery.fn.extend({
 
 		return this.each(function() {
 			if ( type === "string" ) {
-				// toggle individual class names
+				// Toggle individual class names
 				var className,
 					i = 0,
 					self = jQuery( this ),
 					classNames = value.match( rnotwhite ) || [];
 
 				while ( (className = classNames[ i++ ]) ) {
-					// check each className given, space separated list
+					// Check each className given, space separated list
 					if ( self.hasClass( className ) ) {
 						self.removeClass( className );
 					} else {
@@ -18792,7 +18799,7 @@ jQuery.fn.extend({
 					data_priv.set( this, "__className__", this.className );
 				}
 
-				// If the element has a class name or if we're passed "false",
+				// If the element has a class name or if we're passed `false`,
 				// then remove the whole classname (if there was one, the above saved it).
 				// Otherwise bring back whatever was previously saved (if anything),
 				// falling back to the empty string if nothing was stored.
@@ -18836,9 +18843,9 @@ jQuery.fn.extend({
 				ret = elem.value;
 
 				return typeof ret === "string" ?
-					// handle most common string cases
+					// Handle most common string cases
 					ret.replace(rreturn, "") :
-					// handle cases where value is null/undef or number
+					// Handle cases where value is null/undef or number
 					ret == null ? "" : ret;
 			}
 
@@ -18946,7 +18953,7 @@ jQuery.extend({
 					}
 				}
 
-				// force browsers to behave consistently when non-matching value is set
+				// Force browsers to behave consistently when non-matching value is set
 				if ( !optionSet ) {
 					elem.selectedIndex = -1;
 				}
@@ -18967,8 +18974,6 @@ jQuery.each([ "radio", "checkbox" ], function() {
 	};
 	if ( !support.checkOn ) {
 		jQuery.valHooks[ this ].get = function( elem ) {
-			// Support: Webkit
-			// "" is returned instead of "on" if a value isn't specified
 			return elem.getAttribute("value") === null ? "on" : elem.value;
 		};
 	}
@@ -19050,10 +19055,6 @@ jQuery.parseXML = function( data ) {
 
 
 var
-	// Document location
-	ajaxLocParts,
-	ajaxLocation,
-
 	rhash = /#.*$/,
 	rts = /([?&])_=[^&]*/,
 	rheaders = /^(.*?):[ \t]*([^\r\n]*)$/mg,
@@ -19082,22 +19083,13 @@ var
 	transports = {},
 
 	// Avoid comment-prolog char sequence (#10098); must appease lint and evade compression
-	allTypes = "*/".concat("*");
+	allTypes = "*/".concat( "*" ),
 
-// #8138, IE may throw an exception when accessing
-// a field from window.location if document.domain has been set
-try {
-	ajaxLocation = location.href;
-} catch( e ) {
-	// Use the href attribute of an A element
-	// since IE will modify it given document.location
-	ajaxLocation = document.createElement( "a" );
-	ajaxLocation.href = "";
-	ajaxLocation = ajaxLocation.href;
-}
+	// Document location
+	ajaxLocation = window.location.href,
 
-// Segment location into parts
-ajaxLocParts = rurl.exec( ajaxLocation.toLowerCase() ) || [];
+	// Segment location into parts
+	ajaxLocParts = rurl.exec( ajaxLocation.toLowerCase() ) || [];
 
 // Base "constructor" for jQuery.ajaxPrefilter and jQuery.ajaxTransport
 function addToPrefiltersOrTransports( structure ) {
@@ -19576,7 +19568,8 @@ jQuery.extend({
 		}
 
 		// We can fire global events as of now if asked to
-		fireGlobals = s.global;
+		// Don't fire events if jQuery.event is undefined in an AMD-usage scenario (#15118)
+		fireGlobals = jQuery.event && s.global;
 
 		// Watch for a new set of requests
 		if ( fireGlobals && jQuery.active++ === 0 ) {
@@ -19649,7 +19642,7 @@ jQuery.extend({
 			return jqXHR.abort();
 		}
 
-		// aborting is no longer a cancellation
+		// Aborting is no longer a cancellation
 		strAbort = "abort";
 
 		// Install callbacks on deferreds
@@ -19761,8 +19754,7 @@ jQuery.extend({
 					isSuccess = !error;
 				}
 			} else {
-				// We extract error from statusText
-				// then normalize statusText and status for non-aborts
+				// Extract error from statusText and normalize for non-aborts
 				error = statusText;
 				if ( status || !statusText ) {
 					statusText = "error";
@@ -19818,7 +19810,7 @@ jQuery.extend({
 
 jQuery.each( [ "get", "post" ], function( i, method ) {
 	jQuery[ method ] = function( url, data, callback, type ) {
-		// shift arguments if data argument was omitted
+		// Shift arguments if data argument was omitted
 		if ( jQuery.isFunction( data ) ) {
 			type = type || callback;
 			callback = data;
@@ -19832,13 +19824,6 @@ jQuery.each( [ "get", "post" ], function( i, method ) {
 			data: data,
 			success: callback
 		});
-	};
-});
-
-// Attach a bunch of functions for handling common AJAX events
-jQuery.each( [ "ajaxStart", "ajaxStop", "ajaxComplete", "ajaxError", "ajaxSuccess", "ajaxSend" ], function( i, type ) {
-	jQuery.fn[ type ] = function( fn ) {
-		return this.on( type, fn );
 	};
 });
 
@@ -20059,8 +20044,9 @@ var xhrId = 0,
 
 // Support: IE9
 // Open requests must be manually aborted on unload (#5280)
-if ( window.ActiveXObject ) {
-	jQuery( window ).on( "unload", function() {
+// See https://support.microsoft.com/kb/2856746 for more info
+if ( window.attachEvent ) {
+	window.attachEvent( "onunload", function() {
 		for ( var key in xhrCallbacks ) {
 			xhrCallbacks[ key ]();
 		}
@@ -20413,6 +20399,16 @@ jQuery.fn.load = function( url, params, callback ) {
 
 
 
+// Attach a bunch of functions for handling common AJAX events
+jQuery.each( [ "ajaxStart", "ajaxStop", "ajaxComplete", "ajaxError", "ajaxSuccess", "ajaxSend" ], function( i, type ) {
+	jQuery.fn[ type ] = function( fn ) {
+		return this.on( type, fn );
+	};
+});
+
+
+
+
 jQuery.expr.filters.animated = function( elem ) {
 	return jQuery.grep(jQuery.timers, function( fn ) {
 		return elem === fn.elem;
@@ -20449,7 +20445,8 @@ jQuery.offset = {
 		calculatePosition = ( position === "absolute" || position === "fixed" ) &&
 			( curCSSTop + curCSSLeft ).indexOf("auto") > -1;
 
-		// Need to be able to calculate position if either top or left is auto and position is either absolute or fixed
+		// Need to be able to calculate position if either
+		// top or left is auto and position is either absolute or fixed
 		if ( calculatePosition ) {
 			curPosition = curElem.position();
 			curTop = curPosition.top;
@@ -20506,8 +20503,8 @@ jQuery.fn.extend({
 			return box;
 		}
 
+		// Support: BlackBerry 5, iOS 3 (original iPhone)
 		// If we don't have gBCR, just use 0,0 rather than error
-		// BlackBerry 5, iOS 3 (original iPhone)
 		if ( typeof elem.getBoundingClientRect !== strundefined ) {
 			box = elem.getBoundingClientRect();
 		}
@@ -20529,7 +20526,7 @@ jQuery.fn.extend({
 
 		// Fixed elements are offset from window (parentOffset = {top:0, left: 0}, because it is its only offset parent
 		if ( jQuery.css( elem, "position" ) === "fixed" ) {
-			// We assume that getBoundingClientRect is available when computed position is fixed
+			// Assume getBoundingClientRect is there when computed position is fixed
 			offset = elem.getBoundingClientRect();
 
 		} else {
@@ -20592,16 +20589,18 @@ jQuery.each( { scrollLeft: "pageXOffset", scrollTop: "pageYOffset" }, function( 
 	};
 });
 
+// Support: Safari<7+, Chrome<37+
 // Add the top/left cssHooks using jQuery.fn.position
 // Webkit bug: https://bugs.webkit.org/show_bug.cgi?id=29084
-// getComputedStyle returns percent when specified for top/left/bottom/right
-// rather than make the css module depend on the offset module, we just check for it here
+// Blink bug: https://code.google.com/p/chromium/issues/detail?id=229280
+// getComputedStyle returns percent when specified for top/left/bottom/right;
+// rather than make the css module depend on the offset module, just check for it here
 jQuery.each( [ "top", "left" ], function( i, prop ) {
 	jQuery.cssHooks[ prop ] = addGetHookIf( support.pixelPosition,
 		function( elem, computed ) {
 			if ( computed ) {
 				computed = curCSS( elem, prop );
-				// if curCSS returns percentage, fallback to offset
+				// If curCSS returns percentage, fallback to offset
 				return rnumnonpx.test( computed ) ?
 					jQuery( elem ).position()[ prop ] + "px" :
 					computed;
@@ -20614,7 +20613,7 @@ jQuery.each( [ "top", "left" ], function( i, prop ) {
 // Create innerHeight, innerWidth, height, width, outerHeight and outerWidth methods
 jQuery.each( { Height: "height", Width: "width" }, function( name, type ) {
 	jQuery.each( { padding: "inner" + name, content: type, "": "outer" + name }, function( defaultExtra, funcName ) {
-		// margin is only for outerHeight, outerWidth
+		// Margin is only for outerHeight, outerWidth
 		jQuery.fn[ funcName ] = function( margin, value ) {
 			var chainable = arguments.length && ( defaultExtra || typeof margin !== "boolean" ),
 				extra = defaultExtra || ( margin === true || value === true ? "margin" : "border" );
@@ -20705,8 +20704,8 @@ jQuery.noConflict = function( deep ) {
 	return jQuery;
 };
 
-// Expose jQuery and $ identifiers, even in
-// AMD (#7102#comment:10, https://github.com/jquery/jquery/pull/557)
+// Expose jQuery and $ identifiers, even in AMD
+// (#7102#comment:10, https://github.com/jquery/jquery/pull/557)
 // and CommonJS for browser emulators (#13566)
 if ( typeof noGlobal === strundefined ) {
 	window.jQuery = window.$ = jQuery;
@@ -20723,13 +20722,13 @@ return jQuery;
 (function (global){
 
 /*
- * KineticJS JavaScript Framework v5.1.1
- * http://www.kineticjs.com/
- * Copyright 2013, Eric Rowell
+ * KineticJS JavaScript Framework v5.1.9
+ * http://lavrton.github.io/KineticJS/
  * Licensed under the MIT or GPL Version 2 licenses.
- * Date: 2014-05-09
+ * Date: 2015-01-09
  *
- * Copyright (C) 2011 - 2013 by Eric Rowell
+ * Original work Copyright (C) 2011 - 2013 by Eric Rowell
+ * Modified work Copyright 2015 Anton Lavrenov
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20759,7 +20758,7 @@ var Kinetic = {};
 
     Kinetic = {
         // public
-        version: '5.1.1',
+        version: '5.1.9',
 
         // private
         stages: [],
@@ -20777,7 +20776,7 @@ var Kinetic = {};
         /**
          * Global pixel ratio configuration. KineticJS automatically detect pixel ratio of current device.
          * But you may override such property, if you want to use your value.
-         * @property
+         * @property pixelRatio
          * @default undefined
          * @memberof Kinetic
          * @example
@@ -20787,7 +20786,7 @@ var Kinetic = {};
         /**
          * Drag distance property. If you start to drag a node you may want to wait until pointer is moved to some distance from start point,
          * only then start dragging.
-         * @property
+         * @property dragDistance
          * @default 0
          * @memberof Kinetic
          * @example
@@ -20796,7 +20795,7 @@ var Kinetic = {};
         dragDistance : 0,
         /**
          * Use degree values for angle properties. You may set this property to false if you want to use radiant values.
-         * @property
+         * @property angleDeg
          * @default true
          * @memberof Kinetic
          * @example
@@ -20805,30 +20804,17 @@ var Kinetic = {};
          * node.rotation(Math.PI / 2); // PI/2 radian
          */
         angleDeg: true,
+         /**
+         * Show different warnings about errors or wrong API usage
+         * @property showWarnings
+         * @default true
+         * @memberof Kinetic
+         * @example
+         * Kinetic.showWarnings = false;
+         */
+        showWarnings : true,
 
-        // user agent  
-        UA: (function() {
-            var userAgent = (root.navigator && root.navigator.userAgent) || '';
-            var ua = userAgent.toLowerCase(),
-                // jQuery UA regex
-                match = /(chrome)[ \/]([\w.]+)/.exec( ua ) ||
-                /(webkit)[ \/]([\w.]+)/.exec( ua ) ||
-                /(opera)(?:.*version|)[ \/]([\w.]+)/.exec( ua ) ||
-                /(msie) ([\w.]+)/.exec( ua ) ||
-                ua.indexOf('compatible') < 0 && /(mozilla)(?:.*? rv:([\w.]+)|)/.exec( ua ) ||
-                [],
 
-                // adding mobile flag as well
-                mobile = !!(userAgent.match(/Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile/i));
-
-            return {
-                browser: match[ 1 ] || '',
-                version: match[ 2 ] || '0',
-
-                // adding mobile flab
-                mobile: mobile
-            };
-        })(),
 
         /**
          * @namespace Filters
@@ -21019,7 +21005,7 @@ var Kinetic = {};
          * @memberof Kinetic
          * @augments Kinetic.Container
          * @param {Object} config
-         * @param {String|DomElement} config.container Container id or DOM element
+         * @param {String|Element} config.container Container id or DOM element
          * @param {Number} [config.x]
      * @param {Number} [config.y]
      * @param {Number} [config.width]
@@ -21097,7 +21083,7 @@ var Kinetic = {};
          * to contain groups or shapes.
          * @constructor
          * @memberof Kinetic
-         * @augments Kinetic.Container
+         * @augments Kinetic.BaseLayer
          * @param {Object} config
          * @param {Boolean} [config.clearBeforeDraw] set this property to false if you don't want
          * to clear the canvas before each layer draw.  The default value is true.
@@ -21141,7 +21127,7 @@ var Kinetic = {};
          * It renders about 2x faster than normal layers.
          * @constructor
          * @memberof Kinetic
-         * @augments Kinetic.Container
+         * @augments Kinetic.BaseLayer
          * @param {Object} config
          * @param {Boolean} [config.clearBeforeDraw] set this property to false if you don't want
          * to clear the canvas before each layer draw.  The default value is true.
@@ -21211,12 +21197,10 @@ var Kinetic = {};
 
             // if DD is not included with the build, then
             // drag and drop is not even possible
-            if (!dd) {
-                return false;
-            }
-            // if DD is included with the build
-            else {
+            if (dd) {
                 return dd.isDragging;
+            } else {
+                return false;
             }
         },
         /**
@@ -21230,12 +21214,10 @@ var Kinetic = {};
 
             // if DD is not included with the build, then
             // drag and drop is not even possible
-            if (!dd) {
-                return false;
-            }
-            // if DD is included with the build
-            else {
+            if (dd) {
                 return !!dd.node;
+            } else {
+                return false;
             }
         },
         _addId: function(node, id) {
@@ -21250,10 +21232,15 @@ var Kinetic = {};
         },
         _addName: function(node, name) {
             if(name !== undefined) {
-                if(this.names[name] === undefined) {
-                    this.names[name] = [];
+                var names = name.split(/\W+/g);
+                for(var n = 0; n < names.length; n++) {
+                    if (names[n]) {
+                        if(this.names[names[n]] === undefined) {
+                            this.names[names[n]] = [];
+                        }
+                        this.names[names[n]].push(node);
+                    }
                 }
-                this.names[name].push(node);
             }
         },
         _removeName: function(name, _id) {
@@ -21274,8 +21261,36 @@ var Kinetic = {};
         },
         getAngle: function(angle) {
             return this.angleDeg ? angle * PI_OVER_180 : angle;
-        }
+        },
+        _parseUA: function(userAgent) {
+            var ua = userAgent.toLowerCase(),
+                // jQuery UA regex
+                match = /(chrome)[ \/]([\w.]+)/.exec( ua ) ||
+                /(webkit)[ \/]([\w.]+)/.exec( ua ) ||
+                /(opera)(?:.*version|)[ \/]([\w.]+)/.exec( ua ) ||
+                /(msie) ([\w.]+)/.exec( ua ) ||
+                ua.indexOf('compatible') < 0 && /(mozilla)(?:.*? rv:([\w.]+)|)/.exec( ua ) ||
+                [],
+
+                // adding mobile flag as well
+                mobile = !!(userAgent.match(/Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile/i)),
+                ieMobile = !!(userAgent.match(/IEMobile/i));
+                
+            return {
+                browser: match[ 1 ] || '',
+                version: match[ 2 ] || '0',
+
+                // adding mobile flab
+                mobile: mobile,
+                ieMobile: ieMobile  // If this is true (i.e., WP8), then Kinetic touch events are executed instead of equivalent Kinetic mouse events
+            };
+        },
+        // user agent  
+        UA: undefined
     };
+
+    Kinetic.UA = Kinetic._parseUA((root.navigator && root.navigator.userAgent) || '');
+    
 })(this);
 
 // Uses Node, AMD or browser globals to create a module.
@@ -21308,9 +21323,8 @@ var Kinetic = {};
             // like Node.
             var Canvas = require('canvas');
             var jsdom = require('jsdom').jsdom;
-            var doc = jsdom('<!DOCTYPE html><html><head></head><body></body></html>');
 
-            Kinetic.document = doc;
+            Kinetic.document = jsdom('<!DOCTYPE html><html><head></head><body></body></html>');
             Kinetic.window = Kinetic.document.createWindow();
             Kinetic.window.Image = Canvas.Image;
             Kinetic._nodeCanvas = Canvas;
@@ -21442,7 +21456,7 @@ var Kinetic = {};
     /**
      * Transform constructor
      * @constructor
-     * @param {Array} Optional six-element matrix
+     * @param {Array} [m] Optional six-element matrix
      * @memberof Kinetic
      */
     Kinetic.Transform = function(m) {
@@ -21463,14 +21477,14 @@ var Kinetic = {};
          * Transform point
          * @method
          * @memberof Kinetic.Transform.prototype
-         * @param {Object} 2D point(x, y)
+         * @param {Object} point 2D point(x, y)
          * @returns {Object} 2D point(x, y)
          */
-        point: function(p) {
+        point: function(point) {
             var m = this.m;
             return {
-                x: m[0] * p.x + m[2] * p.y + m[4],
-                y: m[1] * p.x + m[3] * p.y + m[5]
+                x: m[0] * point.x + m[2] * point.y + m[4],
+                y: m[1] * point.x + m[3] * point.y + m[5]
             };
         },
         /**
@@ -21629,8 +21643,7 @@ var Kinetic = {};
     };
 
     // CONSTANTS
-    var CANVAS = 'canvas',
-        CONTEXT_2D = '2d',
+    var CONTEXT_2D = '2d',
         OBJECT_ARRAY = '[object Array]',
         OBJECT_NUMBER = '[object Number]',
         OBJECT_STRING = '[object String]',
@@ -21698,11 +21711,11 @@ var Kinetic = {};
         // as much as it can, without ever going more than once per `wait` duration;
         // but if you'd like to disable the execution on the leading edge, pass
         // `{leading: false}`. To disable execution on the trailing edge, ditto.
-        _throttle: function(func, wait, options) {
+        _throttle: function(func, wait, opts) {
             var context, args, result;
             var timeout = null;
             var previous = 0;
-            options || (options = {});
+            var options = opts || {};
             var later = function() {
                 previous = options.leading === false ? 0 : new Date().getTime();
                 timeout = null;
@@ -21711,7 +21724,9 @@ var Kinetic = {};
             };
             return function() {
                 var now = new Date().getTime();
-                if (!previous && options.leading === false) previous = now;
+                if (!previous && options.leading === false) {
+                    previous = now;
+                }
                 var remaining = wait - (now - previous);
                 context = this;
                 args = arguments;
@@ -21743,7 +21758,11 @@ var Kinetic = {};
         },
         createCanvasElement: function() {
             var canvas = Kinetic.document.createElement('canvas');
-            canvas.style = canvas.style || {};
+            // on some environments canvas.style is readonly
+            try {
+                canvas.style = canvas.style || {};
+            } catch (e) {
+            }
             return canvas;
         },
         isBrowser: function() {
@@ -21961,7 +21980,7 @@ var Kinetic = {};
              * IE9 on Windows7 64bit will throw a JS error
              * if we don't use window.console in the conditional
              */
-            if(Kinetic.root.console && console.warn) {
+            if(Kinetic.root.console && console.warn && Kinetic.showWarnings) {
                 console.warn(KINETIC_WARNING + str);
             }
         },
@@ -22045,14 +22064,15 @@ var Kinetic = {};
      * @constructor
      * @abstract
      * @memberof Kinetic
-     * @param {Number} width
-     * @param {Number} height
-     * @param {Number} pixelRatio KineticJS automatically handles pixel ratio adustments in order to render crisp drawings 
+     * @param {Object} config
+     * @param {Number} config.width
+     * @param {Number} config.height
+     * @param {Number} config.pixelRatio KineticJS automatically handles pixel ratio adjustments in order to render crisp drawings
      *  on all devices. Most desktops, low end tablets, and low end phones, have device pixel ratios
      *  of 1.  Some high end tablets and phones, like iPhones and iPads (not the mini) have a device pixel ratio 
      *  of 2.  Some Macbook Pros, and iMacs also have a device pixel ratio of 2.  Some high end Android devices have pixel 
      *  ratios of 2 or 3.  Some browsers like Firefox allow you to configure the pixel ratio of the viewport.  Unless otherwise
-     *  specificed, the pixel ratio will be defaulted to the actual device pixel ratio.  You can override the device pixel
+     *  specified, the pixel ratio will be defaulted to the actual device pixel ratio.  You can override the device pixel
      *  ratio for special situations, or, if you don't want the pixel ratio to be taken into account, you can set it to 1.
      */
     Kinetic.Canvas = function(config) {
@@ -22061,9 +22081,9 @@ var Kinetic = {};
 
     Kinetic.Canvas.prototype = {
         init: function(config) {
-            config = config || {};
+            var conf = config || {};
 
-            var pixelRatio = config.pixelRatio || Kinetic.pixelRatio || _pixelRatio;
+            var pixelRatio = conf.pixelRatio || Kinetic.pixelRatio || _pixelRatio;
 
             this.pixelRatio = pixelRatio;
             this._canvas = Kinetic.Util.createCanvasElement();
@@ -22189,11 +22209,11 @@ var Kinetic = {};
     };
 
     Kinetic.SceneCanvas = function(config) {
-        config = config || {};
-        var width = config.width || 0,
-            height = config.height || 0;
+        var conf = config || {};
+        var width = conf.width || 0,
+            height = conf.height || 0;
 
-        Kinetic.Canvas.call(this, config);
+        Kinetic.Canvas.call(this, conf);
         this.context = new Kinetic.SceneContext(this);
         this.setSize(width, height);
     };
@@ -22217,13 +22237,14 @@ var Kinetic = {};
     Kinetic.Util.extend(Kinetic.SceneCanvas, Kinetic.Canvas);
 
     Kinetic.HitCanvas = function(config) {
-        config = config || {};
-        var width = config.width || 0,
-            height = config.height || 0;
+        var conf = config || {};
+        var width = conf.width || 0,
+            height = conf.height || 0;
             
-        Kinetic.Canvas.call(this, config);
+        Kinetic.Canvas.call(this, conf);
         this.context = new Kinetic.HitContext(this);
         this.setSize(width, height);
+        this.hitCanvas = true;
     };
     Kinetic.Util.extend(Kinetic.HitCanvas, Kinetic.Canvas);
 
@@ -22822,46 +22843,9 @@ var Kinetic = {};
 ;/*jshint unused:false */
 (function() {
     // CONSTANTS
-    var ABSOLUTE_OPACITY = 'absoluteOpacity',
-        ABSOLUTE_TRANSFORM = 'absoluteTransform',
-        ADD = 'add',
-        B = 'b',
-        BEFORE = 'before',
-        BLACK = 'black',
-        CHANGE = 'Change',
-        CHILDREN = 'children',
-        DEG = 'Deg',
-        DOT = '.',
-        EMPTY_STRING = '',
-        G = 'g',
-        GET = 'get',
-        HASH = '#',
-        ID = 'id',
-        KINETIC = 'kinetic',
-        LISTENING = 'listening',
-        MOUSEENTER = 'mouseenter',
-        MOUSELEAVE = 'mouseleave',
-        NAME = 'name',
-        OFF = 'off',
-        ON = 'on',
-        PRIVATE_GET = '_get',
-        R = 'r',
+    var GET = 'get',
         RGB = 'RGB',
-        SET = 'set',
-        SHAPE = 'Shape',
-        SPACE = ' ',
-        STAGE = 'Stage',
-        TRANSFORM = 'transform',
-        UPPER_B = 'B',
-        UPPER_G = 'G',
-        UPPER_HEIGHT = 'Height',
-        UPPER_R = 'R',
-        UPPER_WIDTH = 'Width',
-        UPPER_X = 'X',
-        UPPER_Y = 'Y',
-        VISIBLE = 'visible',
-        X = 'x',
-        Y = 'y';
+        SET = 'set';
 
     Kinetic.Factory = {
         addGetterSetter: function(constructor, attr, def, validator, after) {
@@ -22967,14 +22951,15 @@ var Kinetic = {};
     };
 
     Kinetic.Validators = {
+        /**
+         * @return {number}
+         */
         RGBComponent: function(val) {
             if (val > 255) {
                 return 255;
-            }
-            else if (val < 0) {
+            } else if (val < 0) {
                 return 0;
-            }
-            else {
+            } else {
                 return Math.round(val);
             }
         },
@@ -22995,7 +22980,6 @@ var Kinetic = {};
     // CONSTANTS
     var ABSOLUTE_OPACITY = 'absoluteOpacity',
         ABSOLUTE_TRANSFORM = 'absoluteTransform',
-        BEFORE = 'before',
         CHANGE = 'Change',
         CHILDREN = 'children',
         DOT = '.',
@@ -23142,8 +23126,8 @@ var Kinetic = {};
                 y = conf.y || 0,
                 width = conf.width || this.width(),
                 height = conf.height || this.height(),
-                drawBorder = conf.drawBorder || false,
-                layer = this.getLayer();
+                drawBorder = conf.drawBorder || false;
+
             if (width === 0 || height === 0) {
                 Kinetic.Util.warn('Width or height of caching configuration equals 0. Cache is ignored.');
                 return;
@@ -23162,9 +23146,6 @@ var Kinetic = {};
                     width: width,
                     height: height
                 }),
-                origTransEnabled = this.transformsEnabled(),
-                origX = this.x(),
-                origY = this.y(),
                 sceneContext = cachedSceneCanvas.getContext(),
                 hitContext = cachedHitCanvas.getContext();
 
@@ -23177,7 +23158,7 @@ var Kinetic = {};
 
             // this will draw a red border around the cached box for
             // debugging purposes
-            if (drawBorder) {        
+            if (drawBorder) {
                 sceneContext.save();
                 sceneContext.beginPath();
                 sceneContext.rect(0, 0, width, height);
@@ -23192,9 +23173,9 @@ var Kinetic = {};
             hitContext.translate(x * -1, y * -1);
 
             // don't need to translate canvas if shape is not added to layer
-            if (this.nodeType === 'Shape' && layer) {
+            if (this.nodeType === 'Shape') {
                 sceneContext.translate(this.x() * -1, this.y() * -1);
-                hitContext.translate(this.x() * -1, this.y() * -1);        
+                hitContext.translate(this.x() * -1, this.y() * -1);
             }
 
             this.drawScene(cachedSceneCanvas, this);
@@ -23214,6 +23195,7 @@ var Kinetic = {};
         _drawCachedSceneCanvas: function(context) {
             context.save();
             this.getLayer()._applyTransform(this, context);
+            context._applyOpacity(this);
             context.drawImage(this._getCachedSceneCanvas()._canvas, 0, 0);
             context.restore();
         },
@@ -23265,7 +23247,7 @@ var Kinetic = {};
         },
         /**
          * bind events to the node. KineticJS supports mouseover, mousemove,
-         *  mouseout, mouseenter, mouseleave, mousedown, mouseup, click, dblclick, touchstart, touchmove,
+         *  mouseout, mouseenter, mouseleave, mousedown, mouseup, mousewheel, click, dblclick, touchstart, touchmove,
          *  touchend, tap, dbltap, dragstart, dragmove, and dragend events. The Kinetic Stage supports
          *  contentMouseover, contentMousemove, contentMouseout, contentMousedown, contentMouseup,
          *  contentClick, contentDblclick, contentTouchstart, contentTouchmove, contentTouchend, contentTap,
@@ -23381,10 +23363,16 @@ var Kinetic = {};
          * node.off('click.foo');
          */
         off: function(evtStr) {
-            var events = evtStr.split(SPACE),
+            var events = (evtStr || '').split(SPACE),
                 len = events.length,
                 n, t, event, parts, baseEvent, name;
 
+            if (!evtStr) {
+                // remove all events
+                for(t in this.eventListeners) {
+                    this._off(t);
+                }
+            }
             for(n = 0; n < len; n++) {
                 event = events[n];
                 parts = event.split(DOT);
@@ -23636,7 +23624,7 @@ var Kinetic = {};
          */
         shouldDrawHit: function(canvas) {
             var layer = this.getLayer();
-            return  ((canvas && canvas.isCache) || (layer && layer.hitGraphEnabled())) 
+            return  (canvas && canvas.isCache) || (layer && layer.hitGraphEnabled())
                 && this.isListening() && this.isVisible() && !Kinetic.isDragging();
         },
         /**
@@ -24017,8 +24005,11 @@ var Kinetic = {};
          * node.moveTo(layer2);
          */
         moveTo: function(newContainer) {
-            Kinetic.Node.prototype.remove.call(this);
-            newContainer.add(this);
+            // do nothing if new container is already parent
+            if (this.getParent() !== newContainer) {
+                this.remove();
+                newContainer.add(this);
+            }
             return this;
         },
         /**
@@ -24105,7 +24096,7 @@ var Kinetic = {};
          * @method
          * @memberof Kinetic.Node.prototype
          * @param {String} eventType event type.  can be a regular event, like click, mouseover, or mouseout, or it can be a custom event, like myCustomEvent
-         * @param {EventObject} [evt] event object
+         * @param {Event} [evt] event object
          * @param {Boolean} [bubble] setting the value to false, or leaving it undefined, will result in the event
          *  not bubbling.  Setting the value to true will result in the event bubbling.
          * @returns {Kinetic.Node}
@@ -24145,7 +24136,7 @@ var Kinetic = {};
         getAbsoluteTransform: function(top) {
             // if using an argument, we can't cache the result.
             if (top) {
-                return this._getAbsoluteTransform(top); 
+                return this._getAbsoluteTransform(top);
             }
             // if no argument, we can cache the result
             else {
@@ -24215,7 +24206,7 @@ var Kinetic = {};
          *  for another node
          * @method
          * @memberof Kinetic.Node.prototype
-         * @param {Object} attrs override attrs
+         * @param {Object} obj override attrs
          * @returns {Kinetic.Node}
          * @example
          * // simple clone
@@ -24347,21 +24338,9 @@ var Kinetic = {};
                 height: this.getHeight()
             };
         },
-        /**
-         * get width
-         * @method
-         * @memberof Kinetic.Node.prototype
-         * @returns {Integer}
-         */
         getWidth: function() {
             return this.attrs.width || 0;
         },
-        /**
-         * get height
-         * @method
-         * @memberof Kinetic.Node.prototype
-         * @returns {Integer}
-         */
         getHeight: function() {
             return this.attrs.height || 0;
         },
@@ -24422,13 +24401,6 @@ var Kinetic = {};
                 newVal: newVal
             });
         },
-        /**
-         * set id
-         * @method
-         * @memberof Kinetic.Node.prototype
-         * @param {String} id
-         * @returns {Kinetic.Node}
-         */
         setId: function(id) {
             var oldId = this.getId();
 
@@ -24455,11 +24427,8 @@ var Kinetic = {};
          * @example
          * node.setAttr('x', 5);
          */
-        setAttr: function() {
-            var args = Array.prototype.slice.call(arguments),
-                attr = args[0],
-                val = args[1],
-                method = SET + Kinetic.Util._capitalize(attr),
+        setAttr: function(attr, val) {
+            var method = SET + Kinetic.Util._capitalize(attr),
                 func = this[method];
 
             if(Kinetic.Util._isFunction(func)) {
@@ -24555,8 +24524,8 @@ var Kinetic = {};
      *  and setImage() methods
      * @method
      * @memberof Kinetic.Node
-     * @param {String} JSON string
-     * @param {DomElement} [container] optional container dom element used only if you're
+     * @param {String} json
+     * @param {Element} [container] optional container dom element used only if you're
      *  creating a stage node
      */
     Kinetic.Node.create = function(json, container) {
@@ -24594,7 +24563,7 @@ var Kinetic = {};
      * @memberof Kinetic.Node.prototype
      * @param {Object} pos
      * @param {Number} pos.x
-     * @param {Nubmer} pos.y
+     * @param {Number} pos.y
      * @returns {Object}
      * @example
      * // get position
@@ -24676,6 +24645,9 @@ var Kinetic = {};
      *
      * // set name
      * node.name('foo');
+     *
+     * // also node may have multiple names (as css classes)
+     * node.name('foo bar');
      */
 
     Kinetic.Factory.addGetter(Kinetic.Node, 'id');
@@ -26194,7 +26166,6 @@ var Kinetic = {};
             rMin = data[0], rMax = rMin, r,
             gMin = data[1], gMax = gMin, g,
             bMin = data[2], bMax = bMin, b,
-            aMin = data[3], aMax = aMin,
             i;
 
         // If we are not enhancing anything - don't do any computation
@@ -26221,12 +26192,10 @@ var Kinetic = {};
         if( rMax === rMin ){ rMax = 255; rMin = 0; }
         if( gMax === gMin ){ gMax = 255; gMin = 0; }
         if( bMax === bMin ){ bMax = 255; bMin = 0; }
-        if( aMax === aMin ){ aMax = 255; aMin = 0; }
 
         var rMid, rGoalMax,rGoalMin,
             gMid, gGoalMax,gGoalMin,
-            bMid, bGoalMax,aGoalMin,
-            aMid, aGoalMax,bGoalMin;
+            bMid, bGoalMax,bGoalMin;
 
         // If the enhancement is positive - stretch the histogram 
         if ( enhanceAmount > 0 ){
@@ -26236,8 +26205,6 @@ var Kinetic = {};
             gGoalMin = gMin - enhanceAmount*(gMin-0);
             bGoalMax = bMax + enhanceAmount*(255-bMax);
             bGoalMin = bMin - enhanceAmount*(bMin-0);
-            aGoalMax = aMax + enhanceAmount*(255-aMax);
-            aGoalMin = aMin - enhanceAmount*(aMin-0);
         // If the enhancement is negative - compress the histogram
         } else {
             rMid = (rMax + rMin)*0.5;
@@ -26249,9 +26216,6 @@ var Kinetic = {};
             bMid = (bMax + bMin)*0.5;
             bGoalMax = bMax + enhanceAmount*(bMax-bMid);
             bGoalMin = bMin + enhanceAmount*(bMin-bMid);
-            aMid = (aMax + aMin)*0.5;
-            aGoalMax = aMax + enhanceAmount*(aMax-aMid);
-            aGoalMin = aMin + enhanceAmount*(aMin-aMid);
         }
 
         // Pass 2 - remap everything, except the alpha
@@ -26321,7 +26285,7 @@ var Kinetic = {};
      * @function
      * @name Noise
      * @memberof Kinetic.Filters
-     * @param {Object} imagedata
+     * @param {Object} imageData
      * @author ippo615
      * @example
      * node.cache();
@@ -27044,7 +27008,7 @@ var Kinetic = {};
     Kinetic.Animation._runFrames = function() {
         var layerHash = {},
             animations = this.animations,
-            anim, layers, func, n, i, layersLen, layer, key;
+            anim, layers, func, n, i, layersLen, layer, key, needRedraw;
         /*
          * loop through all animations and execute animation
          *  function.  if the animation object has specified node,
@@ -27056,33 +27020,36 @@ var Kinetic = {};
          * WARNING: don't cache animations.length because it could change while
          * the for loop is running, causing a JS error
          */
-        var needRedraw = false;
+
         for(n = 0; n < animations.length; n++) {
             anim = animations[n];
             layers = anim.layers;
             func = anim.func;
 
+
             anim._updateFrameObject(now());
             layersLen = layers.length;
 
-            for (i=0; i<layersLen; i++) {
-                layer = layers[i];
-                if(layer._id !== undefined) {
-                    layerHash[layer._id] = layer;
-                }
-            }
-
             // if animation object has a function, execute it
-            if(func) {
+            if (func) {
                 // allow anim bypassing drawing
-                needRedraw  = (func.call(anim, anim.frame) !== false) || needRedraw;
+                needRedraw = (func.call(anim, anim.frame) !== false);
+            } else {
+                needRedraw = true;
+            }
+            if (needRedraw) {
+                for (i = 0; i < layersLen; i++) {
+                    layer = layers[i];
+
+                    if (layer._id !== undefined) {
+                        layerHash[layer._id] = layer;
+                    }
+                }
             }
         }
 
-        if (needRedraw) {
-            for(key in layerHash) {
-                layerHash[key].draw();
-            } 
+        for (key in layerHash) {
+            layerHash[key].draw();
         }
     };
     Kinetic.Animation._animationLoop = function() {
@@ -27185,17 +27152,24 @@ var Kinetic = {};
         var that = this,
             node = config.node,
             nodeId = node._id,
-            duration = config.duration || 1,
+            duration,
             easing = config.easing || Kinetic.Easings.Linear,
             yoyo = !!config.yoyo,
             key;
 
+        if (typeof config.duration === 'undefined') {
+            duration = 1;
+        } else if (config.duration === 0) {  // zero is bad value for duration
+            duration = 0.001;
+        } else {
+            duration = config.duration;
+        }
         this.node = node;
         this._id = idCounter++;
 
         this.anim = new Kinetic.Animation(function() {
             that.tween.onEnterFrame();
-        }, node.getLayer());
+        }, node.getLayer() || ((node instanceof Kinetic.Stage) ? node.getLayers() : null));
 
         this.tween = new Tween(key, function(i) {
             that._tweenFunc(i);
@@ -27344,7 +27318,6 @@ var Kinetic = {};
          * @returns {Tween}
          */
         reset: function() {
-            var node = this.node;
             this.tween.reset();
             return this;
         },
@@ -27356,7 +27329,6 @@ var Kinetic = {};
          * @returns {Tween}
          */
         seek: function(t) {
-            var node = this.node;
             this.tween.seek(t * 1000);
             return this;
         },
@@ -27377,7 +27349,6 @@ var Kinetic = {};
          * @returns {Tween}
          */
         finish: function() {
-            var node = this.node;
             this.tween.finish();
             return this;
         },
@@ -27747,11 +27718,11 @@ var Kinetic = {};
 ;(function() {
     Kinetic.DD = {
         // properties
-        anim: new Kinetic.Animation(function(frame) {
-                    var b = this.dirty;
-                    this.dirty = false;
-                    return b;
-                }),
+        anim: new Kinetic.Animation(function() {
+            var b = this.dirty;
+            this.dirty = false;
+            return b;
+        }),
         isDragging: false,
         justDragged: false,
         offset: {
@@ -27931,7 +27902,7 @@ var Kinetic = {};
      */
     Kinetic.Node.prototype.isDragging = function() {
         var dd = Kinetic.DD;
-        return dd.node && dd.node._id === this._id && dd.isDragging;
+        return !!(dd.node && dd.node._id === this._id && dd.isDragging);
     };
 
     Kinetic.Node.prototype._listenDrag = function() {
@@ -27948,6 +27919,10 @@ var Kinetic = {};
         }
         else {
             this.on('mousedown.kinetic touchstart.kinetic', function(evt) {
+                // ignore right and middle buttons
+                if (evt.evt.button === 1 || evt.evt.button === 2) {
+                    return;
+                }
                 if(!Kinetic.DD.node) {
                     that.startDrag(evt);
                 }
@@ -28065,13 +28040,13 @@ var Kinetic = {};
          *    return node.getClassName() === 'Circle';
          * });
          */
-        getChildren: function(predicate) {
-            if (!predicate) {
+        getChildren: function(filterFunc) {
+            if (!filterFunc) {
                 return this.children;
             } else {
                 var results = new Kinetic.Collection();
                 this.children.each(function(child){
-                    if (predicate(child)) {
+                    if (filterFunc(child)) {
                         results.push(child);
                     }
                 });
@@ -28142,11 +28117,11 @@ var Kinetic = {};
                 for (var i = 0; i < arguments.length; i++) {
                     this.add(arguments[i]);
                 }
-                return;
+                return this;
             }
             if (child.getParent()) {
                 child.moveTo(this);
-                return;
+                return this;
             }
             var children = this.children;
             this._validateAdd(child);
@@ -28353,6 +28328,9 @@ var Kinetic = {};
                 cachedHitCanvas = cachedCanvas && cachedCanvas.hit;
 
             if (this.shouldDrawHit(canvas)) {
+                if (layer) {
+                    layer.clearHitCache();
+                }
                 if (cachedHitCanvas) {
                     this._drawCachedHitCanvas(context);
                 }
@@ -28392,7 +28370,7 @@ var Kinetic = {};
         },
         shouldDrawHit: function(canvas) {
             var layer = this.getLayer();
-            return  ((canvas && canvas.isCache) || (layer && layer.hitGraphEnabled())) 
+            return  (canvas && canvas.isCache) || (layer && layer.hitGraphEnabled())
                 && this.isVisible() && !Kinetic.isDragging();
         }
     });
@@ -28606,14 +28584,14 @@ var Kinetic = {};
          * @param {Number} point.y
          * @returns {Boolean}
          */
-        intersects: function(pos) {
+        intersects: function(point) {
             var stage = this.getStage(),
                 bufferHitCanvas = stage.bufferHitCanvas,
                 p;
 
             bufferHitCanvas.getContext().clear();
             this.drawScene(bufferHitCanvas);
-            p = bufferHitCanvas.context.getImageData(Math.round(pos.x), Math.round(pos.y), 1, 1).data;
+            p = bufferHitCanvas.context.getImageData(Math.round(point.x), Math.round(point.y), 1, 1).data;
             return p[3] > 0;
         },
         // extends Node.prototype.destroy 
@@ -28650,12 +28628,15 @@ var Kinetic = {};
                         // layer might be undefined if we are using cache before adding to layer
                         if (layer) {
                             layer._applyTransform(this, bufferContext, top);
+                        } else {
+                            var m = this.getAbsoluteTransform(top).getMatrix();
+                            context.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
                         }
                      
                         drawFunc.call(this, bufferContext);
                         bufferContext.restore();
 
-                        if (hasShadow) {
+                        if (hasShadow && !canvas.hitCanvas) {
                             context.save();
                             context._applyShadow(this);
                             context.drawImage(bufferCanvas._canvas, 0, 0);
@@ -28671,9 +28652,12 @@ var Kinetic = {};
                         // layer might be undefined if we are using cache before adding to layer
                         if (layer) {
                             layer._applyTransform(this, context, top);
+                        } else {
+                            var o = this.getAbsoluteTransform(top).getMatrix();
+                            context.transform(o[0], o[1], o[2], o[3], o[4], o[5]);
                         }
                
-                        if (hasShadow) {
+                        if (hasShadow && !canvas.hitCanvas) {
                             context.save();
                             context._applyShadow(this);
                             drawFunc.call(this, context);
@@ -28698,7 +28682,9 @@ var Kinetic = {};
                 cachedHitCanvas = cachedCanvas && cachedCanvas.hit;
 
             if(this.shouldDrawHit(canvas)) {
-                
+                if (layer) {
+                    layer.clearHitCache();
+                }
                 if (cachedHitCanvas) {
                     this._drawCachedHitCanvas(context);
                 }
@@ -28707,6 +28693,9 @@ var Kinetic = {};
                     context._applyLineJoin(this);
                     if (layer) {
                         layer._applyTransform(this, context, top);
+                    } else {
+                        var m = this.getAbsoluteTransform(top).getMatrix();
+                        context.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
                     }
                    
                     drawFunc.call(this, context);
@@ -28768,7 +28757,7 @@ var Kinetic = {};
             }
 
             return this;
-        },
+        }
     });
     Kinetic.Util.extend(Kinetic.Shape, Kinetic.Node);
 
@@ -29909,11 +29898,12 @@ var Kinetic = {};
         TAP = 'tap',
         DBL_TAP = 'dbltap',
         TOUCHMOVE = 'touchmove',
+        DOMMOUSESCROLL = 'DOMMouseScroll',
+        MOUSEWHEEL = 'mousewheel',
+        WHEEL = 'wheel',
 
         CONTENT_MOUSEOUT = 'contentMouseout',
-        CONTENT_MOUSELEAVE = 'contentMouseleave',
         CONTENT_MOUSEOVER = 'contentMouseover',
-        CONTENT_MOUSEENTER = 'contentMouseenter',
         CONTENT_MOUSEMOVE = 'contentMousemove',
         CONTENT_MOUSEDOWN = 'contentMousedown',
         CONTENT_MOUSEUP = 'contentMouseup',
@@ -29921,7 +29911,6 @@ var Kinetic = {};
         CONTENT_DBL_CLICK = 'contentDblclick',
         CONTENT_TOUCHSTART = 'contentTouchstart',
         CONTENT_TOUCHEND = 'contentTouchend',
-        CONTENT_TAP = 'contentTap',
         CONTENT_DBL_TAP = 'contentDbltap',
         CONTENT_TOUCHMOVE = 'contentTouchmove',
 
@@ -29933,7 +29922,7 @@ var Kinetic = {};
         UNDERSCORE = '_',
         CONTAINER = 'container',
         EMPTY_STRING = '',
-        EVENTS = [MOUSEDOWN, MOUSEMOVE, MOUSEUP, MOUSEOUT, TOUCHSTART, TOUCHMOVE, TOUCHEND, MOUSEOVER],
+        EVENTS = [MOUSEDOWN, MOUSEMOVE, MOUSEUP, MOUSEOUT, TOUCHSTART, TOUCHMOVE, TOUCHEND, MOUSEOVER, DOMMOUSESCROLL, MOUSEWHEEL, WHEEL],
 
         // cached variables
         eventsLength = EVENTS.length;
@@ -30275,6 +30264,12 @@ var Kinetic = {};
             }
         },
         _mousemove: function(evt) {
+        
+            // workaround for mobile IE to force touch event when unhandled pointer event elevates into a mouse event
+            if (Kinetic.UA.ieMobile) {
+                return this._touchmove(evt);
+            }
+            
             // workaround fake mousemove event in chrome browser https://code.google.com/p/chromium/issues/detail?id=161464
             if ((typeof evt.webkitMovementX !== 'undefined' || typeof evt.webkitMovementY !== 'undefined') && evt.webkitMovementY === 0 && evt.webkitMovementX === 0) {
                 return;
@@ -30328,6 +30323,12 @@ var Kinetic = {};
             }
         },
         _mousedown: function(evt) {
+        
+            // workaround for mobile IE to force touch event when unhandled pointer event elevates into a mouse event       
+            if (Kinetic.UA.ieMobile) {
+                return this._touchstart(evt);
+            }
+            
             if (!Kinetic.UA.mobile) {
                 this._setPointerPosition(evt);
                 var shape = this.getIntersection(this.getPointerPosition());
@@ -30350,6 +30351,11 @@ var Kinetic = {};
             }
         },
         _mouseup: function(evt) {
+        
+            // workaround for mobile IE to force touch event when unhandled pointer event elevates into a mouse event       
+            if (Kinetic.UA.ieMobile) {
+                return this._touchend(evt);
+            }
             if (!Kinetic.UA.mobile) {
                 this._setPointerPosition(evt);
                 var shape = this.getIntersection(this.getPointerPosition()),
@@ -30485,6 +30491,20 @@ var Kinetic = {};
                 }
             }
         },
+        _DOMMouseScroll: function(evt) {
+            this._mousewheel(evt);
+        },
+        _mousewheel: function(evt) {
+            this._setPointerPosition(evt);
+            var shape = this.getIntersection(this.getPointerPosition());
+
+            if (shape && shape.isListening()) {
+                shape._fireAndBubble(MOUSEWHEEL, {evt: evt});
+            }
+        },
+        _wheel: function(evt) {
+            this._mousewheel(evt);
+        },
         _setPointerPosition: function(evt) {
             var contentPosition = this._getContentPosition(),
                 offsetX = evt.offsetX,
@@ -30513,8 +30533,8 @@ var Kinetic = {};
                     x = offsetX;
                     y = evt.offsetY;
                 }
-                // we unforunately have to use UA detection here because accessing
-                // the layerX or layerY properties in newer veresions of Chrome
+                // we unfortunately have to use UA detection here because accessing
+                // the layerX or layerY properties in newer versions of Chrome
                 // throws a JS warning.  layerX and layerY are required for FF
                 // when the container is transformed via CSS.
                 else if (Kinetic.UA.browser === 'mozilla') {
@@ -30546,7 +30566,7 @@ var Kinetic = {};
             var container = this.getContainer();
             if (!container) {
                 if (Kinetic.Util.isBrowser()) {
-                    throw 'Stage has not container. But container is required';
+                    throw 'Stage has no container. A container is required.';
                 } else {
                     // automatically create element for jsdom in nodejs env
                     container = Kinetic.document.createElement(DIV);
@@ -30587,7 +30607,6 @@ var Kinetic = {};
         // TODO: may be it is better to cache all children layers?
         cache: function() {
             Kinetic.Util.warn('Cache function is not allowed for stage. You may use cache only for layers, groups and shapes.');
-            return;
         },
         clearCache : function() {
         }
@@ -30665,6 +30684,9 @@ var Kinetic = {};
             this.getContext().clear(bounds);
             this.getHitCanvas().getContext().clear(bounds);
             return this;
+        },
+        clearHitCache: function() {
+            this._hitImageData = undefined;
         },
         // extend Node.prototype.setZIndex
         setZIndex: function(index) {
@@ -30747,6 +30769,42 @@ var Kinetic = {};
         },
         setSize : function(width, height) {
             this.canvas.setSize(width, height);
+        },
+        /**
+         * get/set width of layer.getter return width of stage. setter doing nothing.
+         * if you want change width use `stage.width(value);`
+         * @name width
+         * @method
+         * @memberof Kinetic.BaseLayer.prototype
+         * @returns {Number}
+         * @example
+         * var width = layer.width();
+         */
+        getWidth : function() {
+            if (this.parent) {
+                return this.parent.getWidth();
+            }
+        },
+        setWidth : function() {
+            Kinetic.Util.warn('Can not change width of layer. Use "stage.width(value)" function instead.');
+        },
+        /**
+         * get/set height of layer.getter return height of stage. setter doing nothing.
+         * if you want change height use `stage.height(value);`
+         * @name height
+         * @method
+         * @memberof Kinetic.BaseLayer.prototype
+         * @returns {Number}
+         * @example
+         * var height = layer.height();
+         */
+        getHeight : function() {
+            if (this.parent) {
+                return this.parent.getHeight();
+            }
+        },
+        setHeight : function() {
+            Kinetic.Util.warn('Can not change height of layer. Use "stage.height(value)" function instead.');
         }
     });
     Kinetic.Util.extend(Kinetic.BaseLayer, Kinetic.Container);
@@ -30856,20 +30914,34 @@ var Kinetic = {};
                         }
                     }
                     // if no shape, and no antialiased pixel, we should end searching 
-                    if (!continueSearch) {
-                        return;
-                    } else {
+                    if (continueSearch) {
                         spiralSearchDistance += 1;
+                    } else {
+                        return;
                     }
                 }
-                
-            }
-            else {
+            } else {
                 return null;
             }
         },
+        _getImageData: function(x, y) {
+            var width = this.hitCanvas.width || 1,
+                height = this.hitCanvas.height || 1,
+                index = (Math.round(y) * width ) + Math.round(x);
+
+            if (!this._hitImageData) {
+                this._hitImageData = this.hitCanvas.context.getImageData(0, 0, width, height);
+            }
+
+            return [
+                this._hitImageData.data[4 * index + 0] , // Red
+                this._hitImageData.data[4 * index + 1], // Green
+                this._hitImageData.data[4 * index + 2], // Blue
+                this._hitImageData.data[4 * index + 3] // Alpha
+            ];
+        },
         _getIntersection: function(pos) {
-            var p = this.hitCanvas.context._context.getImageData(pos.x, pos.y, 1, 1).data,
+            var p = this.hitCanvas.context.getImageData(pos.x, pos.y, 1, 1).data,
                 p3 = p[3],
                 colorKey, shape;
 
@@ -30928,6 +31000,7 @@ var Kinetic = {};
             }
 
             Kinetic.Container.prototype.drawHit.call(this, canvas, top);
+            this.imageData = null; // Clear imageData cache
             return this;
         },
         /**
@@ -30946,6 +31019,7 @@ var Kinetic = {};
         clear: function(bounds) {
             this.getContext().clear(bounds);
             this.getHitCanvas().getContext().clear(bounds);
+            this.imageData = null; // Clear getImageData cache
             return this;
         },
         // extend Node.prototype.setVisible
@@ -30966,7 +31040,7 @@ var Kinetic = {};
          * @name enableHitGraph
          * @method
          * @memberof Kinetic.Layer.prototype
-         * @returns {Node}
+         * @returns {Layer}
          */
         enableHitGraph: function() {
             this.setHitGraphEnabled(true);
@@ -30977,7 +31051,7 @@ var Kinetic = {};
          * @name disableHitGraph
          * @method
          * @memberof Kinetic.Layer.prototype
-         * @returns {Node}
+         * @returns {Layer}
          */
         disableHitGraph: function() {
             this.setHitGraphEnabled(false);
@@ -31010,14 +31084,9 @@ var Kinetic = {};
      * // enable hit graph
      * layer.hitGraphEnabled(true);
      */
-
     Kinetic.Collection.mapMethods(Kinetic.Layer);
 })();
 ;(function() {
-    // constants
-    var HASH = '#',
-        BEFORE_DRAW ='beforeDraw',
-        DRAW = 'draw';
 
     Kinetic.Util.addMethods(Kinetic.FastLayer, {
         ____init: function(config) {
@@ -31065,7 +31134,7 @@ var Kinetic = {};
         draw: function() {
             this.drawScene();
             return this;
-        },  
+        },
         /**
          * clear scene and hit canvas contexts tied to the layer
          * @method
@@ -31402,18 +31471,28 @@ var Kinetic = {};
         // implements Shape.prototype.setWidth()
         setWidth: function(width) {
             Kinetic.Node.prototype.setWidth.call(this, width);
-            this.setRadius(width / 2);
+            if (this.radius() !== width / 2) {
+                this.setRadius(width / 2);
+            }
         },
         // implements Shape.prototype.setHeight()
         setHeight: function(height) {
             Kinetic.Node.prototype.setHeight.call(this, height);
-            this.setRadius(height / 2);
+            if (this.radius() !== height / 2) {
+                this.setRadius(height / 2);
+            }
+        },
+        setRadius : function(val) {
+            this._setAttr('radius', val);
+            this.setWidth(val * 2);
+            this.setHeight(val * 2);
         }
     };
     Kinetic.Util.extend(Kinetic.Circle, Kinetic.Shape);
 
     // add getters setters
-    Kinetic.Factory.addGetterSetter(Kinetic.Circle, 'radius', 0);
+    Kinetic.Factory.addGetter(Kinetic.Circle, 'radius', 0);
+    Kinetic.Factory.addOverloadedGetterSetter(Kinetic.Circle, 'radius');
 
     /**
      * get/set radius
@@ -31466,9 +31545,8 @@ var Kinetic = {};
             this.sceneFunc(this._sceneFunc);
         },
         _sceneFunc: function(context) {
-            var r = this.getRadius(),
-                rx = r.x,
-                ry = r.y;
+            var rx = this.getRadiusX(),
+                ry = this.getRadiusY();
 
             context.beginPath();
             context.save();
@@ -31482,11 +31560,11 @@ var Kinetic = {};
         },
         // implements Shape.prototype.getWidth()
         getWidth: function() {
-            return this.getRadius().x * 2;
+            return this.getRadiusX() * 2;
         },
         // implements Shape.prototype.getHeight()
         getHeight: function() {
-            return this.getRadius().y * 2;
+            return this.getRadiusY() * 2;
         },
         // implements Shape.prototype.setWidth()
         setWidth: function(width) {
@@ -31693,12 +31771,21 @@ var Kinetic = {};
         // implements Shape.prototype.setWidth()
         setWidth: function(width) {
             Kinetic.Node.prototype.setWidth.call(this, width);
-            this.setOuterRadius(width / 2);
+            if (this.outerRadius() !== width / 2) {
+                this.setOuterRadius(width / 2);
+            }
         },
         // implements Shape.prototype.setHeight()
         setHeight: function(height) {
             Kinetic.Node.prototype.setHeight.call(this, height);
-            this.setOuterRadius(height / 2);
+            if (this.outerRadius() !== height / 2) {
+                this.setOuterRadius(height / 2);
+            }
+        },
+        setOuterRadius : function(val) {
+            this._setAttr('outerRadius', val);
+            this.setWidth(val * 2);
+            this.setHeight(val * 2);
         }
     };
     Kinetic.Util.extend(Kinetic.Ring, Kinetic.Shape);
@@ -31721,7 +31808,8 @@ var Kinetic = {};
      * ring.innerRadius(20);
      */
      
-    Kinetic.Factory.addGetterSetter(Kinetic.Ring, 'outerRadius', 0);
+    Kinetic.Factory.addGetter(Kinetic.Ring, 'outerRadius', 0);
+    Kinetic.Factory.addOverloadedGetterSetter(Kinetic.Ring, 'outerRadius');
 
     /**
      * get/set outerRadius
@@ -31925,8 +32013,6 @@ var Kinetic = {};
     Kinetic.Collection.mapMethods(Kinetic.Wedge);
 })();
 ;(function() {
-    var PI_OVER_180 = Math.PI / 180;
-
     /**
      * Arc constructor
      * @constructor
@@ -32137,7 +32223,7 @@ var Kinetic = {};
      * @memberof Kinetic
      * @augments Kinetic.Shape
      * @param {Object} config
-     * @param {ImageObject} config.image
+     * @param {Image} config.image
      * @param {Object} [config.crop]
      * @param {String} [config.fill] fill color
      * @param {Integer} [config.fillRed] set fill red component
@@ -32302,7 +32388,7 @@ var Kinetic = {};
      * @name setImage
      * @method
      * @memberof Kinetic.Image.prototype
-     * @param {ImageObject} image
+     * @param {Image} image
      */
 
     /**
@@ -32310,7 +32396,7 @@ var Kinetic = {};
      * @name getImage
      * @method
      * @memberof Kinetic.Image.prototype
-     * @returns {ImageObject}
+     * @returns {Image}
      */
 
     Kinetic.Factory.addComponentsGetterSetter(Kinetic.Image, 'crop', ['x', 'y', 'width', 'height']);
@@ -33371,10 +33457,20 @@ var Kinetic = {};
             Kinetic.Shape.call(this, config);
             this.className = 'Sprite';
 
-            this.anim = new Kinetic.Animation();
+            this._updated = true;
+            var that = this;
+            this.anim = new Kinetic.Animation(function() {
+                // if we don't need to redraw layer we should return false
+                var updated = that._updated;
+                that._updated = false;
+                return updated;
+            });
             this.on('animationChange.kinetic', function() {
                 // reset index when animation changes
                 this.frameIndex(0);
+            });
+            this.on('frameIndexChange.kinetic', function() {
+                this._updated = true;
             });
             // smooth change for frameRate
             this.on('frameRateChange.kinetic', function() {
@@ -35343,8 +35439,8 @@ var Kinetic = {};
                 height = this.getHeight(),
                 pointerDirection = this.getPointerDirection(),
                 pointerWidth = this.getPointerWidth(),
-                pointerHeight = this.getPointerHeight();
-                //cornerRadius = this.getCornerRadius();
+                pointerHeight = this.getPointerHeight(),
+                cornerRadius = this.getCornerRadius();
 
             context.beginPath();
             context.moveTo(0,0);
@@ -35355,28 +35451,48 @@ var Kinetic = {};
                 context.lineTo((width + pointerWidth)/2, 0);
             }
 
-            context.lineTo(width, 0);
-
+            if(!cornerRadius) {
+                context.lineTo(width, 0);
+            } else {
+                context.lineTo(width - cornerRadius, 0);
+                context.arc(width - cornerRadius, cornerRadius, cornerRadius, Math.PI * 3 / 2, 0, false);
+            }
+            
             if (pointerDirection === RIGHT) {
                 context.lineTo(width, (height - pointerHeight)/2);
                 context.lineTo(width + pointerWidth, height/2);
                 context.lineTo(width, (height + pointerHeight)/2);
             }
-
-            context.lineTo(width, height);
+            
+            if(!cornerRadius) {
+                context.lineTo(width, height);
+            } else {
+                context.lineTo(width, height - cornerRadius);
+                context.arc(width - cornerRadius, height - cornerRadius, cornerRadius, 0, Math.PI / 2, false);
+            }
 
             if (pointerDirection === DOWN) {
                 context.lineTo((width + pointerWidth)/2, height);
                 context.lineTo(width/2, height + pointerHeight);
                 context.lineTo((width - pointerWidth)/2, height);
             }
-
-            context.lineTo(0, height);
+            
+            if(!cornerRadius) {
+                context.lineTo(0, height);
+            } else {
+                context.lineTo(cornerRadius, height);
+                context.arc(cornerRadius, height - cornerRadius, cornerRadius, Math.PI / 2, Math.PI, false);
+            }
 
             if (pointerDirection === LEFT) {
                 context.lineTo(0, (height + pointerHeight)/2);
                 context.lineTo(-1 * pointerWidth, height/2);
                 context.lineTo(0, (height - pointerHeight)/2);
+            }
+            
+            if(cornerRadius) {
+                context.lineTo(0, cornerRadius);
+                context.arc(cornerRadius, cornerRadius, cornerRadius, Math.PI, Math.PI * 3 / 2, false);
             }
 
             context.closePath();
@@ -35456,8 +35572,214 @@ var Kinetic = {};
 
     Kinetic.Collection.mapMethods(Kinetic.Tag);
 })();
+;(function() {
+    /**
+     * Arrow constructor
+     * @constructor
+     * @memberof Kinetic
+     * @augments Kinetic.Shape
+     * @param {Object} config
+     * @param {Array} config.points
+     * @param {Number} [config.tension] Higher values will result in a more curvy line.  A value of 0 will result in no interpolation.
+     *   The default is 0
+     * @param {Number} config.pointerLength
+     * @param {Number} config.pointerWidth
+     * @param {String} [config.fill] fill color
+     * @param {Integer} [config.fillRed] set fill red component
+     * @param {Integer} [config.fillGreen] set fill green component
+     * @param {Integer} [config.fillBlue] set fill blue component
+     * @param {Integer} [config.fillAlpha] set fill alpha component
+     * @param {Image} [config.fillPatternImage] fill pattern image
+     * @param {Number} [config.fillPatternX]
+     * @param {Number} [config.fillPatternY]
+     * @param {Object} [config.fillPatternOffset] object with x and y component
+     * @param {Number} [config.fillPatternOffsetX] 
+     * @param {Number} [config.fillPatternOffsetY] 
+     * @param {Object} [config.fillPatternScale] object with x and y component
+     * @param {Number} [config.fillPatternScaleX]
+     * @param {Number} [config.fillPatternScaleY]
+     * @param {Number} [config.fillPatternRotation]
+     * @param {String} [config.fillPatternRepeat] can be "repeat", "repeat-x", "repeat-y", or "no-repeat".  The default is "no-repeat"
+     * @param {Object} [config.fillLinearGradientStartPoint] object with x and y component
+     * @param {Number} [config.fillLinearGradientStartPointX]
+     * @param {Number} [config.fillLinearGradientStartPointY]
+     * @param {Object} [config.fillLinearGradientEndPoint] object with x and y component
+     * @param {Number} [config.fillLinearGradientEndPointX]
+     * @param {Number} [config.fillLinearGradientEndPointY]
+     * @param {Array} [config.fillLinearGradientColorStops] array of color stops
+     * @param {Object} [config.fillRadialGradientStartPoint] object with x and y component
+     * @param {Number} [config.fillRadialGradientStartPointX]
+     * @param {Number} [config.fillRadialGradientStartPointY]
+     * @param {Object} [config.fillRadialGradientEndPoint] object with x and y component
+     * @param {Number} [config.fillRadialGradientEndPointX] 
+     * @param {Number} [config.fillRadialGradientEndPointY] 
+     * @param {Number} [config.fillRadialGradientStartRadius]
+     * @param {Number} [config.fillRadialGradientEndRadius]
+     * @param {Array} [config.fillRadialGradientColorStops] array of color stops
+     * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
+     * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
+     * @param {String} [config.stroke] stroke color
+     * @param {Integer} [config.strokeRed] set stroke red component
+     * @param {Integer} [config.strokeGreen] set stroke green component
+     * @param {Integer} [config.strokeBlue] set stroke blue component
+     * @param {Integer} [config.strokeAlpha] set stroke alpha component
+     * @param {Number} [config.strokeWidth] stroke width
+     * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
+     * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
+     * @param {String} [config.lineJoin] can be miter, round, or bevel.  The default
+     *  is miter
+     * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
+     *  is butt
+     * @param {String} [config.shadowColor]
+     * @param {Integer} [config.shadowRed] set shadow color red component
+     * @param {Integer} [config.shadowGreen] set shadow color green component
+     * @param {Integer} [config.shadowBlue] set shadow color blue component
+     * @param {Integer} [config.shadowAlpha] set shadow color alpha component
+     * @param {Number} [config.shadowBlur]
+     * @param {Object} [config.shadowOffset] object with x and y component
+     * @param {Number} [config.shadowOffsetX]
+     * @param {Number} [config.shadowOffsetY]
+     * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
+     *  between 0 and 1
+     * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
+     * @param {Array} [config.dash]
+     * @param {Boolean} [config.dashEnabled] flag which enables or disables the dashArray.  The default value is true
+     * @param {Number} [config.x]
+     * @param {Number} [config.y]
+     * @param {Number} [config.width]
+     * @param {Number} [config.height]
+     * @param {Boolean} [config.visible]
+     * @param {Boolean} [config.listening] whether or not the node is listening for events
+     * @param {String} [config.id] unique id
+     * @param {String} [config.name] non-unique name
+     * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
+     * @param {Number} [config.rotation] rotation in degrees
+     * @param {Object} [config.offset] offset from center point and rotation point
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
+     * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
+     *  the entire stage by dragging any portion of the stage
+     * @param {Number} [config.dragDistance]
+     * @param {Function} [config.dragBoundFunc]
+     * @example
+     * var line = new Kinetic.Line({
+     *   points: [73, 70, 340, 23, 450, 60, 500, 20],
+     *   stroke: 'red',
+     *   tension: 1,
+     *   pointerLength : 10,
+     *   pointerWidth : 12
+     * });
+     */
+    Kinetic.Arrow = function(config) {
+        this.____init(config);
+    };
+
+    Kinetic.Arrow.prototype = {
+        ____init : function(config) {
+            // call super constructor
+            Kinetic.Line.call(this, config);
+            this.className = 'Arrow';
+        },
+        _sceneFunc : function(ctx) {
+            var PI2 = Math.PI * 2;
+            var points = this.points();
+            var n = points.length;
+            var dx = points[n-2] - points[n-4];
+            var dy = points[n-1] - points[n-3];
+            var radians = (Math.atan2(dy, dx) + PI2) % PI2;
+            var length = this.pointerLength();
+            var width = this.pointerWidth();
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.translate(points[n-2], points[n-1]);
+            ctx.rotate(radians);
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-length, width / 2);
+            ctx.lineTo(-length, -width / 2);
+            ctx.closePath();
+            ctx.restore();
+
+            if (this.pointerAtBeginning()) {
+                ctx.save();
+                ctx.translate(points[0], points[1]);
+                dx = points[2] - points[0];
+                dy = points[3] - points[1];
+                ctx.rotate((Math.atan2(-dy, -dx) + PI2) % PI2);
+                ctx.moveTo(0, 0);
+                ctx.lineTo(-10, 6);
+                ctx.lineTo(-10, -6);
+                ctx.closePath();
+                ctx.restore();
+            }
+
+            ctx.fillStrokeShape(this);
+            Kinetic.Line.prototype._sceneFunc.apply(this, arguments);
+        }
+    };
+
+    Kinetic.Util.extend(Kinetic.Arrow, Kinetic.Line);
+    /**
+     * get/set pointerLength
+     * @name pointerLength
+     * @method
+     * @memberof Kinetic.Arrow.prototype
+     * @param {Number} Length of pointer of arrow.
+     *   The default is 10.
+     * @returns {Number}
+     * @example
+     * // get tension
+     * var pointerLength = line.pointerLength();
+     *
+     * // set tension
+     * line.pointerLength(15);
+     */
+
+    Kinetic.Factory.addGetterSetter(Kinetic.Arrow, 'pointerLength', 10);
+    /**
+     * get/set pointerWidth
+     * @name pointerWidth
+     * @method
+     * @memberof Kinetic.Arrow.prototype
+     * @param {Number} Width of pointer of arrow.
+     *   The default is 10.
+     * @returns {Number}
+     * @example
+     * // get tension
+     * var pointerWidth = line.pointerWidth();
+     *
+     * // set tension
+     * line.pointerWidth(15);
+     */
+
+    Kinetic.Factory.addGetterSetter(Kinetic.Arrow, 'pointerWidth', 10);
+    /**
+     * get/set pointerAtBeginning
+     * @name pointerAtBeginning
+     * @method
+     * @memberof Kinetic.Arrow.prototype
+     * @param {Number} Should pointer displayed at beginning of arrow.
+     *   The default is false.
+     * @returns {Boolean}
+     * @example
+     * // get tension
+     * var pointerAtBeginning = line.pointerAtBeginning();
+     *
+     * // set tension
+     * line.pointerAtBeginning(true);
+     */
+
+    Kinetic.Factory.addGetterSetter(Kinetic.Arrow, 'pointerAtBeginning', false);
+    Kinetic.Collection.mapMethods(Kinetic.Arrow);
+
+})();
+
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"canvas":1,"jsdom":1}],"knockout":[function(require,module,exports){
 /*!
  * Knockout JavaScript library v3.2.0
@@ -40762,7 +41084,7 @@ ko.exportSymbol('nativeTemplateEngine', ko.nativeTemplateEngine);
 },{}],"screenfull":[function(require,module,exports){
 /*!
 * screenfull
-* v1.2.0 - 2014-04-29
+* v2.0.0 - 2014-12-22
 * (c) Sindre Sorhus; MIT License
 */
 (function () {
@@ -40865,8 +41187,6 @@ ko.exportSymbol('nativeTemplateEngine', ko.nativeTemplateEngine);
 				this.request(elem);
 			}
 		},
-		onchange: function () {},
-		onerror: function () {},
 		raw: fn
 	};
 
@@ -40899,14 +41219,6 @@ ko.exportSymbol('nativeTemplateEngine', ko.nativeTemplateEngine);
 				return !!document[fn.fullscreenEnabled];
 			}
 		}
-	});
-
-	document.addEventListener(fn.fullscreenchange, function (e) {
-		screenfull.onchange.call(screenfull, e);
-	});
-
-	document.addEventListener(fn.fullscreenerror, function (e) {
-		screenfull.onerror.call(screenfull, e);
 	});
 
 	if (isCommonjs) {
