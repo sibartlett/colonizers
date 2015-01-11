@@ -1,7 +1,6 @@
 {
     "excludeFiles": [
-      "node_modules/**",
-      "temp/**"
+      "node_modules/**"
     ],
     "disallowSpacesInNamedFunctionExpression": {
         "beforeOpeningRoundBrace": true
