@@ -5,7 +5,7 @@
    */
 
   // Define globals exposed by modern browsers.
-  "browser": true,
+  "browser": false,
 
   // Define globals exposed by jQuery.
   "jquery": false,
