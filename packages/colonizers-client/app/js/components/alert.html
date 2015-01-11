@@ -1,0 +1,12 @@
+<div class="alert alert-info alert-fixed-top" style="display: none" data-bind="visible: message">
+  <button type="button" class="close" data-bind="click: dismiss">
+    <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+  </button>
+  <span data-bind="text: message"></span>
+  <div class="dice" data-bind="visible: showDice">
+    <img border="0" width="32" height="32"
+      data-bind="attr: { src: die1.imageSrc }" />
+    <img border="0" width="32" height="32"
+      data-bind="attr: { src: die2.imageSrc }" />
+  </div>
+</div>

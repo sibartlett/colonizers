@@ -1,0 +1,141 @@
+<div class="container-fluid this-user" data-bind="visible: !isPlayer">
+  <div class="row">
+    <div class="col-xs-9">
+      <p>You are spectating this game.</p>
+    </div>
+
+    <div class="col-xs-3 visible-xs mobile-controls" style="padding-left: 0">
+      <div class="btn-toolbar pull-right" role="toolbar">
+
+        <div class="btn-group">
+          <button type="button" class="btn btn-default sidebar-toggle" data-toggle="offcanvas" data-target=".sidebar">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid this-user player" data-bind="visible: isPlayer">
+  <div class="row">
+    <div class="col-sm-3 col-md-2 col-lg-4 hidden-xs">
+      <div class="row">
+        <div class="col-xs-12 name">
+          <img class="avatar"
+            data-bind="attr: { src: user.avatarUrl }" />
+          <span data-bind="text: user.name"></span>
+          <span class="icon-star"
+            data-bind="text: player.victoryPoints.actual"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xs-9 col-sm-3 col-md-5 col-lg-4" style="padding-right: 0">
+      <div class="row hidden-sm hidden-md hidden-lg">
+        <div class="col-xs-12 name">
+          <span data-bind="text: user.name"></span>
+          <span class="icon-star"
+            data-bind="text: player.victoryPoints.actual"></span>
+        </div>
+      </div>
+      <div class="row badges">
+        <div class="col-xs-12">
+          <span class="icon-gift" title="Resources"></span>
+          <span class="badge lumber" title="Lumber">
+            <span data-bind="text: player.resources.lumber"></span>
+            <span class="hidden-xs hidden-sm">- Lumber</span>
+          </span>
+          <span class="badge brick" title="Brick">
+            <span data-bind="text: player.resources.brick"></span>
+            <span class="hidden-xs hidden-sm">- Brick</span>
+          </span>
+          <span class="badge wool" title="Wool">
+            <span data-bind="text: player.resources.wool"></span>
+            <span class="hidden-xs hidden-sm">- Wool</span>
+          </span>
+          <span class="badge grain" title="Grain">
+            <span data-bind="text: player.resources.grain"></span>
+            <span class="hidden-xs hidden-sm">- Grain</span>
+          </span>
+          <span class="badge ore" title="Ore">
+            <span data-bind="text: player.resources.ore"></span>
+            <span class="hidden-xs hidden-sm">- Ore</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="row badges">
+        <div class="col-xs-12">
+          <span class="icon-hammer" title="Development Cards"></span>
+          <span class="badge" title="Development Cards">
+            <span data-bind="text: player.developmentCards.total"></span>
+            <span class="hidden-xs hidden-sm">- Dev Cards</span>
+          </span>
+
+          &nbsp;
+
+          <span class="icon-shield" title="Largest Army"></span>
+          <span class="badge" title="Largest Army">
+            <span data-bind="text: player.knightsPlayed"></span>
+            <span class="hidden-xs hidden-sm">- Army</span>
+          </span>
+
+          &nbsp;
+
+          <span class="icon-road" title="Longest Road"></span>
+          <span class="badge" title="Longest Road">
+            <span data-bind="text: player.longestRoad"></span>
+            <span class="hidden-xs hidden-sm">- Longest Road</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-md-5 col-lg-4 hidden-xs controls">
+      <div class="pull-right">
+        <button type="button" class="btn btn-default navbar-btn" data-bind="enable: $root.ui.buttons" data-toggle="modal" data-target="#buildModal">Build</button>
+        <button type="button" class="btn btn-default navbar-btn" data-bind="enable: $root.ui.buttons" data-toggle="modal" data-target="#tradeModal">Trade</button>
+        <button type="button" class="btn btn-default navbar-btn" data-bind="enable: $root.ui.buttons">Dev Cards</button>
+        <button type="button" class="btn btn-default navbar-btn" data-bind="enable: $root.ui.buttons, click: actions.endTurn">End Turn</button>
+      </div>
+    </div>
+
+    <div class="col-xs-3 visible-xs mobile-controls" style="padding-left: 0">
+      <div class="btn-toolbar pull-right" role="toolbar">
+        <div class="btn-group-vertical">
+
+          <div class="btn-group dropup">
+
+            <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" data-bind="enable: $root.ui.buttons">
+              <span class="caret"></span>
+              <span class="sr-only">Toggle Dropdown</span>
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-right" role="menu">
+              <li><a href="#" data-toggle="modal" data-target="#buildModal">Build</a></li>
+              <li><a href="#" data-toggle="modal" data-target="#tradeModal">Trade</a></li>
+              <li><a href="#">Dev Cards</a></li>
+              <li class="divider"></li>
+              <li><a data-bind="enable: $root.ui.endTurnButton, click: $root.events.onEndTurnClick">End Turn</a></li>
+            </ul>
+
+          </div>
+
+          <div class="btn-group">
+            <button type="button" class="btn btn-default sidebar-toggle" data-toggle="offcanvas" data-target=".sidebar">
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
