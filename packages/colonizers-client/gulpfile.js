@@ -52,6 +52,7 @@ gulp.task('lib', ['jquery-plugins'], function() {
 
 function buildClient(watch) {
   return dev.gulp.bundle({
+    baseDir: __dirname,
     file: './app/js/index.js',
     dest: './public/room.js',
     exclude: clientDependencies.concat(['jquery-plugins']),
