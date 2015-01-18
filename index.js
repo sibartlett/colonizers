@@ -2,7 +2,9 @@
 
 var nconf = require('nconf'),
     Server = require('colonizers-server'),
-    client = require('colonizers-client'),
+    Client = require('colonizers-client'),
+    tilesets = require('colonizers-client-tilesets'),
+    client,
     app,
     config;
 
@@ -13,6 +15,10 @@ config = new nconf.Provider()
   .defaults({
     PORT: 8080
   });
+
+client = new Client({
+  tilesets: tilesets
+});
 
 app = new Server({
   client: client,
