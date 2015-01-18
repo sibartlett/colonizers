@@ -60,6 +60,12 @@ npm install
 npm link
 cd ..
 
+git clone git@github.com:colonizers/colonizers-client-tilesets.git tilesets
+cd tilesets
+npm install
+npm link
+cd ..
+
 git clone git@github.com:colonizers/colonizers-client.git client
 cd client
 npm link colonizers-dev
@@ -79,6 +85,7 @@ cd ..
 git clone git@github.com:colonizers/colonizers.git app
 cd app
 npm link colonizers-client
+npm link colonizers-client-tilesets
 npm link colonizers-server
 npm install
 ```
