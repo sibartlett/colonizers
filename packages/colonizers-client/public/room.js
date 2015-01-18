@@ -771,6 +771,7 @@ var Game = require('./game'),
 function Factory(tileset) {
   this.tileset = tileset;
 
+  // Process tileset, converting image data uris to image elements
   Object.keys(this.tileset.tiles).forEach(function(key) {
     if (this.tileset.tiles[key].bgimage) {
       var img = new Image();
@@ -1150,8 +1151,7 @@ UiHexTile.prototype.render = function(options, tileset) {
 };
 
 UiHexTile.prototype.getHexOptions = function(tileStyle, tileSpacing, hexInfo) {
-  var patternScale = hexInfo.circumradius * 2 / tileStyle.bgimage.width,
-      options = {
+  var options = {
         x: 0,
         y: 0,
         sides: 6,
@@ -1159,9 +1159,11 @@ UiHexTile.prototype.getHexOptions = function(tileStyle, tileSpacing, hexInfo) {
         rotation: 270,
         fill: tileStyle.bgcolor,
         opacity: tileStyle.opacity || 1
-      };
+      },
+      patternScale;
 
   if (tileStyle.bgimage) {
+    patternScale = hexInfo.circumradius * 2 / tileStyle.bgimage.width;
     options = _.extend(options, {
       fillPriority: 'pattern',
       fillPatternImage: tileStyle.bgimage,
