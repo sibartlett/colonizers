@@ -8,7 +8,18 @@ var Game = require('./game'),
     Player = require('./player'),
     observableProps = require('./observable-properties');
 
-function Factory() {}
+function Factory(tileset) {
+  this.tileset = tileset;
+
+  // Process tileset, converting image data uris to image elements
+  Object.keys(this.tileset.tiles).forEach(function(key) {
+    if (this.tileset.tiles[key].bgimage) {
+      var img = new Image();
+      img.src = this.tileset.tiles[key].bgimage;
+      this.tileset.tiles[key].bgimage = img;
+    }
+  }, this);
+}
 
 Factory.prototype.createGame = function(options) {
   return new Game(this, options);
@@ -19,7 +30,7 @@ Factory.prototype.createBoard = function(options) {
 };
 
 Factory.prototype.createHexTile = function(options) {
-  return new HexTile(this, options);
+  return new HexTile(this, options, this.tileset);
 };
 
 Factory.prototype.createHexCorner = function(options) {

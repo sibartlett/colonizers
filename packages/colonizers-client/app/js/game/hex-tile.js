@@ -4,20 +4,19 @@ var _ = require('underscore'),
     Kinetic = require('kinetic'),
     core = require('colonizers-core'),
     HexTile = core.HexTile,
-    NumberToken = require('./number-token'),
-    theme = require('./../theme');
+    NumberToken = require('./number-token');
 
-function UiHexTile(factory, options) {
+function UiHexTile(factory, options, tileset) {
   HexTile.apply(this, arguments);
   this.addToBoard = this.addToBoard.bind(this);
-  this.render(options);
+  this.render(options, tileset);
 }
 
 core.util.inherits(UiHexTile, HexTile);
 
-UiHexTile.prototype.render = function(options) {
-  var tileStyle = theme.tiles[options.type],
-      tileSpacing = theme.board.tilespacing || 8,
+UiHexTile.prototype.render = function(options, tileset) {
+  var tileStyle = tileset.tiles[options.type],
+      tileSpacing = tileset.board.tilespacing || 8,
       hexagonOpts = this.getHexOptions(tileStyle, tileSpacing, options.hexInfo);
 
   this.numberToken = null;
@@ -43,14 +42,14 @@ UiHexTile.prototype.render = function(options) {
     this.group.add(this.hexagon2);
   }
 
-  if (theme.board && theme.board.bgcolor) {
+  if (tileset.board && tileset.board.bgcolor) {
     this.bgHexagon = new Kinetic.RegularPolygon({
       x: options.center.x,
       y: options.center.y,
       sides: 6,
       radius: options.hexInfo.circumradius + tileSpacing,
       rotation: 270,
-      fill: theme.board.bgcolor
+      fill: tileset.board.bgcolor
     });
   }
   this.group.add(this.hexagon2);

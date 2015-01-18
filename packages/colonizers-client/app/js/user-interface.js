@@ -24,8 +24,7 @@ ko.bindingHandlers.component.preprocess = function(val) {
   return val;
 };
 
-function UserInterface(socket, emitterQueue, notifications, factory) {
-
+function UserInterface(options) {
   this.onBoardClick = this.onBoardClick.bind(this);
   this.onBuildSettlement = this.onBuildSettlement.bind(this);
   this.onBuildRoad = this.onBuildRoad.bind(this);
@@ -33,14 +32,14 @@ function UserInterface(socket, emitterQueue, notifications, factory) {
   this.onTurnStart = this.onTurnStart.bind(this);
 
   this.game = null;
-  this.socket = socket;
-  this.emitterQueue = emitterQueue;
+  this.socket = options.socket;
+  this.emitterQueue = options.emitterQueue;
 
   this.viewModel = new RootViewModel({
-    actions: new ViewActions(socket),
-    emitterQueue: emitterQueue,
-    notifications: notifications,
-    factory: factory
+    actions: new ViewActions(options.socket),
+    emitterQueue: options.emitterQueue,
+    notifications: options.notifications,
+    factory: options.factory
   });
 
   this.viewModel.ui = {
