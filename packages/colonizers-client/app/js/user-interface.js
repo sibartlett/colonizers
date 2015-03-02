@@ -27,6 +27,7 @@ ko.bindingHandlers.component.preprocess = function(val) {
 function UserInterface(options) {
   this.onBoardClick = this.onBoardClick.bind(this);
   this.onBuildSettlement = this.onBuildSettlement.bind(this);
+  this.onBuildCity = this.onBuildCity.bind(this);
   this.onBuildRoad = this.onBuildRoad.bind(this);
   this.onTurnEnd = this.onTurnEnd.bind(this);
   this.onTurnStart = this.onTurnStart.bind(this);
@@ -47,7 +48,8 @@ function UserInterface(options) {
   };
   this.viewModel.events = {
     onBuildRoad: this.onBuildRoad,
-    onBuildSettlement: this.onBuildSettlement
+    onBuildSettlement: this.onBuildSettlement,
+    onBuildCity: this.onBuildCity
   };
 
   this.viewModel.subscribe('turn', function() {
@@ -123,6 +125,10 @@ UserInterface.prototype.onBuildSettlement = function() {
   this.game.showBuildableSettlements();
 };
 
+UserInterface.prototype.onBuildCity = function() {
+  this.game.showBuildableCities();
+};
+
 UserInterface.prototype.onBoardClick = function(data) {
   if (!this.viewModel.myTurn) {
     return;
@@ -133,7 +139,7 @@ UserInterface.prototype.onBoardClick = function(data) {
       buildType: data.type,
       buildId: data.id
     });
-    if (data.type === 'corner') {
+    if (data.type === 'settlement') {
       this.game.showBuildableEdges(data.id);
     }
   } else {

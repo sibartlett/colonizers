@@ -62,6 +62,17 @@ UiGame.prototype.showBuildableSettlements = function() {
   this.draw();
 };
 
+UiGame.prototype.showBuildableCities = function() {
+  var currentPlayer = this.currentPlayer,
+      settlements = this.getSettlementsForPlayer(currentPlayer);
+
+  settlements.forEach(function(settlement) {
+    settlement.show(currentPlayer);
+  });
+
+  this.draw();
+};
+
 UiGame.prototype.showBuildableEdges = function(cornerId) {
   var currentPlayer = this.currentPlayer,
       edges = this.getBuildableEdgesForCurrentPlayer(cornerId);

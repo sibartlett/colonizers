@@ -49,14 +49,14 @@ UiHexEdge.prototype.hookupEvents = function() {
 
   this.rect.on('click', function() {
     this.emit('click', {
-      type: 'edge',
+      type: 'road',
       id: this.id
     });
   }.bind(this));
 
   this.rect.on('tap', function() {
     this.emit('click', {
-      type: 'edge',
+      type: 'road',
       id: this.id
     });
   }.bind(this));

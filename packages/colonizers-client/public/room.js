@@ -207,8 +207,10 @@ BuildModalModel.prototype.resetCanBuildProps = function() {
       game = this.roomModel.game,
       edges,
       corners,
+      cornerSettlements,
       roads,
-      settlements;
+      settlements,
+      cities;
 
   this.canBuildRoad = false;
   this.canBuildSettlement = false;
@@ -218,6 +220,7 @@ BuildModalModel.prototype.resetCanBuildProps = function() {
 
     edges = game.getBuildableEdgesForPlayer(player);
     corners = game.getBuildableCornersForPlayer(player);
+    cornerSettlements = game.getSettlementsForPlayer(player);
 
     roads = this.allowanceRoads > 0 &&
             edges.length > 0 &&
@@ -238,8 +241,15 @@ BuildModalModel.prototype.resetCanBuildProps = function() {
                   });
 
     this.canBuildSettlement = settlements;
+    
+    cities = this.allowanceCities > 0 &&
+             cornerSettlements.length > 0 &&
+             player.hasResources({
+               ore: 3,
+               grain: 2
+             });
 
-    this.canBuildCity = false;
+    this.canBuildCity = cities;
   }
 };
 
@@ -248,11 +258,15 @@ BuildModalModel.prototype.onBuild = function(data, next) {
 
   if (thisPlayer) {
     if (thisPlayer.id === data.playerId) {
-      if (data.buildType === 'edge') {
+      if (data.buildType === 'road') {
         this.allowanceRoads = this.allowanceRoads - 1;
       }
-      if (data.buildType === 'corner') {
+      if (data.buildType === 'settlement') {
         this.allowanceSettlements = this.allowanceSettlements - 1;
+      }
+      if (data.buildType === 'city') {
+        this.allowanceSettlements = this.allowanceSettlements + 1;
+        this.allowanceCities = this.allowanceCities - 1;
       }
     }
   }
@@ -271,7 +285,8 @@ BuildModalModel.prototype.buildSettlement = function() {
 };
 
 BuildModalModel.prototype.buildCity = function() {
-
+  $('#buildModal').modal('hide');
+  this.roomModel.game.showBuildableCities();
 };
 
 module.exports = {
@@ -874,6 +889,17 @@ UiGame.prototype.showBuildableSettlements = function() {
   this.draw();
 };
 
+UiGame.prototype.showBuildableCities = function() {
+  var currentPlayer = this.currentPlayer,
+      settlements = this.getSettlementsForPlayer(currentPlayer);
+
+  settlements.forEach(function(settlement) {
+    settlement.show(currentPlayer);
+  });
+
+  this.draw();
+};
+
 UiGame.prototype.showBuildableEdges = function(cornerId) {
   var currentPlayer = this.currentPlayer,
       edges = this.getBuildableEdgesForCurrentPlayer(cornerId);
@@ -929,7 +955,7 @@ UiHexCorner.prototype.render = function(options) {
     y: options.center.y,
     visible: false
   });
-  
+
   this.drawing = new Kinetic.Circle({
     x: 0,
     y: 0,
@@ -949,47 +975,87 @@ UiHexCorner.prototype.hookupEvents = function() {
   }.bind(this));
 
   this.drawing.on('click', function() {
-    this.emit('click', {
-      type: 'corner',
-      id: this.id
-    });
+    if (!this.isSettlement)
+    {
+      this.emit('click', { type: 'settlement', id: this.id});
+    }
+    else
+    {
+      this.emit('click', { type: 'city', id: this.id});
+    }
   }.bind(this));
 
   this.drawing.on('tap', function() {
-    this.emit('click', {
-      type: 'corner',
-      id: this.id
-    });
+    if (!this.isSettlement)
+    {
+      this.emit('click', { type: 'settlement', id: this.id});
+    }
+    else
+    {
+      this.emit('click', { type: 'city', id: this.id});
+    }
   }.bind(this));
 };
 
-UiHexCorner.prototype.build = function(player) {
+UiHexCorner.prototype.buildSettlement = function(player) {
   var colors = this.board.game.getPlayerColors();
-  
+
   this.drawing = new Kinetic.Shape({
-	  fill: colors[player.id],
-	  opacity: 1,
-      x: 0,
-      y: 0,
-      
-      // a Kinetic.Canvas renderer is passed into the drawFunc function
-      drawFunc: function(context) {
-           context.beginPath();
-           context.moveTo(-12, -5);
-           context.lineTo(-12, 15);
-           context.lineTo(12, 15);
-           context.lineTo(12, -5);
-           context.lineTo(-12, -5);
-           context.lineTo(0, -15);
-           context.lineTo(12, -5);
-           context.closePath();
-           context.fillStrokeShape(this);
-      }
-    });
-  
+    fill: colors[player.id],
+    opacity: 1,
+    x: 0,
+    y: 0,
+    drawFunc: function(context) {
+      context.moveTo(-12, -5);
+      context.beginPath();
+      context.lineTo(-12, 15);
+      context.lineTo(12, 15);
+      context.lineTo(12, -5);
+      context.lineTo(0, -15);
+      context.lineTo(-12, -5);
+      context.closePath();
+      context.fillStrokeShape(this);
+    }
+  });
+
   this.group.add(this.drawing);
 
-  HexCorner.prototype.build.call(this, player);
+  HexCorner.prototype.buildSettlement.call(this, player);
+
+  this.drawing.fill(colors[player.id]);
+  this.drawing.opacity(1);
+  this.group.show();
+  this.group.draw();
+  
+  this.hookupEvents();
+};
+
+UiHexCorner.prototype.buildCity = function(player) {
+  var colors = this.board.game.getPlayerColors();
+
+  this.drawing = new Kinetic.Shape({
+    fill: colors[player.id],
+    opacity: 1,
+    x: 0,
+    y: 0,
+    drawFunc: function(context) {
+      context.moveTo(-12, -5);
+      context.beginPath();
+      context.lineTo(-12, 15);
+      context.lineTo(28, 15);
+      context.lineTo(28, 0);
+      context.lineTo(12, 0);
+      context.lineTo(12, -5);
+      context.lineTo(0, -15);
+      context.lineTo(-12, -5);
+      context.closePath();
+      context.fillStrokeShape(this);
+    }
+  });
+
+  this.group.add(this.drawing);
+
+  HexCorner.prototype.buildCity.call(this, player);
 
   this.drawing.fill(colors[player.id]);
   this.drawing.opacity(1);
@@ -999,7 +1065,7 @@ UiHexCorner.prototype.build = function(player) {
 
 UiHexCorner.prototype.show = function(player) {
   var colors;
-  if (this.isBuildable) {
+  if (this.isBuildable || this.isSettlement) {
     colors = this.board.game.getPlayerColors();
     this.drawing.fill(colors[player.id]);
     this.drawing.opacity(0.4);
@@ -1016,6 +1082,7 @@ UiHexCorner.prototype.hide = function() {
 };
 
 module.exports = UiHexCorner;
+
 },{"colonizers-core":46,"component-emitter":undefined,"jquery":undefined,"kinetic":undefined}],21:[function(require,module,exports){
 'use strict';
 
@@ -1068,14 +1135,14 @@ UiHexEdge.prototype.hookupEvents = function() {
 
   this.rect.on('click', function() {
     this.emit('click', {
-      type: 'edge',
+      type: 'road',
       id: this.id
     });
   }.bind(this));
 
   this.rect.on('tap', function() {
     this.emit('click', {
-      type: 'edge',
+      type: 'road',
       id: this.id
     });
   }.bind(this));
@@ -1109,6 +1176,7 @@ UiHexEdge.prototype.hide = function() {
 };
 
 module.exports = UiHexEdge;
+
 },{"colonizers-core":46,"component-emitter":undefined,"jquery":undefined,"kinetic":undefined}],22:[function(require,module,exports){
 'use strict';
 
@@ -2148,6 +2216,7 @@ ko.bindingHandlers.component.preprocess = function(val) {
 function UserInterface(options) {
   this.onBoardClick = this.onBoardClick.bind(this);
   this.onBuildSettlement = this.onBuildSettlement.bind(this);
+  this.onBuildCity = this.onBuildCity.bind(this);
   this.onBuildRoad = this.onBuildRoad.bind(this);
   this.onTurnEnd = this.onTurnEnd.bind(this);
   this.onTurnStart = this.onTurnStart.bind(this);
@@ -2168,7 +2237,8 @@ function UserInterface(options) {
   };
   this.viewModel.events = {
     onBuildRoad: this.onBuildRoad,
-    onBuildSettlement: this.onBuildSettlement
+    onBuildSettlement: this.onBuildSettlement,
+    onBuildCity: this.onBuildCity,
   };
 
   this.viewModel.subscribe('turn', function() {
@@ -2244,6 +2314,10 @@ UserInterface.prototype.onBuildSettlement = function() {
   this.game.showBuildableSettlements();
 };
 
+UserInterface.prototype.onBuildCity = function() {
+  this.game.showBuildableCities();
+};
+
 UserInterface.prototype.onBoardClick = function(data) {
   if (!this.viewModel.myTurn) {
     return;
@@ -2254,7 +2328,7 @@ UserInterface.prototype.onBoardClick = function(data) {
       buildType: data.type,
       buildId: data.id
     });
-    if (data.type === 'corner') {
+    if (data.type === 'settlement') {
       this.game.showBuildableEdges(data.id);
     }
   } else {
@@ -2675,9 +2749,10 @@ GameCoordinator.prototype.onNextTurn = function(data, next) {
 GameCoordinator.prototype.onBuild = function(data, next) {
   var corner, edge, player;
   player = this.game.getPlayerById(data.playerId);
-  if (data.buildType === 'corner') {
+
+  if (data.buildType === 'settlement') {
     corner = this.game.board.corners.getById(data.buildId);
-    corner.build(player);
+    corner.buildSettlement(player);
     player.addVictoryPoint();
     if (this.game.phase !== 'setup') {
       player.spend({
@@ -2687,7 +2762,16 @@ GameCoordinator.prototype.onBuild = function(data, next) {
         grain: 1
       });
     }
-  } else if (data.buildType === 'edge') {
+  } else if (data.buildType === 'city') {
+    corner = this.game.board.corners.getById(data.buildId);
+    corner.buildCity(player);
+    player.addVictoryPoint();
+    
+    player.spend({
+      ore: 3,
+      grain: 2
+    });
+  } else if (data.buildType === 'road') {
     edge = this.game.board.edges.getById(data.buildId);
     edge.build(player);
     if (this.game.phase !== 'setup') {
@@ -2828,7 +2912,9 @@ GameSerializer.prototype.serializeBoard = function(board) {
   corners = board.corners.map(function(corner) {
     var result = {
       id: corner.id,
-      center: corner.center
+      center: corner.center,
+      isSettlement: corner.isSettlement,
+      isCity: corner.isCity
     };
     if (corner.owner) {
       result.owner = corner.owner;
@@ -2914,7 +3000,11 @@ GameSerializer.prototype.deserializeBuildings = function(board, data, players) {
         return player.id === corner.owner;
       });
       hexCorner = board.corners.getById(corner.id);
-      hexCorner.build(player);
+
+      if (corner.isSettlement)
+        hexCorner.buildSettlement(player);
+      else if (corner.isCity)
+        hexCorner.buildCity(player);
     }
   });
 
@@ -3052,6 +3142,13 @@ Game.prototype.getBuildableEdgesForPlayer = function(player, cornerId) {
   }
 };
 
+Game.prototype.getSettlementsForPlayer = function(player) {
+  return this.board.corners.query({
+    isSettlement: true,
+    owner: player
+  });
+};
+
 Game.prototype.getBuildableCornersForPlayer = function(player) {
   var edges;
 
@@ -3063,6 +3160,7 @@ Game.prototype.getBuildableCornersForPlayer = function(player) {
     edges = this.board.edges.query({
       owner: player
     });
+    
 
     return _.chain(edges)
       .map(function(edge) {
@@ -3135,13 +3233,25 @@ HexCorner.prototype.getAdjacentEdges = spatialQuery(function(board) {
   };
 });
 
-HexCorner.prototype.build = function(player) {
+HexCorner.prototype.buildSettlement = function(player) {
   var corners = this.getAdjacentCorners();
 
   this.owner = player.id;
   this.isBuildable = false;
   this.buildType = 'settlement';
 
+  corners.forEach(function(corner) {
+    corner.isBuildable = false;
+  });
+};
+
+HexCorner.prototype.buildCity = function(player) {
+  var corners = this.getAdjacentCorners();
+
+  this.owner = player.id;
+  this.isBuildable = false;
+  this.buildType = 'city';
+  
   corners.forEach(function(corner) {
     corner.isBuildable = false;
   });

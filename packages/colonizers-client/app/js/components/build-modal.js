@@ -63,8 +63,10 @@ BuildModalModel.prototype.resetCanBuildProps = function() {
       game = this.roomModel.game,
       edges,
       corners,
+      cornerSettlements,
       roads,
-      settlements;
+      settlements,
+      cities;
 
   this.canBuildRoad = false;
   this.canBuildSettlement = false;
@@ -74,6 +76,7 @@ BuildModalModel.prototype.resetCanBuildProps = function() {
 
     edges = game.getBuildableEdgesForPlayer(player);
     corners = game.getBuildableCornersForPlayer(player);
+    cornerSettlements = game.getSettlementsForPlayer(player);
 
     roads = this.allowanceRoads > 0 &&
             edges.length > 0 &&
@@ -95,7 +98,14 @@ BuildModalModel.prototype.resetCanBuildProps = function() {
 
     this.canBuildSettlement = settlements;
 
-    this.canBuildCity = false;
+    cities = this.allowanceCities > 0 &&
+             cornerSettlements.length > 0 &&
+             player.hasResources({
+               ore: 3,
+               grain: 2
+             });
+
+    this.canBuildCity = cities;
   }
 };
 
@@ -104,11 +114,15 @@ BuildModalModel.prototype.onBuild = function(data, next) {
 
   if (thisPlayer) {
     if (thisPlayer.id === data.playerId) {
-      if (data.buildType === 'edge') {
+      if (data.buildType === 'road') {
         this.allowanceRoads = this.allowanceRoads - 1;
       }
-      if (data.buildType === 'corner') {
+      if (data.buildType === 'settlement') {
         this.allowanceSettlements = this.allowanceSettlements - 1;
+      }
+      if (data.buildType === 'city') {
+        this.allowanceSettlements = this.allowanceSettlements + 1;
+        this.allowanceCities = this.allowanceCities - 1;
       }
     }
   }
@@ -127,7 +141,8 @@ BuildModalModel.prototype.buildSettlement = function() {
 };
 
 BuildModalModel.prototype.buildCity = function() {
-
+  $('#buildModal').modal('hide');
+  this.roomModel.game.showBuildableCities();
 };
 
 module.exports = {
