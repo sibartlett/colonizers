@@ -21,7 +21,7 @@ UiHexCorner.prototype.render = function(options) {
     y: options.center.y,
     visible: false
   });
-  
+
   this.drawing = new Kinetic.Circle({
     x: 0,
     y: 0,
@@ -57,28 +57,25 @@ UiHexCorner.prototype.hookupEvents = function() {
 
 UiHexCorner.prototype.build = function(player) {
   var colors = this.board.game.getPlayerColors();
-  
+
   this.drawing = new Kinetic.Shape({
-	  fill: colors[player.id],
-	  opacity: 1,
-      x: 0,
-      y: 0,
-      
-      // a Kinetic.Canvas renderer is passed into the drawFunc function
-      drawFunc: function(context) {
-           context.beginPath();
-           context.moveTo(-12, -5);
-           context.lineTo(-12, 15);
-           context.lineTo(12, 15);
-           context.lineTo(12, -5);
-           context.lineTo(-12, -5);
-           context.lineTo(0, -15);
-           context.lineTo(12, -5);
-           context.closePath();
-           context.fillStrokeShape(this);
-      }
-    });
-  
+    fill: colors[player.id],
+    opacity: 1,
+    x: 0,
+    y: 0,
+    drawFunc: function(context) {
+      context.moveTo(-12, -5);
+      context.beginPath();
+      context.lineTo(-12, 15);
+      context.lineTo(12, 15);
+      context.lineTo(12, -5);
+      context.lineTo(0, -15);
+      context.lineTo(-12, -5);
+      context.closePath();
+      context.fillStrokeShape(this);
+    }
+  });
+
   this.group.add(this.drawing);
 
   HexCorner.prototype.build.call(this, player);
