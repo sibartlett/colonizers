@@ -87,7 +87,7 @@ exports.connect = lookup;
 exports.Manager = require('./manager');
 exports.Socket = require('./socket');
 
-},{"./manager":2,"./socket":4,"./url":5,"debug":8,"socket.io-parser":42}],2:[function(require,module,exports){
+},{"./manager":2,"./socket":4,"./url":5,"debug":9,"socket.io-parser":45}],2:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -103,6 +103,7 @@ var bind = require('component-bind');
 var object = require('object-component');
 var debug = require('debug')('socket.io-client:manager');
 var indexOf = require('indexof');
+var Backoff = require('backo2');
 
 /**
  * Module exports
@@ -134,11 +135,16 @@ function Manager(uri, opts){
   this.reconnectionAttempts(opts.reconnectionAttempts || Infinity);
   this.reconnectionDelay(opts.reconnectionDelay || 1000);
   this.reconnectionDelayMax(opts.reconnectionDelayMax || 5000);
+  this.randomizationFactor(opts.randomizationFactor || 0.5);
+  this.backoff = new Backoff({
+    min: this.reconnectionDelay(),
+    max: this.reconnectionDelayMax(),
+    jitter: this.randomizationFactor()
+  });
   this.timeout(null == opts.timeout ? 20000 : opts.timeout);
   this.readyState = 'closed';
   this.uri = uri;
   this.connected = [];
-  this.attempts = 0;
   this.encoding = false;
   this.packetBuffer = [];
   this.encoder = new parser.Encoder();
@@ -157,6 +163,18 @@ Manager.prototype.emitAll = function() {
   this.emit.apply(this, arguments);
   for (var nsp in this.nsps) {
     this.nsps[nsp].emit.apply(this.nsps[nsp], arguments);
+  }
+};
+
+/**
+ * Update `socket.id` of all sockets
+ *
+ * @api private
+ */
+
+Manager.prototype.updateSocketIds = function(){
+  for (var nsp in this.nsps) {
+    this.nsps[nsp].id = this.engine.id;
   }
 };
 
@@ -205,6 +223,14 @@ Manager.prototype.reconnectionAttempts = function(v){
 Manager.prototype.reconnectionDelay = function(v){
   if (!arguments.length) return this._reconnectionDelay;
   this._reconnectionDelay = v;
+  this.backoff && this.backoff.setMin(v);
+  return this;
+};
+
+Manager.prototype.randomizationFactor = function(v){
+  if (!arguments.length) return this._randomizationFactor;
+  this._randomizationFactor = v;
+  this.backoff && this.backoff.setJitter(v);
   return this;
 };
 
@@ -219,6 +245,7 @@ Manager.prototype.reconnectionDelay = function(v){
 Manager.prototype.reconnectionDelayMax = function(v){
   if (!arguments.length) return this._reconnectionDelayMax;
   this._reconnectionDelayMax = v;
+  this.backoff && this.backoff.setMax(v);
   return this;
 };
 
@@ -244,9 +271,8 @@ Manager.prototype.timeout = function(v){
 
 Manager.prototype.maybeReconnectOnOpen = function() {
   // Only try to reconnect if it's the first time we're connecting
-  if (!this.openReconnect && !this.reconnecting && this._reconnection && this.attempts === 0) {
+  if (!this.reconnecting && this._reconnection && this.backoff.attempts === 0) {
     // keeps reconnection from firing twice for the same reconnection loop
-    this.openReconnect = true;
     this.reconnect();
   }
 };
@@ -288,9 +314,10 @@ Manager.prototype.connect = function(fn){
       var err = new Error('Connection error');
       err.data = data;
       fn(err);
+    } else {
+      // Only do this if there is no fn to handle the error
+      self.maybeReconnectOnOpen();
     }
-
-    self.maybeReconnectOnOpen();
   });
 
   // emit `connect_timeout`
@@ -389,6 +416,7 @@ Manager.prototype.socket = function(nsp){
     this.nsps[nsp] = socket;
     var self = this;
     socket.on('connect', function(){
+      socket.id = self.engine.id;
       if (!~indexOf(self.connected, socket)) {
         self.connected.push(socket);
       }
@@ -476,6 +504,7 @@ Manager.prototype.cleanup = function(){
 Manager.prototype.close =
 Manager.prototype.disconnect = function(){
   this.skipReconnect = true;
+  this.backoff.reset();
   this.readyState = 'closed';
   this.engine && this.engine.close();
 };
@@ -489,6 +518,7 @@ Manager.prototype.disconnect = function(){
 Manager.prototype.onclose = function(reason){
   debug('close');
   this.cleanup();
+  this.backoff.reset();
   this.readyState = 'closed';
   this.emit('close', reason);
   if (this._reconnection && !this.skipReconnect) {
@@ -506,15 +536,14 @@ Manager.prototype.reconnect = function(){
   if (this.reconnecting || this.skipReconnect) return this;
 
   var self = this;
-  this.attempts++;
 
-  if (this.attempts > this._reconnectionAttempts) {
+  if (this.backoff.attempts >= this._reconnectionAttempts) {
     debug('reconnect failed');
+    this.backoff.reset();
     this.emitAll('reconnect_failed');
     this.reconnecting = false;
   } else {
-    var delay = this.attempts * this.reconnectionDelay();
-    delay = Math.min(delay, this.reconnectionDelayMax());
+    var delay = this.backoff.duration();
     debug('will wait %dms before reconnect attempt', delay);
 
     this.reconnecting = true;
@@ -522,8 +551,8 @@ Manager.prototype.reconnect = function(){
       if (self.skipReconnect) return;
 
       debug('attempting reconnect');
-      self.emitAll('reconnect_attempt', self.attempts);
-      self.emitAll('reconnecting', self.attempts);
+      self.emitAll('reconnect_attempt', self.backoff.attempts);
+      self.emitAll('reconnecting', self.backoff.attempts);
 
       // check again for the case socket closed in above events
       if (self.skipReconnect) return;
@@ -556,13 +585,14 @@ Manager.prototype.reconnect = function(){
  */
 
 Manager.prototype.onreconnect = function(){
-  var attempt = this.attempts;
-  this.attempts = 0;
+  var attempt = this.backoff.attempts;
   this.reconnecting = false;
+  this.backoff.reset();
+  this.updateSocketIds();
   this.emitAll('reconnect', attempt);
 };
 
-},{"./on":3,"./socket":4,"./url":5,"component-bind":6,"component-emitter":"component-emitter","debug":8,"engine.io-client":9,"indexof":38,"object-component":39,"socket.io-parser":42}],3:[function(require,module,exports){
+},{"./on":3,"./socket":4,"./url":5,"backo2":6,"component-bind":7,"component-emitter":"component-emitter","debug":9,"engine.io-client":10,"indexof":41,"object-component":42,"socket.io-parser":45}],3:[function(require,module,exports){
 
 /**
  * Module exports.
@@ -780,6 +810,7 @@ Socket.prototype.onclose = function(reason){
   debug('close (%s)', reason);
   this.connected = false;
   this.disconnected = true;
+  delete this.id;
   this.emit('disconnect', reason);
 };
 
@@ -974,7 +1005,7 @@ Socket.prototype.disconnect = function(){
   return this;
 };
 
-},{"./on":3,"component-bind":6,"component-emitter":"component-emitter","debug":8,"has-binary":36,"socket.io-parser":42,"to-array":46}],5:[function(require,module,exports){
+},{"./on":3,"component-bind":7,"component-emitter":"component-emitter","debug":9,"has-binary":39,"socket.io-parser":45,"to-array":49}],5:[function(require,module,exports){
 (function (global){
 
 /**
@@ -1004,7 +1035,7 @@ function url(uri, loc){
 
   // default to window.location
   var loc = loc || global.location;
-  if (null == uri) uri = loc.protocol + '//' + loc.hostname;
+  if (null == uri) uri = loc.protocol + '//' + loc.host;
 
   // relative path support
   if ('string' == typeof uri) {
@@ -1052,7 +1083,94 @@ function url(uri, loc){
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"debug":8,"parseuri":40}],6:[function(require,module,exports){
+},{"debug":9,"parseuri":43}],6:[function(require,module,exports){
+
+/**
+ * Expose `Backoff`.
+ */
+
+module.exports = Backoff;
+
+/**
+ * Initialize backoff timer with `opts`.
+ *
+ * - `min` initial timeout in milliseconds [100]
+ * - `max` max timeout [10000]
+ * - `jitter` [0]
+ * - `factor` [2]
+ *
+ * @param {Object} opts
+ * @api public
+ */
+
+function Backoff(opts) {
+  opts = opts || {};
+  this.ms = opts.min || 100;
+  this.max = opts.max || 10000;
+  this.factor = opts.factor || 2;
+  this.jitter = opts.jitter > 0 && opts.jitter <= 1 ? opts.jitter : 0;
+  this.attempts = 0;
+}
+
+/**
+ * Return the backoff duration.
+ *
+ * @return {Number}
+ * @api public
+ */
+
+Backoff.prototype.duration = function(){
+  var ms = this.ms * Math.pow(this.factor, this.attempts++);
+  if (this.jitter) {
+    var rand =  Math.random();
+    var deviation = Math.floor(rand * this.jitter * ms);
+    ms = (Math.floor(rand * 10) & 1) == 0  ? ms - deviation : ms + deviation;
+  }
+  return Math.min(ms, this.max) | 0;
+};
+
+/**
+ * Reset the number of attempts.
+ *
+ * @api public
+ */
+
+Backoff.prototype.reset = function(){
+  this.attempts = 0;
+};
+
+/**
+ * Set the minimum duration
+ *
+ * @api public
+ */
+
+Backoff.prototype.setMin = function(min){
+  this.ms = min;
+};
+
+/**
+ * Set the maximum duration
+ *
+ * @api public
+ */
+
+Backoff.prototype.setMax = function(max){
+  this.max = max;
+};
+
+/**
+ * Set the jitter
+ *
+ * @api public
+ */
+
+Backoff.prototype.setJitter = function(jitter){
+  this.jitter = jitter;
+};
+
+
+},{}],7:[function(require,module,exports){
 /**
  * Slice reference.
  */
@@ -1077,7 +1195,7 @@ module.exports = function(obj, fn){
   }
 };
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -1243,7 +1361,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 
 /**
  * Expose `debug()` as the module.
@@ -1382,11 +1500,11 @@ try {
   if (window.localStorage) debug.enable(localStorage.debug);
 } catch(e){}
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 
 module.exports =  require('./lib/');
 
-},{"./lib/":10}],10:[function(require,module,exports){
+},{"./lib/":11}],11:[function(require,module,exports){
 
 module.exports = require('./socket');
 
@@ -1398,7 +1516,7 @@ module.exports = require('./socket');
  */
 module.exports.parser = require('engine.io-parser');
 
-},{"./socket":11,"engine.io-parser":23}],11:[function(require,module,exports){
+},{"./socket":12,"engine.io-parser":24}],12:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies.
@@ -1459,7 +1577,12 @@ function Socket(uri, opts){
   if (opts.host) {
     var pieces = opts.host.split(':');
     opts.hostname = pieces.shift();
-    if (pieces.length) opts.port = pieces.pop();
+    if (pieces.length) {
+      opts.port = pieces.pop();
+    } else if (!opts.port) {
+      // if no port is specified manually, use the protocol default
+      opts.port = this.secure ? '443' : '80';
+    }
   }
 
   this.agent = opts.agent || false;
@@ -1484,9 +1607,19 @@ function Socket(uri, opts){
   this.callbackBuffer = [];
   this.policyPort = opts.policyPort || 843;
   this.rememberUpgrade = opts.rememberUpgrade || false;
-  this.open();
   this.binaryType = null;
   this.onlyBinaryUpgrades = opts.onlyBinaryUpgrades;
+
+  // SSL options for Node.js client
+  this.pfx = opts.pfx || null;
+  this.key = opts.key || null;
+  this.passphrase = opts.passphrase || null;
+  this.cert = opts.cert || null;
+  this.ca = opts.ca || null;
+  this.ciphers = opts.ciphers || null;
+  this.rejectUnauthorized = opts.rejectUnauthorized || null;
+
+  this.open();
 }
 
 Socket.priorWebsocketSuccess = false;
@@ -1550,7 +1683,14 @@ Socket.prototype.createTransport = function (name) {
     timestampRequests: this.timestampRequests,
     timestampParam: this.timestampParam,
     policyPort: this.policyPort,
-    socket: this
+    socket: this,
+    pfx: this.pfx,
+    key: this.key,
+    passphrase: this.passphrase,
+    cert: this.cert,
+    ca: this.ca,
+    ciphers: this.ciphers,
+    rejectUnauthorized: this.rejectUnauthorized
   });
 
   return transport;
@@ -2086,7 +2226,7 @@ Socket.prototype.filterUpgrades = function (upgrades) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./transport":12,"./transports":13,"component-emitter":"component-emitter","debug":20,"engine.io-parser":23,"indexof":38,"parsejson":32,"parseqs":33,"parseuri":34}],12:[function(require,module,exports){
+},{"./transport":13,"./transports":14,"component-emitter":"component-emitter","debug":21,"engine.io-parser":24,"indexof":41,"parsejson":35,"parseqs":36,"parseuri":37}],13:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -2119,6 +2259,15 @@ function Transport (opts) {
   this.agent = opts.agent || false;
   this.socket = opts.socket;
   this.enablesXDR = opts.enablesXDR;
+
+  // SSL options for Node.js client
+  this.pfx = opts.pfx;
+  this.key = opts.key;
+  this.passphrase = opts.passphrase;
+  this.cert = opts.cert;
+  this.ca = opts.ca;
+  this.ciphers = opts.ciphers;
+  this.rejectUnauthorized = opts.rejectUnauthorized;
 }
 
 /**
@@ -2238,7 +2387,7 @@ Transport.prototype.onClose = function () {
   this.emit('close');
 };
 
-},{"component-emitter":"component-emitter","engine.io-parser":23}],13:[function(require,module,exports){
+},{"component-emitter":"component-emitter","engine.io-parser":24}],14:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies
@@ -2296,7 +2445,7 @@ function polling(opts){
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./polling-jsonp":14,"./polling-xhr":15,"./websocket":17,"xmlhttprequest":18}],14:[function(require,module,exports){
+},{"./polling-jsonp":15,"./polling-xhr":16,"./websocket":18,"xmlhttprequest":19}],15:[function(require,module,exports){
 (function (global){
 
 /**
@@ -2534,7 +2683,7 @@ JSONPPolling.prototype.doWrite = function (data, fn) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./polling":16,"component-inherit":19}],15:[function(require,module,exports){
+},{"./polling":17,"component-inherit":20}],16:[function(require,module,exports){
 (function (global){
 /**
  * Module requirements.
@@ -2611,6 +2760,16 @@ XHR.prototype.request = function(opts){
   opts.agent = this.agent || false;
   opts.supportsBinary = this.supportsBinary;
   opts.enablesXDR = this.enablesXDR;
+
+  // SSL options for Node.js client
+  opts.pfx = this.pfx;
+  opts.key = this.key;
+  opts.passphrase = this.passphrase;
+  opts.cert = this.cert;
+  opts.ca = this.ca;
+  opts.ciphers = this.ciphers;
+  opts.rejectUnauthorized = this.rejectUnauthorized;
+
   return new Request(opts);
 };
 
@@ -2670,6 +2829,16 @@ function Request(opts){
   this.isBinary = opts.isBinary;
   this.supportsBinary = opts.supportsBinary;
   this.enablesXDR = opts.enablesXDR;
+
+  // SSL options for Node.js client
+  this.pfx = opts.pfx;
+  this.key = opts.key;
+  this.passphrase = opts.passphrase;
+  this.cert = opts.cert;
+  this.ca = opts.ca;
+  this.ciphers = opts.ciphers;
+  this.rejectUnauthorized = opts.rejectUnauthorized;
+
   this.create();
 }
 
@@ -2686,7 +2855,18 @@ Emitter(Request.prototype);
  */
 
 Request.prototype.create = function(){
-  var xhr = this.xhr = new XMLHttpRequest({ agent: this.agent, xdomain: this.xd, xscheme: this.xs, enablesXDR: this.enablesXDR });
+  var opts = { agent: this.agent, xdomain: this.xd, xscheme: this.xs, enablesXDR: this.enablesXDR };
+
+  // SSL options for Node.js client
+  opts.pfx = this.pfx;
+  opts.key = this.key;
+  opts.passphrase = this.passphrase;
+  opts.cert = this.cert;
+  opts.ca = this.ca;
+  opts.ciphers = this.ciphers;
+  opts.rejectUnauthorized = this.rejectUnauthorized;
+
+  var xhr = this.xhr = new XMLHttpRequest(opts);
   var self = this;
 
   try {
@@ -2783,7 +2963,7 @@ Request.prototype.onData = function(data){
 
 Request.prototype.onError = function(err){
   this.emit('error', err);
-  this.cleanup();
+  this.cleanup(true);
 };
 
 /**
@@ -2792,7 +2972,7 @@ Request.prototype.onError = function(err){
  * @api private
  */
 
-Request.prototype.cleanup = function(){
+Request.prototype.cleanup = function(fromError){
   if ('undefined' == typeof this.xhr || null === this.xhr) {
     return;
   }
@@ -2803,9 +2983,11 @@ Request.prototype.cleanup = function(){
     this.xhr.onreadystatechange = empty;
   }
 
-  try {
-    this.xhr.abort();
-  } catch(e) {}
+  if (fromError) {
+    try {
+      this.xhr.abort();
+    } catch(e) {}
+  }
 
   if (global.document) {
     delete Request.requests[this.index];
@@ -2890,7 +3072,7 @@ function unloadHandler() {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./polling":16,"component-emitter":"component-emitter","component-inherit":19,"debug":20,"xmlhttprequest":18}],16:[function(require,module,exports){
+},{"./polling":17,"component-emitter":"component-emitter","component-inherit":20,"debug":21,"xmlhttprequest":19}],17:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -3137,7 +3319,7 @@ Polling.prototype.uri = function(){
   return schema + '://' + this.hostname + port + this.path + query;
 };
 
-},{"../transport":12,"component-inherit":19,"debug":20,"engine.io-parser":23,"parseqs":33,"xmlhttprequest":18}],17:[function(require,module,exports){
+},{"../transport":13,"component-inherit":20,"debug":21,"engine.io-parser":24,"parseqs":36,"xmlhttprequest":19}],18:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -3213,6 +3395,15 @@ WS.prototype.doOpen = function(){
   var uri = this.uri();
   var protocols = void(0);
   var opts = { agent: this.agent };
+
+  // SSL options for Node.js client
+  opts.pfx = this.pfx;
+  opts.key = this.key;
+  opts.passphrase = this.passphrase;
+  opts.cert = this.cert;
+  opts.ca = this.ca;
+  opts.ciphers = this.ciphers;
+  opts.rejectUnauthorized = this.rejectUnauthorized;
 
   this.ws = new WebSocket(uri, protocols, opts);
 
@@ -3368,7 +3559,7 @@ WS.prototype.check = function(){
   return !!WebSocket && !('__initialize' in WebSocket && this.name === WS.prototype.name);
 };
 
-},{"../transport":12,"component-inherit":19,"debug":20,"engine.io-parser":23,"parseqs":33,"ws":35}],18:[function(require,module,exports){
+},{"../transport":13,"component-inherit":20,"debug":21,"engine.io-parser":24,"parseqs":36,"ws":38}],19:[function(require,module,exports){
 // browser shim for xmlhttprequest module
 var hasCORS = require('has-cors');
 
@@ -3406,7 +3597,7 @@ module.exports = function(opts) {
   }
 }
 
-},{"has-cors":30}],19:[function(require,module,exports){
+},{"has-cors":33}],20:[function(require,module,exports){
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -3414,7 +3605,7 @@ module.exports = function(a, b){
   a.prototype = new fn;
   a.prototype.constructor = a;
 };
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 
 /**
  * This is the web browser implementation of `debug()`.
@@ -3563,7 +3754,7 @@ function load() {
 
 exports.enable(load());
 
-},{"./debug":21}],21:[function(require,module,exports){
+},{"./debug":22}],22:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -3762,7 +3953,7 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":22}],22:[function(require,module,exports){
+},{"ms":23}],23:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -3875,13 +4066,14 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's';
 }
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies.
  */
 
 var keys = require('./keys');
+var hasBinary = require('has-binary');
 var sliceBuffer = require('arraybuffer.slice');
 var base64encoder = require('base64-arraybuffer');
 var after = require('after');
@@ -3895,6 +4087,20 @@ var utf8 = require('utf8');
  */
 
 var isAndroid = navigator.userAgent.match(/Android/i);
+
+/**
+ * Check if we are running in PhantomJS.
+ * Uploading a Blob with PhantomJS does not work correctly, as reported here:
+ * https://github.com/ariya/phantomjs/issues/11395
+ * @type boolean
+ */
+var isPhantomJS = /PhantomJS/i.test(navigator.userAgent);
+
+/**
+ * When true, avoids using Blobs to encode payloads.
+ * @type boolean
+ */
+var dontSendBlobs = isAndroid || isPhantomJS;
 
 /**
  * Current protocol version.
@@ -3967,6 +4173,11 @@ exports.encodePacket = function (packet, supportsBinary, utf8encode, callback) {
     return encodeBlob(packet, supportsBinary, callback);
   }
 
+  // might be an object with { base64: true, data: dataAsBase64String }
+  if (data && data.base64) {
+    return encodeBase64Object(packet, callback);
+  }
+
   // Sending data as a utf-8 string
   var encoded = packets[packet.type];
 
@@ -3978,6 +4189,12 @@ exports.encodePacket = function (packet, supportsBinary, utf8encode, callback) {
   return callback('' + encoded);
 
 };
+
+function encodeBase64Object(packet, callback) {
+  // packet data is an object { base64: true, data: dataAsBase64String }
+  var message = 'b' + exports.packets[packet.type] + packet.data.data;
+  return callback(message);
+}
 
 /**
  * Encode packet helpers for binary types
@@ -4018,7 +4235,7 @@ function encodeBlob(packet, supportsBinary, callback) {
     return exports.encodeBase64Packet(packet, callback);
   }
 
-  if (isAndroid) {
+  if (dontSendBlobs) {
     return encodeBlobAsArrayBuffer(packet, supportsBinary, callback);
   }
 
@@ -4150,8 +4367,10 @@ exports.encodePayload = function (packets, supportsBinary, callback) {
     supportsBinary = null;
   }
 
-  if (supportsBinary) {
-    if (Blob && !isAndroid) {
+  var isBinary = hasBinary(packets);
+
+  if (supportsBinary && isBinary) {
+    if (Blob && !dontSendBlobs) {
       return exports.encodePayloadAsBlob(packets, callback);
     }
 
@@ -4167,7 +4386,7 @@ exports.encodePayload = function (packets, supportsBinary, callback) {
   }
 
   function encodeOne(packet, doneCallback) {
-    exports.encodePacket(packet, supportsBinary, true, function(message) {
+    exports.encodePacket(packet, !isBinary ? false : supportsBinary, true, function(message) {
       doneCallback(null, setLengthHeader(message));
     });
   }
@@ -4446,7 +4665,7 @@ exports.decodePayloadAsBinary = function (data, binaryType, callback) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./keys":24,"after":25,"arraybuffer.slice":26,"base64-arraybuffer":27,"blob":28,"utf8":29}],24:[function(require,module,exports){
+},{"./keys":25,"after":26,"arraybuffer.slice":27,"base64-arraybuffer":28,"blob":29,"has-binary":30,"utf8":32}],25:[function(require,module,exports){
 
 /**
  * Gets the keys for an object.
@@ -4467,7 +4686,7 @@ module.exports = Object.keys || function keys (obj){
   return arr;
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 module.exports = after
 
 function after(count, callback, err_cb) {
@@ -4497,7 +4716,7 @@ function after(count, callback, err_cb) {
 
 function noop() {}
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /**
  * An abstraction for slicing an arraybuffer even when
  * ArrayBuffer.prototype.slice is not supported
@@ -4528,7 +4747,7 @@ module.exports = function(arraybuffer, start, end) {
   return result.buffer;
 };
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 /*
  * base64-arraybuffer
  * https://github.com/niklasvh/base64-arraybuffer
@@ -4589,7 +4808,7 @@ module.exports = function(arraybuffer, start, end) {
   };
 })("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 (function (global){
 /**
  * Create a blob builder even when vendor prefixes exist
@@ -4643,7 +4862,75 @@ module.exports = (function() {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
+(function (global){
+
+/*
+ * Module requirements.
+ */
+
+var isArray = require('isarray');
+
+/**
+ * Module exports.
+ */
+
+module.exports = hasBinary;
+
+/**
+ * Checks for binary data.
+ *
+ * Right now only Buffer and ArrayBuffer are supported..
+ *
+ * @param {Object} anything
+ * @api public
+ */
+
+function hasBinary(data) {
+
+  function _hasBinary(obj) {
+    if (!obj) return false;
+
+    if ( (global.Buffer && global.Buffer.isBuffer(obj)) ||
+         (global.ArrayBuffer && obj instanceof ArrayBuffer) ||
+         (global.Blob && obj instanceof Blob) ||
+         (global.File && obj instanceof File)
+        ) {
+      return true;
+    }
+
+    if (isArray(obj)) {
+      for (var i = 0; i < obj.length; i++) {
+          if (_hasBinary(obj[i])) {
+              return true;
+          }
+      }
+    } else if (obj && 'object' == typeof obj) {
+      if (obj.toJSON) {
+        obj = obj.toJSON();
+      }
+
+      for (var key in obj) {
+        if (obj.hasOwnProperty(key) && _hasBinary(obj[key])) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  return _hasBinary(data);
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{"isarray":31}],31:[function(require,module,exports){
+module.exports = Array.isArray || function (arr) {
+  return Object.prototype.toString.call(arr) == '[object Array]';
+};
+
+},{}],32:[function(require,module,exports){
 (function (global){
 /*! http://mths.be/utf8js v2.0.0 by @mathias */
 ;(function(root) {
@@ -4887,7 +5174,7 @@ module.exports = (function() {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],30:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -4912,7 +5199,7 @@ try {
   module.exports = false;
 }
 
-},{"global":31}],31:[function(require,module,exports){
+},{"global":34}],34:[function(require,module,exports){
 
 /**
  * Returns `this`. Execute this without a "context" (i.e. without it being
@@ -4922,7 +5209,7 @@ try {
 
 module.exports = (function () { return this; })();
 
-},{}],32:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 (function (global){
 /**
  * JSON parse.
@@ -4958,7 +5245,7 @@ module.exports = function parsejson(data) {
 };
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],33:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 /**
  * Compiles a querystring
  * Returns string representation of the object
@@ -4997,7 +5284,7 @@ exports.decode = function(qs){
   return qry;
 };
 
-},{}],34:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 /**
  * Parses an URI
  *
@@ -5038,7 +5325,7 @@ module.exports = function parseuri(str) {
     return uri;
 };
 
-},{}],35:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -5083,7 +5370,7 @@ function ws(uri, protocols, opts) {
 
 if (WebSocket) ws.prototype = WebSocket.prototype;
 
-},{}],36:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 (function (global){
 
 /*
@@ -5132,7 +5419,7 @@ function hasBinary(data) {
       }
 
       for (var key in obj) {
-        if (obj.hasOwnProperty(key) && _hasBinary(obj[key])) {
+        if (Object.prototype.hasOwnProperty.call(obj, key) && _hasBinary(obj[key])) {
           return true;
         }
       }
@@ -5146,12 +5433,9 @@ function hasBinary(data) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"isarray":37}],37:[function(require,module,exports){
-module.exports = Array.isArray || function (arr) {
-  return Object.prototype.toString.call(arr) == '[object Array]';
-};
-
-},{}],38:[function(require,module,exports){
+},{"isarray":40}],40:[function(require,module,exports){
+arguments[4][31][0].apply(exports,arguments)
+},{"dup":31}],41:[function(require,module,exports){
 
 var indexOf = [].indexOf;
 
@@ -5162,7 +5446,7 @@ module.exports = function(arr, obj){
   }
   return -1;
 };
-},{}],39:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 
 /**
  * HOP ref.
@@ -5247,7 +5531,7 @@ exports.length = function(obj){
 exports.isEmpty = function(obj){
   return 0 == exports.length(obj);
 };
-},{}],40:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 /**
  * Parses an URI
  *
@@ -5274,7 +5558,7 @@ module.exports = function parseuri(str) {
   return uri;
 };
 
-},{}],41:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 (function (global){
 /*global Blob,File*/
 
@@ -5420,7 +5704,7 @@ exports.removeBlobs = function(data, callback) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./is-buffer":43,"isarray":44}],42:[function(require,module,exports){
+},{"./is-buffer":46,"isarray":47}],45:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -5663,7 +5947,7 @@ Decoder.prototype.add = function(obj) {
       this.reconstructor = new BinaryReconstructor(packet);
 
       // no attachments, labeled binary but no binary data to follow
-      if (this.reconstructor.reconPack.attachments == 0) {
+      if (this.reconstructor.reconPack.attachments === 0) {
         this.emit('decoded', packet);
       }
     } else { // non-binary full packet
@@ -5704,11 +5988,15 @@ function decodeString(str) {
 
   // look up attachments if type binary
   if (exports.BINARY_EVENT == p.type || exports.BINARY_ACK == p.type) {
-    p.attachments = '';
+    var buf = '';
     while (str.charAt(++i) != '-') {
-      p.attachments += str.charAt(i);
+      buf += str.charAt(i);
+      if (i + 1 == str.length) break;
     }
-    p.attachments = Number(p.attachments);
+    if (buf != Number(buf) || str.charAt(i) != '-') {
+      throw new Error('Illegal attachments');
+    }
+    p.attachments = Number(buf);
   }
 
   // look up namespace (if any)
@@ -5726,7 +6014,7 @@ function decodeString(str) {
 
   // look up id
   var next = str.charAt(i + 1);
-  if ('' != next && Number(next) == next) {
+  if ('' !== next && Number(next) == next) {
     p.id = '';
     while (++i) {
       var c = str.charAt(i);
@@ -5818,7 +6106,7 @@ function error(data){
   };
 }
 
-},{"./binary":41,"./is-buffer":43,"component-emitter":"component-emitter","debug":8,"isarray":44,"json3":45}],43:[function(require,module,exports){
+},{"./binary":44,"./is-buffer":46,"component-emitter":"component-emitter","debug":9,"isarray":47,"json3":48}],46:[function(require,module,exports){
 (function (global){
 
 module.exports = isBuf;
@@ -5836,9 +6124,9 @@ function isBuf(obj) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{}],44:[function(require,module,exports){
-arguments[4][37][0].apply(exports,arguments)
-},{"dup":37}],45:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
+arguments[4][31][0].apply(exports,arguments)
+},{"dup":31}],48:[function(require,module,exports){
 /*! JSON v3.2.6 | http://bestiejs.github.io/json3 | Copyright 2012-2013, Kit Cambridge | http://kit.mit-license.org */
 ;(function (window) {
   // Convenience aliases.
@@ -6701,7 +6989,7 @@ arguments[4][37][0].apply(exports,arguments)
   }
 }(this));
 
-},{}],46:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 module.exports = toArray
 
 function toArray(list, index) {
@@ -6716,9 +7004,9 @@ function toArray(list, index) {
     return array
 }
 
-},{}],47:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 
-},{}],48:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -7905,9 +8193,170 @@ process.umask = function() { return 0; };
 
 }).call(this,require('_process'))
 
-},{"_process":48}],"component-emitter":[function(require,module,exports){
-arguments[4][7][0].apply(exports,arguments)
-},{"dup":7}],"hammerjs":[function(require,module,exports){
+},{"_process":51}],"component-emitter":[function(require,module,exports){
+
+/**
+ * Expose `Emitter`.
+ */
+
+module.exports = Emitter;
+
+/**
+ * Initialize a new `Emitter`.
+ *
+ * @api public
+ */
+
+function Emitter(obj) {
+  if (obj) return mixin(obj);
+};
+
+/**
+ * Mixin the emitter properties.
+ *
+ * @param {Object} obj
+ * @return {Object}
+ * @api private
+ */
+
+function mixin(obj) {
+  for (var key in Emitter.prototype) {
+    obj[key] = Emitter.prototype[key];
+  }
+  return obj;
+}
+
+/**
+ * Listen on the given `event` with `fn`.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.on =
+Emitter.prototype.addEventListener = function(event, fn){
+  this._callbacks = this._callbacks || {};
+  (this._callbacks['$' + event] = this._callbacks['$' + event] || [])
+    .push(fn);
+  return this;
+};
+
+/**
+ * Adds an `event` listener that will be invoked a single
+ * time then automatically removed.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.once = function(event, fn){
+  function on() {
+    this.off(event, on);
+    fn.apply(this, arguments);
+  }
+
+  on.fn = fn;
+  this.on(event, on);
+  return this;
+};
+
+/**
+ * Remove the given callback for `event` or all
+ * registered callbacks.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.off =
+Emitter.prototype.removeListener =
+Emitter.prototype.removeAllListeners =
+Emitter.prototype.removeEventListener = function(event, fn){
+  this._callbacks = this._callbacks || {};
+
+  // all
+  if (0 == arguments.length) {
+    this._callbacks = {};
+    return this;
+  }
+
+  // specific event
+  var callbacks = this._callbacks['$' + event];
+  if (!callbacks) return this;
+
+  // remove all handlers
+  if (1 == arguments.length) {
+    delete this._callbacks['$' + event];
+    return this;
+  }
+
+  // remove specific handler
+  var cb;
+  for (var i = 0; i < callbacks.length; i++) {
+    cb = callbacks[i];
+    if (cb === fn || cb.fn === fn) {
+      callbacks.splice(i, 1);
+      break;
+    }
+  }
+  return this;
+};
+
+/**
+ * Emit `event` with the given args.
+ *
+ * @param {String} event
+ * @param {Mixed} ...
+ * @return {Emitter}
+ */
+
+Emitter.prototype.emit = function(event){
+  this._callbacks = this._callbacks || {};
+  var args = [].slice.call(arguments, 1)
+    , callbacks = this._callbacks['$' + event];
+
+  if (callbacks) {
+    callbacks = callbacks.slice(0);
+    for (var i = 0, len = callbacks.length; i < len; ++i) {
+      callbacks[i].apply(this, args);
+    }
+  }
+
+  return this;
+};
+
+/**
+ * Return array of callbacks for `event`.
+ *
+ * @param {String} event
+ * @return {Array}
+ * @api public
+ */
+
+Emitter.prototype.listeners = function(event){
+  this._callbacks = this._callbacks || {};
+  return this._callbacks['$' + event] || [];
+};
+
+/**
+ * Check if this emitter has `event` handlers.
+ *
+ * @param {String} event
+ * @return {Boolean}
+ * @api public
+ */
+
+Emitter.prototype.hasListeners = function(event){
+  return !! this.listeners(event).length;
+};
+
+},{}],"hammerjs":[function(require,module,exports){
 /*! Hammer.JS - v2.0.4 - 2014-09-28
  * http://hammerjs.github.io/
  *
@@ -10600,10 +11049,10 @@ var jQuery = require('jquery'),
     $ = jQuery;
 
 /* ========================================================================
- * Bootstrap: modal.js v3.3.1
+ * Bootstrap: modal.js v3.3.2
  * http://getbootstrap.com/javascript/#modals
  * ========================================================================
- * Copyright 2011-2014 Twitter, Inc.
+ * Copyright 2011-2015 Twitter, Inc.
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
@@ -10631,7 +11080,7 @@ var jQuery = require('jquery'),
     }
   }
 
-  Modal.VERSION  = '3.3.1'
+  Modal.VERSION  = '3.3.2'
 
   Modal.TRANSITION_DURATION = 300
   Modal.BACKDROP_TRANSITION_DURATION = 150
@@ -10925,10 +11374,10 @@ var jQuery = require('jquery'),
 }(jQuery);
 
 /* ========================================================================
- * Bootstrap: tab.js v3.3.1
+ * Bootstrap: tab.js v3.3.2
  * http://getbootstrap.com/javascript/#tabs
  * ========================================================================
- * Copyright 2011-2014 Twitter, Inc.
+ * Copyright 2011-2015 Twitter, Inc.
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
@@ -10943,7 +11392,7 @@ var jQuery = require('jquery'),
     this.element = $(element)
   }
 
-  Tab.VERSION = '3.3.1'
+  Tab.VERSION = '3.3.2'
 
   Tab.TRANSITION_DURATION = 150
 
@@ -11079,10 +11528,10 @@ var jQuery = require('jquery'),
 }(jQuery);
 
 /* ========================================================================
- * Bootstrap: transition.js v3.3.1
+ * Bootstrap: transition.js v3.3.2
  * http://getbootstrap.com/javascript/#transitions
  * ========================================================================
- * Copyright 2011-2014 Twitter, Inc.
+ * Copyright 2011-2015 Twitter, Inc.
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
@@ -20722,13 +21171,13 @@ return jQuery;
 (function (global){
 
 /*
- * KineticJS JavaScript Framework v5.1.9
+ * KineticJS JavaScript Framework v5.2.0
  * http://lavrton.github.io/KineticJS/
  * Licensed under the MIT or GPL Version 2 licenses.
- * Date: 2015-01-09
+ * Date: 2015-01-22
  *
  * Original work Copyright (C) 2011 - 2013 by Eric Rowell
- * Modified work Copyright 2015 Anton Lavrenov
+ * Modified work Copyright (C) 2014 - 2015 by Anton Lavrenov
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20758,7 +21207,7 @@ var Kinetic = {};
 
     Kinetic = {
         // public
-        version: '5.1.9',
+        version: '5.2.0',
 
         // private
         stages: [],
@@ -21232,13 +21681,15 @@ var Kinetic = {};
         },
         _addName: function(node, name) {
             if(name !== undefined) {
-                var names = name.split(/\W+/g);
+
+                var names = name.split(/\s/g);
                 for(var n = 0; n < names.length; n++) {
-                    if (names[n]) {
-                        if(this.names[names[n]] === undefined) {
-                            this.names[names[n]] = [];
+                    var subname = names[n];
+                    if (subname) {
+                        if(this.names[subname] === undefined) {
+                            this.names[subname] = [];
                         }
-                        this.names[names[n]].push(node);
+                        this.names[subname].push(node);
                     }
                 }
             }
@@ -21984,12 +22435,19 @@ var Kinetic = {};
                 console.warn(KINETIC_WARNING + str);
             }
         },
-        extend: function(c1, c2) {
-            for(var key in c2.prototype) {
-                if(!( key in c1.prototype)) {
-                    c1.prototype[key] = c2.prototype[key];
+        extend: function(child, parent) {
+                function ctor() {
+                    this.constructor = child;
                 }
-            }
+                ctor.prototype = parent.prototype;
+                var old_proto = child.prototype;
+                child.prototype = new ctor();
+                for (var key in old_proto) {
+                    if (old_proto.hasOwnProperty(key)) {
+                        child.prototype[key] = old_proto[key];
+                    }
+                }
+                child.__super__ = parent.prototype;
         },
         /**
          * adds methods to a constructor prototype
@@ -23326,17 +23784,6 @@ var Kinetic = {};
                     name: name,
                     handler: handler
                 });
-
-                // NOTE: this flag is set to true when any event handler is added, even non
-                // mouse or touch gesture events.  This improves performance for most
-                // cases where users aren't using events, but is still very light weight.  
-                // To ensure perfect accuracy, devs can explicitly set listening to false.
-                /*
-                if (name !== KINETIC) {
-                    this._listeningEnabled = true;
-                    this._clearSelfAndAncestorCache(LISTENING_ENABLED);
-                }
-                */
             }
 
             return this;
@@ -23517,7 +23964,7 @@ var Kinetic = {};
 
             if(config) {
                 for(key in config) {
-                    if (key === CHILDREN) {
+                    if (key === CHILDREN || config[key] instanceof Kinetic.Node) {
 
                     }
                     else {
@@ -23625,7 +24072,7 @@ var Kinetic = {};
         shouldDrawHit: function(canvas) {
             var layer = this.getLayer();
             return  (canvas && canvas.isCache) || (layer && layer.hitGraphEnabled())
-                && this.isListening() && this.isVisible() && !Kinetic.isDragging();
+                && this.isListening() && this.isVisible();
         },
         /**
          * show node
@@ -24823,6 +25270,7 @@ var Kinetic = {};
     /**
      * get/set offset x
      * @name offsetX
+     * @method
      * @memberof Kinetic.Node.prototype
      * @param {Number} x
      * @returns {Number}
@@ -24835,26 +25283,6 @@ var Kinetic = {};
      */
 
     Kinetic.Factory.addGetterSetter(Kinetic.Node, 'offsetY', 0);
-
-    /**
-     * get/set drag distance
-     * @name dragDistance
-     * @memberof Kinetic.Node.prototype
-     * @param {Number} distance
-     * @returns {Number}
-     * @example
-     * // get drag distance
-     * var dragDistance = node.dragDistance();
-     *
-     * // set distance
-     * // node starts dragging only if pointer moved more then 3 pixels
-     * node.dragDistance(3);
-     * // or set globally
-     * Kinetic.dragDistance = 3;
-     */
-
-    Kinetic.Factory.addSetter(Kinetic.Node, 'dragDistance');
-    Kinetic.Factory.addOverloadedGetterSetter(Kinetic.Node, 'dragDistance');
 
     /**
      * get/set offset y
@@ -24870,6 +25298,28 @@ var Kinetic = {};
      * // set offset y
      * node.offsetY(3);
      */
+
+    Kinetic.Factory.addSetter(Kinetic.Node, 'dragDistance');
+    Kinetic.Factory.addOverloadedGetterSetter(Kinetic.Node, 'dragDistance');
+
+    /**
+     * get/set drag distance
+     * @name dragDistance
+     * @method
+     * @memberof Kinetic.Node.prototype
+     * @param {Number} distance
+     * @returns {Number}
+     * @example
+     * // get drag distance
+     * var dragDistance = node.dragDistance();
+     *
+     * // set distance
+     * // node starts dragging only if pointer moved more then 3 pixels
+     * node.dragDistance(3);
+     * // or set globally
+     * Kinetic.dragDistance = 3;
+     */
+
 
     Kinetic.Factory.addSetter(Kinetic.Node, 'width', 0);
     Kinetic.Factory.addOverloadedGetterSetter(Kinetic.Node, 'width');
@@ -27982,7 +28432,7 @@ var Kinetic = {};
      * var dragBoundFunc = node.dragBoundFunc();
      *
      * // create vertical drag and drop
-     * node.dragBoundFunc(function(){
+     * node.dragBoundFunc(function(pos){
      *   return {
      *     x: this.getAbsolutePosition().x,
      *     y: pos.y
@@ -28131,6 +28581,11 @@ var Kinetic = {};
             this._fire('add', {
                 child: child
             });
+
+            // if node under drag we need to update drag animation
+            if (child.isDragging()) {
+                Kinetic.DD.anim.setLayers(child.getLayer());
+            }
 
             // chainable
             return this;
@@ -28370,8 +28825,10 @@ var Kinetic = {};
         },
         shouldDrawHit: function(canvas) {
             var layer = this.getLayer();
+            var dd = Kinetic.DD;
+            var layerUnderDrag = dd && Kinetic.isDragging() && (Kinetic.DD.anim.getLayers().indexOf(layer) !== -1);
             return  (canvas && canvas.isCache) || (layer && layer.hitGraphEnabled())
-                && this.isVisible() && !Kinetic.isDragging();
+                && this.isVisible() && !layerUnderDrag;
         }
     });
 
@@ -29203,6 +29660,9 @@ var Kinetic = {};
      *
      * // set fill color with rgba and make it 50% opaque
      * shape.fill('rgba(0,255,0,0.5');
+     *
+     * // shape without fill
+     * shape.fill(null);
      */
 
     Kinetic.Factory.addGetterSetter(Kinetic.Shape, 'fillRed', 0, Kinetic.Validators.RGBComponent);
@@ -30678,7 +31138,12 @@ var Kinetic = {};
          * @param {Number} [bounds.height]
          * @example
          * layer.clear();
-         * layer.clear(0, 0, 100, 100);
+         * layer.clear({
+         *   x : 0,
+         *   y : 0,
+         *   width : 100,
+         *   height : 100
+         * });
          */
         clear: function(bounds) {
             this.getContext().clear(bounds);
@@ -31014,7 +31479,12 @@ var Kinetic = {};
          * @param {Number} [bounds.height]
          * @example
          * layer.clear();
-         * layer.clear(0, 0, 100, 100);
+         * layer.clear({
+         *   x : 0,
+         *   y : 0,
+         *   width : 100,
+         *   height : 100
+         * });
          */
         clear: function(bounds) {
             this.getContext().clear(bounds);
@@ -31146,7 +31616,12 @@ var Kinetic = {};
          * @param {Number} [bounds.height]
          * @example
          * layer.clear();
-         * layer.clear(0, 0, 100, 100);
+         * layer.clear({
+         *   x : 0,
+         *   y : 0,
+         *   width : 100,
+         *   height : 100
+         * });
          */
         clear: function(bounds) {
             this.getContext().clear(bounds);
@@ -32635,7 +33110,8 @@ var Kinetic = {};
 
     Kinetic.Text.prototype = {
         ___init: function(config) {
-            var that = this;
+            config = config || {};
+            config.fill = config.fill || 'black';
 
             if (config.width === undefined) {
                 config.width = AUTO;
@@ -32653,7 +33129,7 @@ var Kinetic = {};
 
             // update text data for certain attr changes
             for(var n = 0; n < attrChangeListLen; n++) {
-                this.on(ATTR_CHANGE_LIST[n] + CHANGE_KINETIC, that._setTextData);
+                this.on(ATTR_CHANGE_LIST[n] + CHANGE_KINETIC, this._setTextData);
             }
 
             this._setTextData();
@@ -33167,6 +33643,10 @@ var Kinetic = {};
                 closed = this.getClosed(),
                 tp, len, n;
 
+            if (!length) {
+                return;
+            }
+
             context.beginPath();
             context.moveTo(points[0], points[1]);
 
@@ -33302,7 +33782,7 @@ var Kinetic = {};
      * line.tension(3);
      */
 
-    Kinetic.Factory.addGetterSetter(Kinetic.Line, 'points');
+    Kinetic.Factory.addGetterSetter(Kinetic.Line, 'points', []);
     /**
      * get/set points array
      * @name points
@@ -33489,6 +33969,7 @@ var Kinetic = {};
                 index = this.frameIndex(),
                 ix4 = index * 4,
                 set = this.getAnimations()[anim],
+                offsets = this.frameOffsets(),
                 x =      set[ix4 + 0],
                 y =      set[ix4 + 1],
                 width =  set[ix4 + 2],
@@ -33496,7 +33977,13 @@ var Kinetic = {};
                 image = this.getImage();
 
             if(image) {
-                context.drawImage(image, x, y, width, height, 0, 0, width, height);
+                if (offsets) {
+                    var offset = offsets[anim],
+                    ix2 = index * 2;
+                    context.drawImage(image, x, y, width, height, offset[ix2 + 0], offset[ix2 + 1], width, height);
+                } else {
+                    context.drawImage(image, x, y, width, height, 0, 0, width, height);
+                }
             }
         },
         _hitFunc: function(context) {
@@ -33504,11 +33991,18 @@ var Kinetic = {};
                 index = this.frameIndex(),
                 ix4 = index * 4,
                 set = this.getAnimations()[anim],
+                offsets = this.frameOffsets(),
                 width =  set[ix4 + 2],
                 height = set[ix4 + 3];
 
             context.beginPath();
-            context.rect(0, 0, width, height);
+            if (offsets) {
+                var offset = offsets[anim];
+                var ix2 = index * 2;
+                context.rect(offset[ix2 + 0], offset[ix2 + 1], width, height);
+            } else {
+                context.rect(0, 0, width, height);
+            }
             context.closePath();
             context.fillShape(this);
         },
@@ -33628,6 +34122,42 @@ var Kinetic = {};
      * });
      */
 
+    Kinetic.Factory.addGetterSetter(Kinetic.Sprite, 'frameOffsets');
+
+    /**
+    * get/set offsets map
+    * @name offsets
+    * @method
+    * @memberof Kinetic.Sprite.prototype
+    * @param {Object} offsets
+    * @returns {Object}
+    * @example
+    * // get offsets map
+    * var offsets = sprite.offsets();
+    *
+    * // set offsets map
+    * sprite.offsets({
+    *   standing: [
+    *     // x, y (6 frames)
+    *     0, 0,
+    *     0, 0,
+    *     5, 0,
+    *     0, 0,
+    *     0, 3,
+    *     2, 0
+    *   ],
+    *   kicking: [
+    *     // x, y (6 frames)
+    *     0, 5,
+    *     5, 0,
+    *     10, 0,
+    *     0, 0,
+    *     2, 1,
+    *     0, 0
+    *   ]
+    * });
+    */
+ 
     Kinetic.Factory.addGetterSetter(Kinetic.Sprite, 'image');
 
     /**
@@ -35780,9 +36310,9 @@ var Kinetic = {};
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"canvas":47,"jsdom":47}],"knockout":[function(require,module,exports){
+},{"canvas":50,"jsdom":50}],"knockout":[function(require,module,exports){
 /*!
- * Knockout JavaScript library v3.2.0
+ * Knockout JavaScript library v3.3.0
  * (c) Steven Sanderson - http://knockoutjs.com/
  * License: MIT (http://www.opensource.org/licenses/mit-license.php)
  */
@@ -35799,18 +36329,17 @@ var DEBUG=true;
         JSON = window["JSON"];
 (function(factory) {
     // Support three module loading scenarios
-    if (typeof require === 'function' && typeof exports === 'object' && typeof module === 'object') {
-        // [1] CommonJS/Node.js
-        var target = module['exports'] || exports; // module.exports is for Node.js
-        factory(target, require);
-    } else if (typeof define === 'function' && define['amd']) {
-        // [2] AMD anonymous module
+    if (typeof define === 'function' && define['amd']) {
+        // [1] AMD anonymous module
         define(['exports', 'require'], factory);
+    } else if (typeof require === 'function' && typeof exports === 'object' && typeof module === 'object') {
+        // [2] CommonJS/Node.js
+        factory(module['exports'] || exports);  // module.exports is for Node.js
     } else {
         // [3] No module loader (plain <script> tag) - put directly in global namespace
         factory(window['ko'] = {});
     }
-}(function(koExports, require){
+}(function(koExports, amdRequire){
 // Internally, all KO objects are attached to koExports (even the non-exported ones whose names will be minified by the closure compiler).
 // In the future, the following "ko" variable may be made distinct from "koExports" so that private objects are not externally reachable.
 var ko = typeof koExports !== 'undefined' ? koExports : {};
@@ -35829,7 +36358,7 @@ ko.exportSymbol = function(koPath, object) {
 ko.exportProperty = function(owner, publicName, object) {
     owner[publicName] = object;
 };
-ko.version = "3.2.0";
+ko.version = "3.3.0";
 
 ko.exportSymbol('version', ko.version);
 ko.utils = (function () {
@@ -35894,6 +36423,37 @@ ko.utils = (function () {
         if (eventType.toLowerCase() != "click") return false;
         var inputType = element.type;
         return (inputType == "checkbox") || (inputType == "radio");
+    }
+
+    // For details on the pattern for changing node classes
+    // see: https://github.com/knockout/knockout/issues/1597
+    var cssClassNameRegex = /\S+/g;
+
+    function toggleDomNodeCssClass(node, classNames, shouldHaveClass) {
+        var addOrRemoveFn;
+        if (classNames) {
+            if (typeof node.classList === 'object') {
+                addOrRemoveFn = node.classList[shouldHaveClass ? 'add' : 'remove'];
+                ko.utils.arrayForEach(classNames.match(cssClassNameRegex), function(className) {
+                    addOrRemoveFn.call(node.classList, className);
+                });
+            } else if (typeof node.className['baseVal'] === 'string') {
+                // SVG tag .classNames is an SVGAnimatedString instance
+                toggleObjectClassPropertyString(node.className, 'baseVal', classNames, shouldHaveClass);
+            } else {
+                // node.className ought to be a string.
+                toggleObjectClassPropertyString(node, 'className', classNames, shouldHaveClass);
+            }
+        }
+    }
+
+    function toggleObjectClassPropertyString(obj, prop, classNames, shouldHaveClass) {
+        // obj/prop is either a node/'className' or a SVGAnimatedString/'baseVal'.
+        var currentClassNames = obj[prop].match(cssClassNameRegex) || [];
+        ko.utils.arrayForEach(classNames.match(cssClassNameRegex), function(className) {
+            ko.utils.addOrRemoveItem(currentClassNames, className, shouldHaveClass);
+        });
+        obj[prop] = currentClassNames.join(" ");
     }
 
     return {
@@ -36009,8 +36569,9 @@ ko.utils = (function () {
             // Ensure it's a real array, as we're about to reparent the nodes and
             // we don't want the underlying collection to change while we're doing that.
             var nodesArray = ko.utils.makeArray(nodes);
+            var templateDocument = (nodesArray[0] && nodesArray[0].ownerDocument) || document;
 
-            var container = document.createElement('div');
+            var container = templateDocument.createElement('div');
             for (var i = 0, j = nodesArray.length; i < j; i++) {
                 container.appendChild(ko.cleanNode(nodesArray[i]));
             }
@@ -36066,7 +36627,7 @@ ko.utils = (function () {
 
                 // Rule [A]
                 while (continuousNodeArray.length && continuousNodeArray[0].parentNode !== parentNode)
-                    continuousNodeArray.shift();
+                    continuousNodeArray.splice(0, 1);
 
                 // Rule [B]
                 if (continuousNodeArray.length > 1) {
@@ -36195,16 +36756,7 @@ ko.utils = (function () {
             return ko.isObservable(value) ? value.peek() : value;
         },
 
-        toggleDomNodeCssClass: function (node, classNames, shouldHaveClass) {
-            if (classNames) {
-                var cssClassNameRegex = /\S+/g,
-                    currentClassNames = node.className.match(cssClassNameRegex) || [];
-                ko.utils.arrayForEach(classNames.match(cssClassNameRegex), function(className) {
-                    ko.utils.addOrRemoveItem(currentClassNames, className, shouldHaveClass);
-                });
-                node.className = currentClassNames.join(" ");
-            }
-        },
+        toggleDomNodeCssClass: toggleDomNodeCssClass,
 
         setTextContent: function(element, textContent) {
             var value = ko.utils.unwrapObservable(textContent);
@@ -36378,16 +36930,26 @@ ko.exportSymbol('utils.triggerEvent', ko.utils.triggerEvent);
 ko.exportSymbol('utils.unwrapObservable', ko.utils.unwrapObservable);
 ko.exportSymbol('utils.objectForEach', ko.utils.objectForEach);
 ko.exportSymbol('utils.addOrRemoveItem', ko.utils.addOrRemoveItem);
+ko.exportSymbol('utils.setTextContent', ko.utils.setTextContent);
 ko.exportSymbol('unwrap', ko.utils.unwrapObservable); // Convenient shorthand, because this is used so commonly
 
 if (!Function.prototype['bind']) {
     // Function.prototype.bind is a standard part of ECMAScript 5th Edition (December 2009, http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-262.pdf)
     // In case the browser doesn't implement it natively, provide a JavaScript implementation. This implementation is based on the one in prototype.js
     Function.prototype['bind'] = function (object) {
-        var originalFunction = this, args = Array.prototype.slice.call(arguments), object = args.shift();
-        return function () {
-            return originalFunction.apply(object, args.concat(Array.prototype.slice.call(arguments)));
-        };
+        var originalFunction = this;
+        if (arguments.length === 1) {
+            return function () {
+                return originalFunction.apply(object, arguments);
+            };
+        } else {
+            var partialArgs = Array.prototype.slice.call(arguments, 1);
+            return function () {
+                var args = partialArgs.slice(0);
+                args.push.apply(args, arguments);
+                return originalFunction.apply(object, args);
+            };
+        }
     };
 }
 
@@ -36534,7 +37096,7 @@ ko.utils.domNodeDisposal = new (function () {
             if (jQueryInstance && (typeof jQueryInstance['cleanData'] == "function"))
                 jQueryInstance['cleanData']([node]);
         }
-    }
+    };
 })();
 ko.cleanNode = ko.utils.domNodeDisposal.cleanNode; // Shorthand name for convenience
 ko.removeNode = ko.utils.domNodeDisposal.removeNode; // Shorthand name for convenience
@@ -36546,7 +37108,10 @@ ko.exportSymbol('utils.domNodeDisposal.removeDisposeCallback', ko.utils.domNodeD
 (function () {
     var leadingCommentRegex = /^(\s*)<!--(.*?)-->/;
 
-    function simpleHtmlParse(html) {
+    function simpleHtmlParse(html, documentContext) {
+        documentContext || (documentContext = document);
+        var windowContext = documentContext['parentWindow'] || documentContext['defaultView'] || window;
+
         // Based on jQuery's "clean" function, but only accounting for table-related elements.
         // If you have referenced jQuery, this won't be used anyway - KO will use jQuery's "clean" function directly
 
@@ -36556,7 +37121,7 @@ ko.exportSymbol('utils.domNodeDisposal.removeDisposeCallback', ko.utils.domNodeD
         // (possibly a text node) in front of the comment. So, KO does not attempt to workaround this IE issue automatically at present.
 
         // Trim whitespace, otherwise indexOf won't work as expected
-        var tags = ko.utils.stringTrim(html).toLowerCase(), div = document.createElement("div");
+        var tags = ko.utils.stringTrim(html).toLowerCase(), div = documentContext.createElement("div");
 
         // Finds the first match from the left column, and returns the corresponding "wrap" data from the right column
         var wrap = tags.match(/^<(thead|tbody|tfoot)/)              && [1, "<table>", "</table>"] ||
@@ -36567,8 +37132,8 @@ ko.exportSymbol('utils.domNodeDisposal.removeDisposeCallback', ko.utils.domNodeD
         // Go to html and back, then peel off extra wrappers
         // Note that we always prefix with some dummy text, because otherwise, IE<9 will strip out leading comment nodes in descendants. Total madness.
         var markup = "ignored<div>" + wrap[1] + html + wrap[2] + "</div>";
-        if (typeof window['innerShiv'] == "function") {
-            div.appendChild(window['innerShiv'](markup));
+        if (typeof windowContext['innerShiv'] == "function") {
+            div.appendChild(windowContext['innerShiv'](markup));
         } else {
             div.innerHTML = markup;
         }
@@ -36580,13 +37145,13 @@ ko.exportSymbol('utils.domNodeDisposal.removeDisposeCallback', ko.utils.domNodeD
         return ko.utils.makeArray(div.lastChild.childNodes);
     }
 
-    function jQueryHtmlParse(html) {
+    function jQueryHtmlParse(html, documentContext) {
         // jQuery's "parseHTML" function was introduced in jQuery 1.8.0 and is a documented public API.
         if (jQueryInstance['parseHTML']) {
-            return jQueryInstance['parseHTML'](html) || []; // Ensure we always return an array and never null
+            return jQueryInstance['parseHTML'](html, documentContext) || []; // Ensure we always return an array and never null
         } else {
             // For jQuery < 1.8.0, we fall back on the undocumented internal "clean" function.
-            var elems = jQueryInstance['clean']([html]);
+            var elems = jQueryInstance['clean']([html], documentContext);
 
             // As of jQuery 1.7.1, jQuery parses the HTML by appending it to some dummy parent nodes held in an in-memory document fragment.
             // Unfortunately, it never clears the dummy parent nodes from the document fragment, so it leaks memory over time.
@@ -36605,9 +37170,9 @@ ko.exportSymbol('utils.domNodeDisposal.removeDisposeCallback', ko.utils.domNodeD
         }
     }
 
-    ko.utils.parseHtmlFragment = function(html) {
-        return jQueryInstance ? jQueryHtmlParse(html)   // As below, benefit from jQuery's optimisations where possible
-                              : simpleHtmlParse(html);  // ... otherwise, this simple logic will do in most common cases.
+    ko.utils.parseHtmlFragment = function(html, documentContext) {
+        return jQueryInstance ? jQueryHtmlParse(html, documentContext)   // As below, benefit from jQuery's optimisations where possible
+                              : simpleHtmlParse(html, documentContext);  // ... otherwise, this simple logic will do in most common cases.
     };
 
     ko.utils.setHtml = function(node, html) {
@@ -36627,7 +37192,7 @@ ko.exportSymbol('utils.domNodeDisposal.removeDisposeCallback', ko.utils.domNodeD
                 jQueryInstance(node)['html'](html);
             } else {
                 // ... otherwise, use KO's own parsing logic.
-                var parsedNodes = ko.utils.parseHtmlFragment(html);
+                var parsedNodes = ko.utils.parseHtmlFragment(html, node.ownerDocument);
                 for (var i = 0; i < parsedNodes.length; i++)
                     node.appendChild(parsedNodes[i]);
             }
@@ -36794,7 +37359,7 @@ function applyExtenders(requestedExtenders) {
 ko.exportSymbol('extenders', ko.extenders);
 
 ko.subscription = function (target, callback, disposeCallback) {
-    this.target = target;
+    this._target = target;
     this.callback = callback;
     this.disposeCallback = disposeCallback;
     this.isDisposed = false;
@@ -36808,6 +37373,7 @@ ko.subscription.prototype.dispose = function () {
 ko.subscribable = function () {
     ko.utils.setPrototypeOfOrExtend(this, ko.subscribable['fn']);
     this._subscriptions = {};
+    this._versionNumber = 1;
 }
 
 var defaultEvent = "change";
@@ -36837,6 +37403,9 @@ var ko_subscribable_fn = {
 
     "notifySubscribers": function (valueToNotify, event) {
         event = event || defaultEvent;
+        if (event === defaultEvent) {
+            this.updateVersion();
+        }
         if (this.hasSubscriptionsForEvent(event)) {
             try {
                 ko.dependencyDetection.begin(); // Begin suppressing dependency detection (by setting the top frame to undefined)
@@ -36850,6 +37419,18 @@ var ko_subscribable_fn = {
                 ko.dependencyDetection.end(); // End suppressing dependency detection
             }
         }
+    },
+
+    getVersion: function () {
+        return this._versionNumber;
+    },
+
+    hasChanged: function (versionToCheck) {
+        return this.getVersion() !== versionToCheck;
+    },
+
+    updateVersion: function () {
+        ++this._versionNumber;
     },
 
     limit: function(limitFunction) {
@@ -36898,12 +37479,16 @@ var ko_subscribable_fn = {
         return this._subscriptions[event] && this._subscriptions[event].length;
     },
 
-    getSubscriptionsCount: function () {
-        var total = 0;
-        ko.utils.objectForEach(this._subscriptions, function(eventName, subscriptions) {
-            total += subscriptions.length;
-        });
-        return total;
+    getSubscriptionsCount: function (event) {
+        if (event) {
+            return this._subscriptions[event] && this._subscriptions[event].length || 0;
+        } else {
+            var total = 0;
+            ko.utils.objectForEach(this._subscriptions, function(eventName, subscriptions) {
+                total += subscriptions.length;
+            });
+            return total;
+        }
     },
 
     isDifferent: function(oldValue, newValue) {
@@ -36996,6 +37581,8 @@ ko.exportSymbol('computedContext', ko.computedContext);
 ko.exportSymbol('computedContext.getDependenciesCount', ko.computedContext.getDependenciesCount);
 ko.exportSymbol('computedContext.isInitial', ko.computedContext.isInitial);
 ko.exportSymbol('computedContext.isSleeping', ko.computedContext.isSleeping);
+
+ko.exportSymbol('ignoreDependencies', ko.ignoreDependencies = ko.dependencyDetection.ignore);
 ko.observable = function (initialValue) {
     var _latestValue = initialValue;
 
@@ -37201,15 +37788,27 @@ ko.extenders['trackArrayChanges'] = function(target) {
     }
     var trackingChanges = false,
         cachedDiff = null,
+        arrayChangeSubscription,
         pendingNotifications = 0,
-        underlyingSubscribeFunction = target.subscribe;
+        underlyingBeforeSubscriptionAddFunction = target.beforeSubscriptionAdd,
+        underlyingAfterSubscriptionRemoveFunction = target.afterSubscriptionRemove;
 
-    // Intercept "subscribe" calls, and for array change events, ensure change tracking is enabled
-    target.subscribe = target['subscribe'] = function(callback, callbackTarget, event) {
+    // Watch "subscribe" calls, and for array change events, ensure change tracking is enabled
+    target.beforeSubscriptionAdd = function (event) {
+        if (underlyingBeforeSubscriptionAddFunction)
+            underlyingBeforeSubscriptionAddFunction.call(target, event);
         if (event === arrayChangeEventName) {
             trackChanges();
         }
-        return underlyingSubscribeFunction.apply(this, arguments);
+    };
+    // Watch "dispose" calls, and for array change events, ensure change tracking is disabled when all are disposed
+    target.afterSubscriptionRemove = function (event) {
+        if (underlyingAfterSubscriptionRemoveFunction)
+            underlyingAfterSubscriptionRemoveFunction.call(target, event);
+        if (event === arrayChangeEventName && !target.hasSubscriptionsForEvent(arrayChangeEventName)) {
+            arrayChangeSubscription.dispose();
+            trackingChanges = false;
+        }
     };
 
     function trackChanges() {
@@ -37233,22 +37832,23 @@ ko.extenders['trackArrayChanges'] = function(target) {
         // change it's possible to produce a diff
         var previousContents = [].concat(target.peek() || []);
         cachedDiff = null;
-        target.subscribe(function(currentContents) {
+        arrayChangeSubscription = target.subscribe(function(currentContents) {
             // Make a copy of the current contents and ensure it's an array
             currentContents = [].concat(currentContents || []);
 
             // Compute the diff and issue notifications, but only if someone is listening
             if (target.hasSubscriptionsForEvent(arrayChangeEventName)) {
                 var changes = getChanges(previousContents, currentContents);
-                if (changes.length) {
-                    target['notifySubscribers'](changes, arrayChangeEventName);
-                }
             }
 
             // Eliminate references to the old, removed items, so they can be GCed
             previousContents = currentContents;
             cachedDiff = null;
             pendingNotifications = 0;
+
+            if (changes && changes.length) {
+                target['notifySubscribers'](changes, arrayChangeEventName);
+            }
         });
     }
 
@@ -37341,44 +37941,58 @@ ko.computed = ko.dependentObservable = function (evaluatorFunctionOrOptions, eva
     if (typeof readFunction != "function")
         throw new Error("Pass a function that returns the value of the ko.computed");
 
-    function addSubscriptionToDependency(subscribable, id) {
-        if (!_subscriptionsToDependencies[id]) {
-            _subscriptionsToDependencies[id] = subscribable.subscribe(evaluatePossiblyAsync);
-            ++_dependenciesCount;
+    function addDependencyTracking(id, target, trackingObj) {
+        if (pure && target === dependentObservable) {
+            throw Error("A 'pure' computed must not be called recursively");
+        }
+
+        dependencyTracking[id] = trackingObj;
+        trackingObj._order = _dependenciesCount++;
+        trackingObj._version = target.getVersion();
+    }
+
+    function haveDependenciesChanged() {
+        var id, dependency;
+        for (id in dependencyTracking) {
+            if (dependencyTracking.hasOwnProperty(id)) {
+                dependency = dependencyTracking[id];
+                if (dependency._target.hasChanged(dependency._version)) {
+                    return true;
+                }
+            }
         }
     }
 
-    function disposeAllSubscriptionsToDependencies() {
-        ko.utils.objectForEach(_subscriptionsToDependencies, function (id, subscription) {
-            subscription.dispose();
-        });
-        _subscriptionsToDependencies = {};
-    }
-
     function disposeComputed() {
-        disposeAllSubscriptionsToDependencies();
+        if (!isSleeping && dependencyTracking) {
+            ko.utils.objectForEach(dependencyTracking, function (id, dependency) {
+                if (dependency.dispose)
+                    dependency.dispose();
+            });
+        }
+        dependencyTracking = null;
         _dependenciesCount = 0;
         _isDisposed = true;
         _needsEvaluation = false;
+        isSleeping = false;
     }
 
     function evaluatePossiblyAsync() {
         var throttleEvaluationTimeout = dependentObservable['throttleEvaluation'];
         if (throttleEvaluationTimeout && throttleEvaluationTimeout >= 0) {
             clearTimeout(evaluationTimeoutInstance);
-            evaluationTimeoutInstance = setTimeout(evaluateImmediate, throttleEvaluationTimeout);
+            evaluationTimeoutInstance = setTimeout(function () {
+                evaluateImmediate(true /*notifyChange*/);
+            }, throttleEvaluationTimeout);
         } else if (dependentObservable._evalRateLimited) {
             dependentObservable._evalRateLimited();
         } else {
-            evaluateImmediate();
+            evaluateImmediate(true /*notifyChange*/);
         }
     }
 
-    function evaluateImmediate(suppressChangeNotification) {
+    function evaluateImmediate(notifyChange) {
         if (_isBeingEvaluated) {
-            if (pure) {
-                throw Error("A 'pure' computed must not be called recursively");
-            }
             // If the evaluation of a ko.computed causes side effects, it's possible that it will trigger its own re-evaluation.
             // This is not desirable (it's hard for a developer to realise a chain of dependencies might cause this, and they almost
             // certainly didn't intend infinite re-evaluations). So, for predictability, we simply prevent ko.computeds from causing
@@ -37404,82 +38018,71 @@ ko.computed = ko.dependentObservable = function (evaluatorFunctionOrOptions, eva
 
         _isBeingEvaluated = true;
 
-        // When sleeping, recalculate the value and return.
-        if (isSleeping) {
-            try {
-                var dependencyTracking = {};
-                ko.dependencyDetection.begin({
-                    callback: function (subscribable, id) {
-                        if (!dependencyTracking[id]) {
-                            dependencyTracking[id] = 1;
-                            ++_dependenciesCount;
+        try {
+            // Initially, we assume that none of the subscriptions are still being used (i.e., all are candidates for disposal).
+            // Then, during evaluation, we cross off any that are in fact still being used.
+            var disposalCandidates = dependencyTracking,
+                disposalCount = _dependenciesCount,
+                isInitial = pure ? undefined : !_dependenciesCount;   // If we're evaluating when there are no previous dependencies, it must be the first time
+
+            ko.dependencyDetection.begin({
+                callback: function(subscribable, id) {
+                    if (!_isDisposed) {
+                        if (disposalCount && disposalCandidates[id]) {
+                            // Don't want to dispose this subscription, as it's still being used
+                            addDependencyTracking(id, subscribable, disposalCandidates[id]);
+                            delete disposalCandidates[id];
+                            --disposalCount;
+                        } else if (!dependencyTracking[id]) {
+                            // Brand new subscription - add it
+                            addDependencyTracking(id, subscribable, isSleeping ? { _target: subscribable } : subscribable.subscribe(evaluatePossiblyAsync));
                         }
-                    },
-                    computed: dependentObservable,
-                    isInitial: undefined
-                });
-                _dependenciesCount = 0;
-                _latestValue = readFunction.call(evaluatorFunctionTarget);
+                    }
+                },
+                computed: dependentObservable,
+                isInitial: isInitial
+            });
+
+            dependencyTracking = {};
+            _dependenciesCount = 0;
+
+            try {
+                var newValue = evaluatorFunctionTarget ? readFunction.call(evaluatorFunctionTarget) : readFunction();
+
             } finally {
                 ko.dependencyDetection.end();
-                _isBeingEvaluated = false;
-            }
-        } else {
-            try {
-                // Initially, we assume that none of the subscriptions are still being used (i.e., all are candidates for disposal).
-                // Then, during evaluation, we cross off any that are in fact still being used.
-                var disposalCandidates = _subscriptionsToDependencies, disposalCount = _dependenciesCount;
-                ko.dependencyDetection.begin({
-                    callback: function(subscribable, id) {
-                        if (!_isDisposed) {
-                            if (disposalCount && disposalCandidates[id]) {
-                                // Don't want to dispose this subscription, as it's still being used
-                                _subscriptionsToDependencies[id] = disposalCandidates[id];
-                                ++_dependenciesCount;
-                                delete disposalCandidates[id];
-                                --disposalCount;
-                            } else {
-                                // Brand new subscription - add it
-                                addSubscriptionToDependency(subscribable, id);
-                            }
-                        }
-                    },
-                    computed: dependentObservable,
-                    isInitial: pure ? undefined : !_dependenciesCount        // If we're evaluating when there are no previous dependencies, it must be the first time
-                });
 
-                _subscriptionsToDependencies = {};
-                _dependenciesCount = 0;
-
-                try {
-                    var newValue = evaluatorFunctionTarget ? readFunction.call(evaluatorFunctionTarget) : readFunction();
-
-                } finally {
-                    ko.dependencyDetection.end();
-
-                    // For each subscription no longer being used, remove it from the active subscriptions list and dispose it
-                    if (disposalCount) {
-                        ko.utils.objectForEach(disposalCandidates, function(id, toDispose) {
+                // For each subscription no longer being used, remove it from the active subscriptions list and dispose it
+                if (disposalCount && !isSleeping) {
+                    ko.utils.objectForEach(disposalCandidates, function(id, toDispose) {
+                        if (toDispose.dispose)
                             toDispose.dispose();
-                        });
-                    }
-
-                    _needsEvaluation = false;
+                    });
                 }
 
-                if (dependentObservable.isDifferent(_latestValue, newValue)) {
-                    dependentObservable["notifySubscribers"](_latestValue, "beforeChange");
-
-                    _latestValue = newValue;
-                    if (DEBUG) dependentObservable._latestValue = _latestValue;
-
-                    if (suppressChangeNotification !== true) {  // Check for strict true value since setTimeout in Firefox passes a numeric value to the function
-                        dependentObservable["notifySubscribers"](_latestValue);
-                    }
-                }
-            } finally {
-                _isBeingEvaluated = false;
+                _needsEvaluation = false;
             }
+
+            if (dependentObservable.isDifferent(_latestValue, newValue)) {
+                if (!isSleeping) {
+                    notify(_latestValue, "beforeChange");
+                }
+
+                _latestValue = newValue;
+                if (DEBUG) dependentObservable._latestValue = _latestValue;
+
+                if (isSleeping) {
+                    dependentObservable.updateVersion();
+                } else if (notifyChange) {
+                    notify(_latestValue);
+                }
+            }
+
+            if (isInitial) {
+                notify(_latestValue, "awake");
+            }
+        } finally {
+            _isBeingEvaluated = false;
         }
 
         if (!_dependenciesCount)
@@ -37498,22 +38101,27 @@ ko.computed = ko.dependentObservable = function (evaluatorFunctionOrOptions, eva
         } else {
             // Reading the value
             ko.dependencyDetection.registerDependency(dependentObservable);
-            if (_needsEvaluation)
-                evaluateImmediate(true /* suppressChangeNotification */);
+            if (_needsEvaluation || (isSleeping && haveDependenciesChanged())) {
+                evaluateImmediate();
+            }
             return _latestValue;
         }
     }
 
     function peek() {
-        // Peek won't re-evaluate, except to get the initial value when "deferEvaluation" is set, or while the computed is sleeping.
-        // Those are the only times that both of these conditions will be satisfied.
-        if (_needsEvaluation && !_dependenciesCount)
-            evaluateImmediate(true /* suppressChangeNotification */);
+        // Peek won't re-evaluate, except while the computed is sleeping or to get the initial value when "deferEvaluation" is set.
+        if ((_needsEvaluation && !_dependenciesCount) || (isSleeping && haveDependenciesChanged())) {
+            evaluateImmediate();
+        }
         return _latestValue;
     }
 
     function isActive() {
         return _needsEvaluation || _dependenciesCount > 0;
+    }
+
+    function notify(value, event) {
+        dependentObservable["notifySubscribers"](value, event);
     }
 
     // By here, "options" is always non-null
@@ -37522,7 +38130,7 @@ ko.computed = ko.dependentObservable = function (evaluatorFunctionOrOptions, eva
         disposeWhenOption = options["disposeWhen"] || options.disposeWhen,
         disposeWhen = disposeWhenOption,
         dispose = disposeComputed,
-        _subscriptionsToDependencies = {},
+        dependencyTracking = {},
         _dependenciesCount = 0,
         evaluationTimeoutInstance = null;
 
@@ -37534,7 +38142,7 @@ ko.computed = ko.dependentObservable = function (evaluatorFunctionOrOptions, eva
 
     dependentObservable.peek = peek;
     dependentObservable.getDependenciesCount = function () { return _dependenciesCount; };
-    dependentObservable.hasWriteFunction = typeof options["write"] === "function";
+    dependentObservable.hasWriteFunction = typeof writeFunction === "function";
     dependentObservable.dispose = function () { dispose(); };
     dependentObservable.isActive = isActive;
 
@@ -37556,24 +38164,69 @@ ko.computed = ko.dependentObservable = function (evaluatorFunctionOrOptions, eva
     if (options['pure']) {
         pure = true;
         isSleeping = true;     // Starts off sleeping; will awake on the first subscription
-        dependentObservable.beforeSubscriptionAdd = function () {
-            // If asleep, wake up the computed and evaluate to register any dependencies.
-            if (isSleeping) {
+        dependentObservable.beforeSubscriptionAdd = function (event) {
+            // If asleep, wake up the computed by subscribing to any dependencies.
+            if (!_isDisposed && isSleeping && event == 'change') {
                 isSleeping = false;
-                evaluateImmediate(true /* suppressChangeNotification */);
+                if (_needsEvaluation || haveDependenciesChanged()) {
+                    dependencyTracking = null;
+                    _dependenciesCount = 0;
+                    _needsEvaluation = true;
+                    evaluateImmediate();
+                } else {
+                    // First put the dependencies in order
+                    var dependeciesOrder = [];
+                    ko.utils.objectForEach(dependencyTracking, function (id, dependency) {
+                        dependeciesOrder[dependency._order] = id;
+                    });
+                    // Next, subscribe to each one
+                    ko.utils.arrayForEach(dependeciesOrder, function(id, order) {
+                        var dependency = dependencyTracking[id],
+                            subscription = dependency._target.subscribe(evaluatePossiblyAsync);
+                        subscription._order = order;
+                        subscription._version = dependency._version;
+                        dependencyTracking[id] = subscription;
+                    });
+                }
+                if (!_isDisposed) {     // test since evaluating could trigger disposal
+                    notify(_latestValue, "awake");
+                }
             }
-        }
-        dependentObservable.afterSubscriptionRemove = function () {
-            if (!dependentObservable.getSubscriptionsCount()) {
-                disposeAllSubscriptionsToDependencies();
-                isSleeping = _needsEvaluation = true;
+        };
+
+        dependentObservable.afterSubscriptionRemove = function (event) {
+            if (!_isDisposed && event == 'change' && !dependentObservable.hasSubscriptionsForEvent('change')) {
+                ko.utils.objectForEach(dependencyTracking, function (id, dependency) {
+                    if (dependency.dispose) {
+                        dependencyTracking[id] = {
+                            _target: dependency._target,
+                            _order: dependency._order,
+                            _version: dependency._version
+                        };
+                        dependency.dispose();
+                    }
+                });
+                isSleeping = true;
+                notify(undefined, "asleep");
             }
-        }
+        };
+
+        // Because a pure computed is not automatically updated while it is sleeping, we can't
+        // simply return the version number. Instead, we check if any of the dependencies have
+        // changed and conditionally re-evaluate the computed observable.
+        dependentObservable._originalGetVersion = dependentObservable.getVersion;
+        dependentObservable.getVersion = function () {
+            if (isSleeping && (_needsEvaluation || haveDependenciesChanged())) {
+                evaluateImmediate();
+            }
+            return dependentObservable._originalGetVersion();
+        };
     } else if (options['deferEvaluation']) {
         // This will force a computed with deferEvaluation to evaluate when the first subscriptions is registered.
-        dependentObservable.beforeSubscriptionAdd = function () {
-            peek();
-            delete dependentObservable.beforeSubscriptionAdd;
+        dependentObservable.beforeSubscriptionAdd = function (event) {
+            if (event == 'change' || event == 'beforeChange') {
+                peek();
+            }
         }
     }
 
@@ -37868,7 +38521,7 @@ ko.expressionRewriting = (function () {
         if (str.charCodeAt(0) === 123) str = str.slice(1, -1);
 
         // Split into tokens
-        var result = [], toks = str.match(bindingToken), key, values, depth = 0;
+        var result = [], toks = str.match(bindingToken), key, values = [], depth = 0;
 
         if (toks) {
             // Append a comma so that we don't need a separate code block to deal with the last item
@@ -37879,15 +38532,17 @@ ko.expressionRewriting = (function () {
                 // A comma signals the end of a key/value pair if depth is zero
                 if (c === 44) { // ","
                     if (depth <= 0) {
-                        if (key)
-                            result.push(values ? {key: key, value: values.join('')} : {'unknown': key});
-                        key = values = depth = 0;
+                        result.push((key && values.length) ? {key: key, value: values.join('')} : {'unknown': key || values.join('')});
+                        key = depth = 0;
+                        values = [];
                         continue;
                     }
                 // Simply skip the colon that separates the name and value
                 } else if (c === 58) { // ":"
-                    if (!values)
+                    if (!depth && !key && values.length === 1) {
+                        key = values.pop();
                         continue;
+                    }
                 // A set of slashes is initially matched as a regular expression, but could be division
                 } else if (c === 47 && i && tok.length > 1) {  // "/"
                     // Look at the end of the previous token to determine if the slash is actually division
@@ -37906,15 +38561,11 @@ ko.expressionRewriting = (function () {
                     ++depth;
                 } else if (c === 41 || c === 125 || c === 93) { // ')', '}', ']'
                     --depth;
-                // The key must be a single token; if it's a string, trim the quotes
-                } else if (!key && !values) {
-                    key = (c === 34 || c === 39) /* '"', "'" */ ? tok.slice(1, -1) : tok;
-                    continue;
+                // The key will be the first token; if it's a string, trim the quotes
+                } else if (!key && !values.length && (c === 34 || c === 39)) { // '"', "'"
+                    tok = tok.slice(1, -1);
                 }
-                if (values)
-                    values.push(tok);
-                else
-                    values = [tok];
+                values.push(tok);
             }
         }
         return result;
@@ -38295,9 +38946,10 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
     // may consider adding <template> to this list, because such elements' contents are always
     // intended to be bound in a different context from where they appear in the document.
     var bindingDoesNotRecurseIntoElementTypes = {
-        // Don't want bindings that operate on text nodes to mutate <script> contents,
+        // Don't want bindings that operate on text nodes to mutate <script> and <textarea> contents,
         // because it's unexpected and a potential XSS issue
-        'script': true
+        'script': true,
+        'textarea': true
     };
 
     // Use an overridable method for retrieving binding handlers so that a plugins may support dynamically created handlers
@@ -38761,8 +39413,15 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
             var cachedDefinition = getObjectOwnProperty(loadedDefinitionsCache, componentName);
             if (cachedDefinition) {
                 // It's already loaded and cached. Reuse the same definition object.
-                // Note that for API consistency, even cache hits complete asynchronously.
-                setTimeout(function() { callback(cachedDefinition) }, 0);
+                // Note that for API consistency, even cache hits complete asynchronously by default.
+                // You can bypass this by putting synchronous:true on your component config.
+                if (cachedDefinition.isSynchronousComponent) {
+                    ko.dependencyDetection.ignore(function() { // See comment in loaderRegistryBehaviors.js for reasoning
+                        callback(cachedDefinition.definition);
+                    });
+                } else {
+                    setTimeout(function() { callback(cachedDefinition.definition); }, 0);
+                }
             } else {
                 // Join the loading process that is already underway, or start a new one.
                 loadComponentAndNotify(componentName, callback);
@@ -38786,14 +39445,22 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
         if (!subscribable) {
             // It's not started loading yet. Start loading, and when it's done, move it to loadedDefinitionsCache.
             subscribable = loadingSubscribablesCache[componentName] = new ko.subscribable();
-            beginLoadingComponent(componentName, function(definition) {
-                loadedDefinitionsCache[componentName] = definition;
+            subscribable.subscribe(callback);
+
+            beginLoadingComponent(componentName, function(definition, config) {
+                var isSynchronousComponent = !!(config && config['synchronous']);
+                loadedDefinitionsCache[componentName] = { definition: definition, isSynchronousComponent: isSynchronousComponent };
                 delete loadingSubscribablesCache[componentName];
 
                 // For API consistency, all loads complete asynchronously. However we want to avoid
                 // adding an extra setTimeout if it's unnecessary (i.e., the completion is already
                 // async) since setTimeout(..., 0) still takes about 16ms or more on most browsers.
-                if (completedAsync) {
+                //
+                // You can bypass the 'always synchronous' feature by putting the synchronous:true
+                // flag on your component configuration when you register it.
+                if (completedAsync || isSynchronousComponent) {
+                    // Note that notifySubscribers ignores any dependencies read within the callback.
+                    // See comment in loaderRegistryBehaviors.js for reasoning
                     subscribable['notifySubscribers'](definition);
                 } else {
                     setTimeout(function() {
@@ -38802,8 +39469,9 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
                 }
             });
             completedAsync = true;
+        } else {
+            subscribable.subscribe(callback);
         }
-        subscribable.subscribe(callback);
     }
 
     function beginLoadingComponent(componentName, callback) {
@@ -38811,14 +39479,14 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
             if (config) {
                 // We have a config, so now load its definition
                 getFirstResultFromLoaders('loadComponent', [componentName, config], function(definition) {
-                    callback(definition);
+                    callback(definition, config);
                 });
             } else {
                 // The component has no config - it's unknown to all the loaders.
                 // Note that this is not an error (e.g., a module loading error) - that would abort the
                 // process and this callback would not run. For this callback to run, all loaders must
                 // have confirmed they don't know about this component.
-                callback(null);
+                callback(null, null);
             }
         });
     }
@@ -39074,8 +39742,8 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
     function possiblyGetConfigFromAmd(errorCallback, config, callback) {
         if (typeof config['require'] === 'string') {
             // The config is the value of an AMD module
-            if (require || window['require']) {
-                (require || window['require'])([config['require']], callback);
+            if (amdRequire || window['require']) {
+                (amdRequire || window['require'])([config['require']], callback);
             } else {
                 errorCallback('Uses require, but no AMD loader is present');
             }
@@ -39147,18 +39815,26 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
                     return ko.computed(paramValue, null, { disposeWhenNodeIsRemoved: elem });
                 }),
                 result = ko.utils.objectMap(rawParamComputedValues, function(paramValueComputed, paramName) {
+                    var paramValue = paramValueComputed.peek();
                     // Does the evaluation of the parameter value unwrap any observables?
                     if (!paramValueComputed.isActive()) {
                         // No it doesn't, so there's no need for any computed wrapper. Just pass through the supplied value directly.
                         // Example: "someVal: firstName, age: 123" (whether or not firstName is an observable/computed)
-                        return paramValueComputed.peek();
+                        return paramValue;
                     } else {
                         // Yes it does. Supply a computed property that unwraps both the outer (binding expression)
                         // level of observability, and any inner (resulting model value) level of observability.
-                        // This means the component doesn't have to worry about multiple unwrapping.
-                        return ko.computed(function() {
-                            return ko.utils.unwrapObservable(paramValueComputed());
-                        }, null, { disposeWhenNodeIsRemoved: elem });
+                        // This means the component doesn't have to worry about multiple unwrapping. If the value is a
+                        // writable observable, the computed will also be writable and pass the value on to the observable.
+                        return ko.computed({
+                            'read': function() {
+                                return ko.utils.unwrapObservable(paramValueComputed());
+                            },
+                            'write': ko.isWriteableObservable(paramValue) && function(value) {
+                                paramValueComputed()(value);
+                            },
+                            disposeWhenNodeIsRemoved: elem
+                        });
                     }
                 });
 
@@ -39221,7 +39897,8 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
 
                     // Any in-flight loading operation is no longer relevant, so make sure we ignore its completion
                     currentLoadingOperationId = null;
-                };
+                },
+                originalChildNodes = ko.utils.makeArray(ko.virtualElements.childNodes(element));
 
             ko.utils.domNodeDisposal.addDisposeCallback(element, disposeAssociatedComponentViewModel);
 
@@ -39255,8 +39932,11 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
                         throw new Error('Unknown component \'' + componentName + '\'');
                     }
                     cloneTemplateIntoElement(componentName, componentDefinition, element);
-                    var componentViewModel = createViewModel(componentDefinition, element, componentParams),
-                        childBindingContext = bindingContext['createChildContext'](componentViewModel);
+                    var componentViewModel = createViewModel(componentDefinition, element, originalChildNodes, componentParams),
+                        childBindingContext = bindingContext['createChildContext'](componentViewModel, /* dataItemAlias */ undefined, function(ctx) {
+                            ctx['$component'] = componentViewModel;
+                            ctx['$componentTemplateNodes'] = originalChildNodes;
+                        });
                     currentViewModel = componentViewModel;
                     ko.applyBindingsToDescendants(childBindingContext, element);
                 });
@@ -39278,10 +39958,10 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
         ko.virtualElements.setDomNodeChildren(element, clonedNodesArray);
     }
 
-    function createViewModel(componentDefinition, element, componentParams) {
+    function createViewModel(componentDefinition, element, originalChildNodes, componentParams) {
         var componentViewModelFactory = componentDefinition['createViewModel'];
         return componentViewModelFactory
-            ? componentViewModelFactory.call(componentDefinition, componentParams, { element: element })
+            ? componentViewModelFactory.call(componentDefinition, componentParams, { 'element': element, 'templateNodes': originalChildNodes })
             : componentParams; // Template-only component
     }
 
@@ -39434,7 +40114,7 @@ ko.bindingHandlers['checkedValue'] = {
 ko.bindingHandlers['css'] = {
     'update': function (element, valueAccessor) {
         var value = ko.utils.unwrapObservable(valueAccessor());
-        if (typeof value == "object") {
+        if (value !== null && typeof value == "object") {
             ko.utils.objectForEach(value, function(className, shouldHaveClass) {
                 shouldHaveClass = ko.utils.unwrapObservable(shouldHaveClass);
                 ko.utils.toggleDomNodeCssClass(element, className, shouldHaveClass);
@@ -39676,19 +40356,23 @@ ko.bindingHandlers['options'] = {
             return ko.utils.arrayFilter(element.options, function (node) { return node.selected; });
         }
 
-        var selectWasPreviouslyEmpty = element.length == 0;
-        var previousScrollTop = (!selectWasPreviouslyEmpty && element.multiple) ? element.scrollTop : null;
-        var unwrappedArray = ko.utils.unwrapObservable(valueAccessor());
-        var includeDestroyed = allBindings.get('optionsIncludeDestroyed');
-        var arrayToDomNodeChildrenOptions = {};
-        var captionValue;
-        var filteredArray;
-        var previousSelectedValues;
+        var selectWasPreviouslyEmpty = element.length == 0,
+            multiple = element.multiple,
+            previousScrollTop = (!selectWasPreviouslyEmpty && multiple) ? element.scrollTop : null,
+            unwrappedArray = ko.utils.unwrapObservable(valueAccessor()),
+            valueAllowUnset = allBindings.get('valueAllowUnset') && allBindings['has']('value'),
+            includeDestroyed = allBindings.get('optionsIncludeDestroyed'),
+            arrayToDomNodeChildrenOptions = {},
+            captionValue,
+            filteredArray,
+            previousSelectedValues = [];
 
-        if (element.multiple) {
-            previousSelectedValues = ko.utils.arrayMap(selectedOptions(), ko.selectExtensions.readValue);
-        } else {
-            previousSelectedValues = element.selectedIndex >= 0 ? [ ko.selectExtensions.readValue(element.options[element.selectedIndex]) ] : [];
+        if (!valueAllowUnset) {
+            if (multiple) {
+                previousSelectedValues = ko.utils.arrayMap(selectedOptions(), ko.selectExtensions.readValue);
+            } else if (element.selectedIndex >= 0) {
+                previousSelectedValues.push(ko.selectExtensions.readValue(element.options[element.selectedIndex]));
+            }
         }
 
         if (unwrappedArray) {
@@ -39729,7 +40413,7 @@ ko.bindingHandlers['options'] = {
         var itemUpdate = false;
         function optionForArrayItem(arrayEntry, index, oldOptions) {
             if (oldOptions.length) {
-                previousSelectedValues = oldOptions[0].selected ? [ ko.selectExtensions.readValue(oldOptions[0]) ] : [];
+                previousSelectedValues = !valueAllowUnset && oldOptions[0].selected ? [ ko.selectExtensions.readValue(oldOptions[0]) ] : [];
                 itemUpdate = true;
             }
             var option = element.ownerDocument.createElement("option");
@@ -39756,20 +40440,25 @@ ko.bindingHandlers['options'] = {
             };
 
         function setSelectionCallback(arrayEntry, newOptions) {
-            // IE6 doesn't like us to assign selection to OPTION nodes before they're added to the document.
-            // That's why we first added them without selection. Now it's time to set the selection.
-            if (previousSelectedValues.length) {
+            if (itemUpdate && valueAllowUnset) {
+                // The model value is authoritative, so make sure its value is the one selected
+                // There is no need to use dependencyDetection.ignore since setDomNodeChildrenFromArrayMapping does so already.
+                ko.selectExtensions.writeValue(element, ko.utils.unwrapObservable(allBindings.get('value')), true /* allowUnset */);
+            } else if (previousSelectedValues.length) {
+                // IE6 doesn't like us to assign selection to OPTION nodes before they're added to the document.
+                // That's why we first added them without selection. Now it's time to set the selection.
                 var isSelected = ko.utils.arrayIndexOf(previousSelectedValues, ko.selectExtensions.readValue(newOptions[0])) >= 0;
                 ko.utils.setOptionNodeSelectionState(newOptions[0], isSelected);
 
                 // If this option was changed from being selected during a single-item update, notify the change
-                if (itemUpdate && !isSelected)
+                if (itemUpdate && !isSelected) {
                     ko.dependencyDetection.ignore(ko.utils.triggerEvent, null, [element, "change"]);
+                }
             }
         }
 
         var callback = setSelectionCallback;
-        if (allBindings['has']('optionsAfterRender')) {
+        if (allBindings['has']('optionsAfterRender') && typeof allBindings.get('optionsAfterRender') == "function") {
             callback = function(arrayEntry, newOptions) {
                 setSelectionCallback(arrayEntry, newOptions);
                 ko.dependencyDetection.ignore(allBindings.get('optionsAfterRender'), null, [newOptions[0], arrayEntry !== captionPlaceholder ? arrayEntry : undefined]);
@@ -39779,13 +40468,13 @@ ko.bindingHandlers['options'] = {
         ko.utils.setDomNodeChildrenFromArrayMapping(element, filteredArray, optionForArrayItem, arrayToDomNodeChildrenOptions, callback);
 
         ko.dependencyDetection.ignore(function () {
-            if (allBindings.get('valueAllowUnset') && allBindings['has']('value')) {
+            if (valueAllowUnset) {
                 // The model value is authoritative, so make sure its value is the one selected
                 ko.selectExtensions.writeValue(element, ko.utils.unwrapObservable(allBindings.get('value')), true /* allowUnset */);
             } else {
                 // Determine if the selection has changed as a result of updating the options list
                 var selectionChanged;
-                if (element.multiple) {
+                if (multiple) {
                     // For a multiple-select box, compare the new selection count to the previous one
                     // But if nothing was selected before, the selection can't have changed
                     selectionChanged = previousSelectedValues.length && selectedOptions().length < previousSelectedValues.length;
@@ -40200,6 +40889,7 @@ makeEventHandlerShortcut('click');
 //            //   - you might also want to make bindingContext.$parent, bindingContext.$parents,
 //            //     and bindingContext.$root available in the template too
 //            // - options gives you access to any other properties set on "data-bind: { template: options }"
+//            // - templateDocument is the document object of the template
 //            //
 //            // Return value: an array of DOM nodes
 //        }
@@ -40217,7 +40907,7 @@ makeEventHandlerShortcut('click');
 
 ko.templateEngine = function () { };
 
-ko.templateEngine.prototype['renderTemplateSource'] = function (templateSource, bindingContext, options) {
+ko.templateEngine.prototype['renderTemplateSource'] = function (templateSource, bindingContext, options, templateDocument) {
     throw new Error("Override renderTemplateSource");
 };
 
@@ -40242,7 +40932,7 @@ ko.templateEngine.prototype['makeTemplateSource'] = function(template, templateD
 
 ko.templateEngine.prototype['renderTemplate'] = function (template, bindingContext, options, templateDocument) {
     var templateSource = this['makeTemplateSource'](template, templateDocument);
-    return this['renderTemplateSource'](templateSource, bindingContext, options);
+    return this['renderTemplateSource'](templateSource, bindingContext, options, templateDocument);
 };
 
 ko.templateEngine.prototype['isTemplateRewritten'] = function (template, templateDocument) {
@@ -40262,7 +40952,7 @@ ko.templateEngine.prototype['rewriteTemplate'] = function (template, rewriterCal
 ko.exportSymbol('templateEngine', ko.templateEngine);
 
 ko.templateRewriting = (function () {
-    var memoizeDataBindingAttributeSyntaxRegex = /(<([a-z]+\d*)(?:\s+(?!data-bind\s*=\s*)[a-z0-9\-]+(?:=(?:\"[^\"]*\"|\'[^\']*\'))?)*\s+)data-bind\s*=\s*(["'])([\s\S]*?)\3/gi;
+    var memoizeDataBindingAttributeSyntaxRegex = /(<([a-z]+\d*)(?:\s+(?!data-bind\s*=\s*)[a-z0-9\-]+(?:=(?:\"[^\"]*\"|\'[^\']*\'|[^>]*))?)*\s+)data-bind\s*=\s*(["'])([\s\S]*?)\3/gi;
     var memoizeVirtualContainerBindingSyntaxRegex = /<!--\s*ko\b\s*([\s\S]*?)\s*-->/g;
 
     function validateDataBindValuesForRewriting(keyValueArray) {
@@ -40503,7 +41193,7 @@ ko.exportSymbol('__tr_ambtns', ko.templateRewriting.applyMemoizedBindingsToNextS
     function executeTemplate(targetNodeOrNodeArray, renderMode, template, bindingContext, options) {
         options = options || {};
         var firstTargetNode = targetNodeOrNodeArray && getFirstNodeFromPossibleArray(targetNodeOrNodeArray);
-        var templateDocument = firstTargetNode && firstTargetNode.ownerDocument;
+        var templateDocument = (firstTargetNode || template || {}).ownerDocument;
         var templateEngineToUse = (options['templateEngine'] || _templateEngine);
         ko.templateRewriting.ensureTemplateIsRewritten(template, templateEngineToUse, templateDocument);
         var renderedNodesArray = templateEngineToUse['renderTemplate'](template, bindingContext, options, templateDocument);
@@ -40609,6 +41299,10 @@ ko.exportSymbol('__tr_ambtns', ko.templateRewriting.applyMemoizedBindingsToNextS
             activateBindingsOnContinuousNodeArray(addedNodesArray, arrayItemContext);
             if (options['afterRender'])
                 options['afterRender'](addedNodesArray, arrayValue);
+
+            // release the "cache" variable, so that it can be collected by
+            // the GC when its value isn't used from within the bindings anymore.
+            arrayItemContext = null;
         };
 
         return ko.dependentObservable(function () {
@@ -40643,6 +41337,17 @@ ko.exportSymbol('__tr_ambtns', ko.templateRewriting.applyMemoizedBindingsToNextS
             if (typeof bindingValue == "string" || bindingValue['name']) {
                 // It's a named template - clear the element
                 ko.virtualElements.emptyNode(element);
+            } else if ('nodes' in bindingValue) {
+                // We've been given an array of DOM nodes. Save them as the template source.
+                // There is no known use case for the node array being an observable array (if the output
+                // varies, put that behavior *into* your template - that's what templates are for), and
+                // the implementation would be a mess, so assert that it's not observable.
+                var nodes = bindingValue['nodes'] || [];
+                if (ko.isObservable(nodes)) {
+                    throw new Error('The "nodes" option must be a plain, non-observable array.');
+                }
+                var container = ko.utils.moveCleanedNodesToContainerElement(nodes); // This also removes the nodes from their current parent
+                new ko.templateSources.anonymousTemplate(element)['nodes'](container);
             } else {
                 // It's an anonymous template - store the element contents, then clear the element
                 var templateNodes = ko.virtualElements.childNodes(element),
@@ -40977,7 +41682,7 @@ ko.nativeTemplateEngine = function () {
 
 ko.nativeTemplateEngine.prototype = new ko.templateEngine();
 ko.nativeTemplateEngine.prototype.constructor = ko.nativeTemplateEngine;
-ko.nativeTemplateEngine.prototype['renderTemplateSource'] = function (templateSource, bindingContext, options) {
+ko.nativeTemplateEngine.prototype['renderTemplateSource'] = function (templateSource, bindingContext, options, templateDocument) {
     var useNodesIfAvailable = !(ko.utils.ieVersion < 9), // IE<9 cloneNode doesn't work properly
         templateNodesFunc = useNodesIfAvailable ? templateSource['nodes'] : null,
         templateNodes = templateNodesFunc ? templateSource['nodes']() : null;
@@ -40986,7 +41691,7 @@ ko.nativeTemplateEngine.prototype['renderTemplateSource'] = function (templateSo
         return ko.utils.makeArray(templateNodes.cloneNode(true).childNodes);
     } else {
         var templateText = templateSource['text']();
-        return ko.utils.parseHtmlFragment(templateText);
+        return ko.utils.parseHtmlFragment(templateText, templateDocument);
     }
 };
 
@@ -41023,7 +41728,8 @@ ko.exportSymbol('nativeTemplateEngine', ko.nativeTemplateEngine);
             return jQueryInstance['tmpl'](compiledTemplate, data, jQueryTemplateOptions);
         }
 
-        this['renderTemplateSource'] = function(templateSource, bindingContext, options) {
+        this['renderTemplateSource'] = function(templateSource, bindingContext, options, templateDocument) {
+            templateDocument = templateDocument || document;
             options = options || {};
             ensureHasReferencedJQueryTemplates();
 
@@ -41042,7 +41748,7 @@ ko.exportSymbol('nativeTemplateEngine', ko.nativeTemplateEngine);
             var jQueryTemplateOptions = jQueryInstance['extend']({ 'koBindingContext': bindingContext }, options['templateOptions']);
 
             var resultNodes = executeTemplate(precompiled, data, jQueryTemplateOptions);
-            resultNodes['appendTo'](document.createElement("div")); // Using "appendTo" forces jQuery/jQuery.tmpl to perform necessary cleanup work
+            resultNodes['appendTo'](templateDocument.createElement("div")); // Using "appendTo" forces jQuery/jQuery.tmpl to perform necessary cleanup work
 
             jQueryInstance['fragments'] = {}; // Clear jQuery's fragment cache to avoid a memory leak after a large number of template renders
             return resultNodes;
@@ -41233,9 +41939,9 @@ ko.exportSymbol('nativeTemplateEngine', ko.nativeTemplateEngine);
 module.exports = require('./lib/');
 
 },{"./lib/":1}],"underscore":[function(require,module,exports){
-//     Underscore.js 1.7.0
+//     Underscore.js 1.8.2
 //     http://underscorejs.org
-//     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+//     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 //     Underscore may be freely distributed under the MIT license.
 
 (function() {
@@ -41256,7 +41962,6 @@ module.exports = require('./lib/');
   var
     push             = ArrayProto.push,
     slice            = ArrayProto.slice,
-    concat           = ArrayProto.concat,
     toString         = ObjProto.toString,
     hasOwnProperty   = ObjProto.hasOwnProperty;
 
@@ -41265,7 +41970,11 @@ module.exports = require('./lib/');
   var
     nativeIsArray      = Array.isArray,
     nativeKeys         = Object.keys,
-    nativeBind         = FuncProto.bind;
+    nativeBind         = FuncProto.bind,
+    nativeCreate       = Object.create;
+
+  // Naked function reference for surrogate-prototype-swapping.
+  var Ctor = function(){};
 
   // Create a safe reference to the Underscore object for use below.
   var _ = function(obj) {
@@ -41287,12 +41996,12 @@ module.exports = require('./lib/');
   }
 
   // Current version.
-  _.VERSION = '1.7.0';
+  _.VERSION = '1.8.2';
 
   // Internal function that returns an efficient (for current engines) version
   // of the passed-in callback, to be repeatedly applied in other Underscore
   // functions.
-  var createCallback = function(func, context, argCount) {
+  var optimizeCb = function(func, context, argCount) {
     if (context === void 0) return func;
     switch (argCount == null ? 3 : argCount) {
       case 1: return function(value) {
@@ -41316,11 +42025,51 @@ module.exports = require('./lib/');
   // A mostly-internal function to generate callbacks that can be applied
   // to each element in a collection, returning the desired result — either
   // identity, an arbitrary callback, a property matcher, or a property accessor.
-  _.iteratee = function(value, context, argCount) {
+  var cb = function(value, context, argCount) {
     if (value == null) return _.identity;
-    if (_.isFunction(value)) return createCallback(value, context, argCount);
-    if (_.isObject(value)) return _.matches(value);
+    if (_.isFunction(value)) return optimizeCb(value, context, argCount);
+    if (_.isObject(value)) return _.matcher(value);
     return _.property(value);
+  };
+  _.iteratee = function(value, context) {
+    return cb(value, context, Infinity);
+  };
+
+  // An internal function for creating assigner functions.
+  var createAssigner = function(keysFunc, undefinedOnly) {
+    return function(obj) {
+      var length = arguments.length;
+      if (length < 2 || obj == null) return obj;
+      for (var index = 1; index < length; index++) {
+        var source = arguments[index],
+            keys = keysFunc(source),
+            l = keys.length;
+        for (var i = 0; i < l; i++) {
+          var key = keys[i];
+          if (!undefinedOnly || obj[key] === void 0) obj[key] = source[key];
+        }
+      }
+      return obj;
+    };
+  };
+
+  // An internal function for creating a new object that inherits from another.
+  var baseCreate = function(prototype) {
+    if (!_.isObject(prototype)) return {};
+    if (nativeCreate) return nativeCreate(prototype);
+    Ctor.prototype = prototype;
+    var result = new Ctor;
+    Ctor.prototype = null;
+    return result;
+  };
+
+  // Helper for collection methods to determine whether a collection
+  // should be iterated as an array or as an object
+  // Related: http://people.mozilla.org/~jorendorff/es6-draft.html#sec-tolength
+  var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
+  var isArrayLike = function(collection) {
+    var length = collection && collection.length;
+    return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
   };
 
   // Collection Functions
@@ -41330,11 +42079,10 @@ module.exports = require('./lib/');
   // Handles raw objects in addition to array-likes. Treats all
   // sparse array-likes as if they were dense.
   _.each = _.forEach = function(obj, iteratee, context) {
-    if (obj == null) return obj;
-    iteratee = createCallback(iteratee, context);
-    var i, length = obj.length;
-    if (length === +length) {
-      for (i = 0; i < length; i++) {
+    iteratee = optimizeCb(iteratee, context);
+    var i, length;
+    if (isArrayLike(obj)) {
+      for (i = 0, length = obj.length; i < length; i++) {
         iteratee(obj[i], i, obj);
       }
     } else {
@@ -41348,77 +42096,66 @@ module.exports = require('./lib/');
 
   // Return the results of applying the iteratee to each element.
   _.map = _.collect = function(obj, iteratee, context) {
-    if (obj == null) return [];
-    iteratee = _.iteratee(iteratee, context);
-    var keys = obj.length !== +obj.length && _.keys(obj),
+    iteratee = cb(iteratee, context);
+    var keys = !isArrayLike(obj) && _.keys(obj),
         length = (keys || obj).length,
-        results = Array(length),
-        currentKey;
+        results = Array(length);
     for (var index = 0; index < length; index++) {
-      currentKey = keys ? keys[index] : index;
+      var currentKey = keys ? keys[index] : index;
       results[index] = iteratee(obj[currentKey], currentKey, obj);
     }
     return results;
   };
 
-  var reduceError = 'Reduce of empty array with no initial value';
+  // Create a reducing function iterating left or right.
+  function createReduce(dir) {
+    // Optimized iterator function as using arguments.length
+    // in the main function will deoptimize the, see #1991.
+    function iterator(obj, iteratee, memo, keys, index, length) {
+      for (; index >= 0 && index < length; index += dir) {
+        var currentKey = keys ? keys[index] : index;
+        memo = iteratee(memo, obj[currentKey], currentKey, obj);
+      }
+      return memo;
+    }
+
+    return function(obj, iteratee, memo, context) {
+      iteratee = optimizeCb(iteratee, context, 4);
+      var keys = !isArrayLike(obj) && _.keys(obj),
+          length = (keys || obj).length,
+          index = dir > 0 ? 0 : length - 1;
+      // Determine the initial value if none is provided.
+      if (arguments.length < 3) {
+        memo = obj[keys ? keys[index] : index];
+        index += dir;
+      }
+      return iterator(obj, iteratee, memo, keys, index, length);
+    };
+  }
 
   // **Reduce** builds up a single result from a list of values, aka `inject`,
   // or `foldl`.
-  _.reduce = _.foldl = _.inject = function(obj, iteratee, memo, context) {
-    if (obj == null) obj = [];
-    iteratee = createCallback(iteratee, context, 4);
-    var keys = obj.length !== +obj.length && _.keys(obj),
-        length = (keys || obj).length,
-        index = 0, currentKey;
-    if (arguments.length < 3) {
-      if (!length) throw new TypeError(reduceError);
-      memo = obj[keys ? keys[index++] : index++];
-    }
-    for (; index < length; index++) {
-      currentKey = keys ? keys[index] : index;
-      memo = iteratee(memo, obj[currentKey], currentKey, obj);
-    }
-    return memo;
-  };
+  _.reduce = _.foldl = _.inject = createReduce(1);
 
   // The right-associative version of reduce, also known as `foldr`.
-  _.reduceRight = _.foldr = function(obj, iteratee, memo, context) {
-    if (obj == null) obj = [];
-    iteratee = createCallback(iteratee, context, 4);
-    var keys = obj.length !== + obj.length && _.keys(obj),
-        index = (keys || obj).length,
-        currentKey;
-    if (arguments.length < 3) {
-      if (!index) throw new TypeError(reduceError);
-      memo = obj[keys ? keys[--index] : --index];
-    }
-    while (index--) {
-      currentKey = keys ? keys[index] : index;
-      memo = iteratee(memo, obj[currentKey], currentKey, obj);
-    }
-    return memo;
-  };
+  _.reduceRight = _.foldr = createReduce(-1);
 
   // Return the first value which passes a truth test. Aliased as `detect`.
   _.find = _.detect = function(obj, predicate, context) {
-    var result;
-    predicate = _.iteratee(predicate, context);
-    _.some(obj, function(value, index, list) {
-      if (predicate(value, index, list)) {
-        result = value;
-        return true;
-      }
-    });
-    return result;
+    var key;
+    if (isArrayLike(obj)) {
+      key = _.findIndex(obj, predicate, context);
+    } else {
+      key = _.findKey(obj, predicate, context);
+    }
+    if (key !== void 0 && key !== -1) return obj[key];
   };
 
   // Return all the elements that pass a truth test.
   // Aliased as `select`.
   _.filter = _.select = function(obj, predicate, context) {
     var results = [];
-    if (obj == null) return results;
-    predicate = _.iteratee(predicate, context);
+    predicate = cb(predicate, context);
     _.each(obj, function(value, index, list) {
       if (predicate(value, index, list)) results.push(value);
     });
@@ -41427,19 +42164,17 @@ module.exports = require('./lib/');
 
   // Return all the elements for which a truth test fails.
   _.reject = function(obj, predicate, context) {
-    return _.filter(obj, _.negate(_.iteratee(predicate)), context);
+    return _.filter(obj, _.negate(cb(predicate)), context);
   };
 
   // Determine whether all of the elements match a truth test.
   // Aliased as `all`.
   _.every = _.all = function(obj, predicate, context) {
-    if (obj == null) return true;
-    predicate = _.iteratee(predicate, context);
-    var keys = obj.length !== +obj.length && _.keys(obj),
-        length = (keys || obj).length,
-        index, currentKey;
-    for (index = 0; index < length; index++) {
-      currentKey = keys ? keys[index] : index;
+    predicate = cb(predicate, context);
+    var keys = !isArrayLike(obj) && _.keys(obj),
+        length = (keys || obj).length;
+    for (var index = 0; index < length; index++) {
+      var currentKey = keys ? keys[index] : index;
       if (!predicate(obj[currentKey], currentKey, obj)) return false;
     }
     return true;
@@ -41448,24 +42183,21 @@ module.exports = require('./lib/');
   // Determine if at least one element in the object matches a truth test.
   // Aliased as `any`.
   _.some = _.any = function(obj, predicate, context) {
-    if (obj == null) return false;
-    predicate = _.iteratee(predicate, context);
-    var keys = obj.length !== +obj.length && _.keys(obj),
-        length = (keys || obj).length,
-        index, currentKey;
-    for (index = 0; index < length; index++) {
-      currentKey = keys ? keys[index] : index;
+    predicate = cb(predicate, context);
+    var keys = !isArrayLike(obj) && _.keys(obj),
+        length = (keys || obj).length;
+    for (var index = 0; index < length; index++) {
+      var currentKey = keys ? keys[index] : index;
       if (predicate(obj[currentKey], currentKey, obj)) return true;
     }
     return false;
   };
 
   // Determine if the array or object contains a given value (using `===`).
-  // Aliased as `include`.
-  _.contains = _.include = function(obj, target) {
-    if (obj == null) return false;
-    if (obj.length !== +obj.length) obj = _.values(obj);
-    return _.indexOf(obj, target) >= 0;
+  // Aliased as `includes` and `include`.
+  _.contains = _.includes = _.include = function(obj, target, fromIndex) {
+    if (!isArrayLike(obj)) obj = _.values(obj);
+    return _.indexOf(obj, target, typeof fromIndex == 'number' && fromIndex) >= 0;
   };
 
   // Invoke a method (with arguments) on every item in a collection.
@@ -41473,7 +42205,8 @@ module.exports = require('./lib/');
     var args = slice.call(arguments, 2);
     var isFunc = _.isFunction(method);
     return _.map(obj, function(value) {
-      return (isFunc ? method : value[method]).apply(value, args);
+      var func = isFunc ? method : value[method];
+      return func == null ? func : func.apply(value, args);
     });
   };
 
@@ -41485,13 +42218,13 @@ module.exports = require('./lib/');
   // Convenience version of a common use case of `filter`: selecting only objects
   // containing specific `key:value` pairs.
   _.where = function(obj, attrs) {
-    return _.filter(obj, _.matches(attrs));
+    return _.filter(obj, _.matcher(attrs));
   };
 
   // Convenience version of a common use case of `find`: getting the first object
   // containing specific `key:value` pairs.
   _.findWhere = function(obj, attrs) {
-    return _.find(obj, _.matches(attrs));
+    return _.find(obj, _.matcher(attrs));
   };
 
   // Return the maximum element (or element-based computation).
@@ -41499,7 +42232,7 @@ module.exports = require('./lib/');
     var result = -Infinity, lastComputed = -Infinity,
         value, computed;
     if (iteratee == null && obj != null) {
-      obj = obj.length === +obj.length ? obj : _.values(obj);
+      obj = isArrayLike(obj) ? obj : _.values(obj);
       for (var i = 0, length = obj.length; i < length; i++) {
         value = obj[i];
         if (value > result) {
@@ -41507,7 +42240,7 @@ module.exports = require('./lib/');
         }
       }
     } else {
-      iteratee = _.iteratee(iteratee, context);
+      iteratee = cb(iteratee, context);
       _.each(obj, function(value, index, list) {
         computed = iteratee(value, index, list);
         if (computed > lastComputed || computed === -Infinity && result === -Infinity) {
@@ -41524,7 +42257,7 @@ module.exports = require('./lib/');
     var result = Infinity, lastComputed = Infinity,
         value, computed;
     if (iteratee == null && obj != null) {
-      obj = obj.length === +obj.length ? obj : _.values(obj);
+      obj = isArrayLike(obj) ? obj : _.values(obj);
       for (var i = 0, length = obj.length; i < length; i++) {
         value = obj[i];
         if (value < result) {
@@ -41532,7 +42265,7 @@ module.exports = require('./lib/');
         }
       }
     } else {
-      iteratee = _.iteratee(iteratee, context);
+      iteratee = cb(iteratee, context);
       _.each(obj, function(value, index, list) {
         computed = iteratee(value, index, list);
         if (computed < lastComputed || computed === Infinity && result === Infinity) {
@@ -41547,7 +42280,7 @@ module.exports = require('./lib/');
   // Shuffle a collection, using the modern version of the
   // [Fisher-Yates shuffle](http://en.wikipedia.org/wiki/Fisher–Yates_shuffle).
   _.shuffle = function(obj) {
-    var set = obj && obj.length === +obj.length ? obj : _.values(obj);
+    var set = isArrayLike(obj) ? obj : _.values(obj);
     var length = set.length;
     var shuffled = Array(length);
     for (var index = 0, rand; index < length; index++) {
@@ -41563,7 +42296,7 @@ module.exports = require('./lib/');
   // The internal `guard` argument allows it to work with `map`.
   _.sample = function(obj, n, guard) {
     if (n == null || guard) {
-      if (obj.length !== +obj.length) obj = _.values(obj);
+      if (!isArrayLike(obj)) obj = _.values(obj);
       return obj[_.random(obj.length - 1)];
     }
     return _.shuffle(obj).slice(0, Math.max(0, n));
@@ -41571,7 +42304,7 @@ module.exports = require('./lib/');
 
   // Sort the object's values by a criterion produced by an iteratee.
   _.sortBy = function(obj, iteratee, context) {
-    iteratee = _.iteratee(iteratee, context);
+    iteratee = cb(iteratee, context);
     return _.pluck(_.map(obj, function(value, index, list) {
       return {
         value: value,
@@ -41593,7 +42326,7 @@ module.exports = require('./lib/');
   var group = function(behavior) {
     return function(obj, iteratee, context) {
       var result = {};
-      iteratee = _.iteratee(iteratee, context);
+      iteratee = cb(iteratee, context);
       _.each(obj, function(value, index) {
         var key = iteratee(value, index, obj);
         behavior(result, value, key);
@@ -41621,37 +42354,24 @@ module.exports = require('./lib/');
     if (_.has(result, key)) result[key]++; else result[key] = 1;
   });
 
-  // Use a comparator function to figure out the smallest index at which
-  // an object should be inserted so as to maintain order. Uses binary search.
-  _.sortedIndex = function(array, obj, iteratee, context) {
-    iteratee = _.iteratee(iteratee, context, 1);
-    var value = iteratee(obj);
-    var low = 0, high = array.length;
-    while (low < high) {
-      var mid = low + high >>> 1;
-      if (iteratee(array[mid]) < value) low = mid + 1; else high = mid;
-    }
-    return low;
-  };
-
   // Safely create a real, live array from anything iterable.
   _.toArray = function(obj) {
     if (!obj) return [];
     if (_.isArray(obj)) return slice.call(obj);
-    if (obj.length === +obj.length) return _.map(obj, _.identity);
+    if (isArrayLike(obj)) return _.map(obj, _.identity);
     return _.values(obj);
   };
 
   // Return the number of elements in an object.
   _.size = function(obj) {
     if (obj == null) return 0;
-    return obj.length === +obj.length ? obj.length : _.keys(obj).length;
+    return isArrayLike(obj) ? obj.length : _.keys(obj).length;
   };
 
   // Split a collection into two arrays: one whose elements all satisfy the given
   // predicate, and one whose elements all do not satisfy the predicate.
   _.partition = function(obj, predicate, context) {
-    predicate = _.iteratee(predicate, context);
+    predicate = cb(predicate, context);
     var pass = [], fail = [];
     _.each(obj, function(value, key, obj) {
       (predicate(value, key, obj) ? pass : fail).push(value);
@@ -41668,30 +42388,27 @@ module.exports = require('./lib/');
   _.first = _.head = _.take = function(array, n, guard) {
     if (array == null) return void 0;
     if (n == null || guard) return array[0];
-    if (n < 0) return [];
-    return slice.call(array, 0, n);
+    return _.initial(array, array.length - n);
   };
 
   // Returns everything but the last entry of the array. Especially useful on
   // the arguments object. Passing **n** will return all the values in
-  // the array, excluding the last N. The **guard** check allows it to work with
-  // `_.map`.
+  // the array, excluding the last N.
   _.initial = function(array, n, guard) {
     return slice.call(array, 0, Math.max(0, array.length - (n == null || guard ? 1 : n)));
   };
 
   // Get the last element of an array. Passing **n** will return the last N
-  // values in the array. The **guard** check allows it to work with `_.map`.
+  // values in the array.
   _.last = function(array, n, guard) {
     if (array == null) return void 0;
     if (n == null || guard) return array[array.length - 1];
-    return slice.call(array, Math.max(array.length - n, 0));
+    return _.rest(array, Math.max(0, array.length - n));
   };
 
   // Returns everything but the first entry of the array. Aliased as `tail` and `drop`.
   // Especially useful on the arguments object. Passing an **n** will return
-  // the rest N values in the array. The **guard**
-  // check allows it to work with `_.map`.
+  // the rest N values in the array.
   _.rest = _.tail = _.drop = function(array, n, guard) {
     return slice.call(array, n == null || guard ? 1 : n);
   };
@@ -41702,18 +42419,20 @@ module.exports = require('./lib/');
   };
 
   // Internal implementation of a recursive `flatten` function.
-  var flatten = function(input, shallow, strict, output) {
-    if (shallow && _.every(input, _.isArray)) {
-      return concat.apply(output, input);
-    }
-    for (var i = 0, length = input.length; i < length; i++) {
+  var flatten = function(input, shallow, strict, startIndex) {
+    var output = [], idx = 0;
+    for (var i = startIndex || 0, length = input && input.length; i < length; i++) {
       var value = input[i];
-      if (!_.isArray(value) && !_.isArguments(value)) {
-        if (!strict) output.push(value);
-      } else if (shallow) {
-        push.apply(output, value);
-      } else {
-        flatten(value, shallow, strict, output);
+      if (isArrayLike(value) && (_.isArray(value) || _.isArguments(value))) {
+        //flatten current level of array or arguments object
+        if (!shallow) value = flatten(value, shallow, strict);
+        var j = 0, len = value.length;
+        output.length += len;
+        while (j < len) {
+          output[idx++] = value[j++];
+        }
+      } else if (!strict) {
+        output[idx++] = value;
       }
     }
     return output;
@@ -41721,7 +42440,7 @@ module.exports = require('./lib/');
 
   // Flatten out an array, either recursively (by default), or just one level.
   _.flatten = function(array, shallow) {
-    return flatten(array, shallow, false, []);
+    return flatten(array, shallow, false);
   };
 
   // Return a version of the array that does not contain the specified value(s).
@@ -41739,21 +42458,21 @@ module.exports = require('./lib/');
       iteratee = isSorted;
       isSorted = false;
     }
-    if (iteratee != null) iteratee = _.iteratee(iteratee, context);
+    if (iteratee != null) iteratee = cb(iteratee, context);
     var result = [];
     var seen = [];
     for (var i = 0, length = array.length; i < length; i++) {
-      var value = array[i];
+      var value = array[i],
+          computed = iteratee ? iteratee(value, i, array) : value;
       if (isSorted) {
-        if (!i || seen !== value) result.push(value);
-        seen = value;
+        if (!i || seen !== computed) result.push(value);
+        seen = computed;
       } else if (iteratee) {
-        var computed = iteratee(value, i, array);
-        if (_.indexOf(seen, computed) < 0) {
+        if (!_.contains(seen, computed)) {
           seen.push(computed);
           result.push(value);
         }
-      } else if (_.indexOf(result, value) < 0) {
+      } else if (!_.contains(result, value)) {
         result.push(value);
       }
     }
@@ -41763,7 +42482,7 @@ module.exports = require('./lib/');
   // Produce an array that contains the union: each distinct element from all of
   // the passed-in arrays.
   _.union = function() {
-    return _.uniq(flatten(arguments, true, true, []));
+    return _.uniq(flatten(arguments, true, true));
   };
 
   // Produce an array that contains every item shared between all the
@@ -41786,7 +42505,7 @@ module.exports = require('./lib/');
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
   _.difference = function(array) {
-    var rest = flatten(slice.call(arguments, 1), true, true, []);
+    var rest = flatten(arguments, true, true, 1);
     return _.filter(array, function(value){
       return !_.contains(rest, value);
     });
@@ -41794,23 +42513,28 @@ module.exports = require('./lib/');
 
   // Zip together multiple lists into a single array -- elements that share
   // an index go together.
-  _.zip = function(array) {
-    if (array == null) return [];
-    var length = _.max(arguments, 'length').length;
-    var results = Array(length);
-    for (var i = 0; i < length; i++) {
-      results[i] = _.pluck(arguments, i);
+  _.zip = function() {
+    return _.unzip(arguments);
+  };
+
+  // Complement of _.zip. Unzip accepts an array of arrays and groups
+  // each array's elements on shared indices
+  _.unzip = function(array) {
+    var length = array && _.max(array, 'length').length || 0;
+    var result = Array(length);
+
+    for (var index = 0; index < length; index++) {
+      result[index] = _.pluck(array, index);
     }
-    return results;
+    return result;
   };
 
   // Converts lists into objects. Pass either a single array of `[key, value]`
   // pairs, or two parallel arrays of the same length -- one of keys, and one of
   // the corresponding values.
   _.object = function(list, values) {
-    if (list == null) return {};
     var result = {};
-    for (var i = 0, length = list.length; i < length; i++) {
+    for (var i = 0, length = list && list.length; i < length; i++) {
       if (values) {
         result[list[i]] = values[i];
       } else {
@@ -41825,28 +42549,61 @@ module.exports = require('./lib/');
   // If the array is large and already in sort order, pass `true`
   // for **isSorted** to use binary search.
   _.indexOf = function(array, item, isSorted) {
-    if (array == null) return -1;
-    var i = 0, length = array.length;
-    if (isSorted) {
-      if (typeof isSorted == 'number') {
-        i = isSorted < 0 ? Math.max(0, length + isSorted) : isSorted;
-      } else {
-        i = _.sortedIndex(array, item);
-        return array[i] === item ? i : -1;
-      }
+    var i = 0, length = array && array.length;
+    if (typeof isSorted == 'number') {
+      i = isSorted < 0 ? Math.max(0, length + isSorted) : isSorted;
+    } else if (isSorted && length) {
+      i = _.sortedIndex(array, item);
+      return array[i] === item ? i : -1;
+    }
+    if (item !== item) {
+      return _.findIndex(slice.call(array, i), _.isNaN);
     }
     for (; i < length; i++) if (array[i] === item) return i;
     return -1;
   };
 
   _.lastIndexOf = function(array, item, from) {
-    if (array == null) return -1;
-    var idx = array.length;
+    var idx = array ? array.length : 0;
     if (typeof from == 'number') {
       idx = from < 0 ? idx + from + 1 : Math.min(idx, from + 1);
     }
+    if (item !== item) {
+      return _.findLastIndex(slice.call(array, 0, idx), _.isNaN);
+    }
     while (--idx >= 0) if (array[idx] === item) return idx;
     return -1;
+  };
+
+  // Generator function to create the findIndex and findLastIndex functions
+  function createIndexFinder(dir) {
+    return function(array, predicate, context) {
+      predicate = cb(predicate, context);
+      var length = array != null && array.length;
+      var index = dir > 0 ? 0 : length - 1;
+      for (; index >= 0 && index < length; index += dir) {
+        if (predicate(array[index], index, array)) return index;
+      }
+      return -1;
+    };
+  }
+
+  // Returns the first index on an array-like that passes a predicate test
+  _.findIndex = createIndexFinder(1);
+
+  _.findLastIndex = createIndexFinder(-1);
+
+  // Use a comparator function to figure out the smallest index at which
+  // an object should be inserted so as to maintain order. Uses binary search.
+  _.sortedIndex = function(array, obj, iteratee, context) {
+    iteratee = cb(iteratee, context, 1);
+    var value = iteratee(obj);
+    var low = 0, high = array.length;
+    while (low < high) {
+      var mid = Math.floor((low + high) / 2);
+      if (iteratee(array[mid]) < value) low = mid + 1; else high = mid;
+    }
+    return low;
   };
 
   // Generate an integer Array containing an arithmetic progression. A port of
@@ -41872,25 +42629,25 @@ module.exports = require('./lib/');
   // Function (ahem) Functions
   // ------------------
 
-  // Reusable constructor function for prototype setting.
-  var Ctor = function(){};
+  // Determines whether to execute a function as a constructor
+  // or a normal function with the provided arguments
+  var executeBound = function(sourceFunc, boundFunc, context, callingContext, args) {
+    if (!(callingContext instanceof boundFunc)) return sourceFunc.apply(context, args);
+    var self = baseCreate(sourceFunc.prototype);
+    var result = sourceFunc.apply(self, args);
+    if (_.isObject(result)) return result;
+    return self;
+  };
 
   // Create a function bound to a given object (assigning `this`, and arguments,
   // optionally). Delegates to **ECMAScript 5**'s native `Function.bind` if
   // available.
   _.bind = function(func, context) {
-    var args, bound;
     if (nativeBind && func.bind === nativeBind) return nativeBind.apply(func, slice.call(arguments, 1));
     if (!_.isFunction(func)) throw new TypeError('Bind must be called on a function');
-    args = slice.call(arguments, 2);
-    bound = function() {
-      if (!(this instanceof bound)) return func.apply(context, args.concat(slice.call(arguments)));
-      Ctor.prototype = func.prototype;
-      var self = new Ctor;
-      Ctor.prototype = null;
-      var result = func.apply(self, args.concat(slice.call(arguments)));
-      if (_.isObject(result)) return result;
-      return self;
+    var args = slice.call(arguments, 2);
+    var bound = function() {
+      return executeBound(func, bound, context, this, args.concat(slice.call(arguments)));
     };
     return bound;
   };
@@ -41900,15 +42657,16 @@ module.exports = require('./lib/');
   // as a placeholder, allowing any combination of arguments to be pre-filled.
   _.partial = function(func) {
     var boundArgs = slice.call(arguments, 1);
-    return function() {
-      var position = 0;
-      var args = boundArgs.slice();
-      for (var i = 0, length = args.length; i < length; i++) {
-        if (args[i] === _) args[i] = arguments[position++];
+    var bound = function() {
+      var position = 0, length = boundArgs.length;
+      var args = Array(length);
+      for (var i = 0; i < length; i++) {
+        args[i] = boundArgs[i] === _ ? arguments[position++] : boundArgs[i];
       }
       while (position < arguments.length) args.push(arguments[position++]);
-      return func.apply(this, args);
+      return executeBound(func, bound, this, this, args);
     };
+    return bound;
   };
 
   // Bind a number of an object's methods to that object. Remaining arguments
@@ -41928,7 +42686,7 @@ module.exports = require('./lib/');
   _.memoize = function(func, hasher) {
     var memoize = function(key) {
       var cache = memoize.cache;
-      var address = hasher ? hasher.apply(this, arguments) : key;
+      var address = '' + (hasher ? hasher.apply(this, arguments) : key);
       if (!_.has(cache, address)) cache[address] = func.apply(this, arguments);
       return cache[address];
     };
@@ -41947,9 +42705,7 @@ module.exports = require('./lib/');
 
   // Defers a function, scheduling it to run after the current call stack has
   // cleared.
-  _.defer = function(func) {
-    return _.delay.apply(_, [func, 1].concat(slice.call(arguments, 1)));
-  };
+  _.defer = _.partial(_.delay, _, 1);
 
   // Returns a function, that, when invoked, will only be triggered at most once
   // during a given window of time. Normally, the throttled function will run
@@ -41974,8 +42730,10 @@ module.exports = require('./lib/');
       context = this;
       args = arguments;
       if (remaining <= 0 || remaining > wait) {
-        clearTimeout(timeout);
-        timeout = null;
+        if (timeout) {
+          clearTimeout(timeout);
+          timeout = null;
+        }
         previous = now;
         result = func.apply(context, args);
         if (!timeout) context = args = null;
@@ -41996,7 +42754,7 @@ module.exports = require('./lib/');
     var later = function() {
       var last = _.now() - timestamp;
 
-      if (last < wait && last > 0) {
+      if (last < wait && last >= 0) {
         timeout = setTimeout(later, wait - last);
       } else {
         timeout = null;
@@ -42049,7 +42807,7 @@ module.exports = require('./lib/');
     };
   };
 
-  // Returns a function that will only be executed after being called N times.
+  // Returns a function that will only be executed on and after the Nth call.
   _.after = function(times, func) {
     return function() {
       if (--times < 1) {
@@ -42058,15 +42816,14 @@ module.exports = require('./lib/');
     };
   };
 
-  // Returns a function that will only be executed before being called N times.
+  // Returns a function that will only be executed up to (but not including) the Nth call.
   _.before = function(times, func) {
     var memo;
     return function() {
       if (--times > 0) {
         memo = func.apply(this, arguments);
-      } else {
-        func = null;
       }
+      if (times <= 1) func = null;
       return memo;
     };
   };
@@ -42078,13 +42835,47 @@ module.exports = require('./lib/');
   // Object Functions
   // ----------------
 
-  // Retrieve the names of an object's properties.
+  // Keys in IE < 9 that won't be iterated by `for key in ...` and thus missed.
+  var hasEnumBug = !{toString: null}.propertyIsEnumerable('toString');
+  var nonEnumerableProps = ['valueOf', 'isPrototypeOf', 'toString',
+                      'propertyIsEnumerable', 'hasOwnProperty', 'toLocaleString'];
+
+  function collectNonEnumProps(obj, keys) {
+    var nonEnumIdx = nonEnumerableProps.length;
+    var constructor = obj.constructor;
+    var proto = (_.isFunction(constructor) && constructor.prototype) || ObjProto;
+
+    // Constructor is a special case.
+    var prop = 'constructor';
+    if (_.has(obj, prop) && !_.contains(keys, prop)) keys.push(prop);
+
+    while (nonEnumIdx--) {
+      prop = nonEnumerableProps[nonEnumIdx];
+      if (prop in obj && obj[prop] !== proto[prop] && !_.contains(keys, prop)) {
+        keys.push(prop);
+      }
+    }
+  }
+
+  // Retrieve the names of an object's own properties.
   // Delegates to **ECMAScript 5**'s native `Object.keys`
   _.keys = function(obj) {
     if (!_.isObject(obj)) return [];
     if (nativeKeys) return nativeKeys(obj);
     var keys = [];
     for (var key in obj) if (_.has(obj, key)) keys.push(key);
+    // Ahem, IE < 9.
+    if (hasEnumBug) collectNonEnumProps(obj, keys);
+    return keys;
+  };
+
+  // Retrieve all the property names of an object.
+  _.allKeys = function(obj) {
+    if (!_.isObject(obj)) return [];
+    var keys = [];
+    for (var key in obj) keys.push(key);
+    // Ahem, IE < 9.
+    if (hasEnumBug) collectNonEnumProps(obj, keys);
     return keys;
   };
 
@@ -42097,6 +42888,21 @@ module.exports = require('./lib/');
       values[i] = obj[keys[i]];
     }
     return values;
+  };
+
+  // Returns the results of applying the iteratee to each element of the object
+  // In contrast to _.map it returns an object
+  _.mapObject = function(obj, iteratee, context) {
+    iteratee = cb(iteratee, context);
+    var keys =  _.keys(obj),
+          length = keys.length,
+          results = {},
+          currentKey;
+      for (var index = 0; index < length; index++) {
+        currentKey = keys[index];
+        results[currentKey] = iteratee(obj[currentKey], currentKey, obj);
+      }
+      return results;
   };
 
   // Convert an object into a list of `[key, value]` pairs.
@@ -42131,37 +42937,38 @@ module.exports = require('./lib/');
   };
 
   // Extend a given object with all the properties in passed-in object(s).
-  _.extend = function(obj) {
-    if (!_.isObject(obj)) return obj;
-    var source, prop;
-    for (var i = 1, length = arguments.length; i < length; i++) {
-      source = arguments[i];
-      for (prop in source) {
-        if (hasOwnProperty.call(source, prop)) {
-            obj[prop] = source[prop];
-        }
-      }
+  _.extend = createAssigner(_.allKeys);
+
+  // Assigns a given object with all the own properties in the passed-in object(s)
+  // (https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object/assign)
+  _.extendOwn = _.assign = createAssigner(_.keys);
+
+  // Returns the first key on an object that passes a predicate test
+  _.findKey = function(obj, predicate, context) {
+    predicate = cb(predicate, context);
+    var keys = _.keys(obj), key;
+    for (var i = 0, length = keys.length; i < length; i++) {
+      key = keys[i];
+      if (predicate(obj[key], key, obj)) return key;
     }
-    return obj;
   };
 
   // Return a copy of the object only containing the whitelisted properties.
-  _.pick = function(obj, iteratee, context) {
-    var result = {}, key;
+  _.pick = function(object, oiteratee, context) {
+    var result = {}, obj = object, iteratee, keys;
     if (obj == null) return result;
-    if (_.isFunction(iteratee)) {
-      iteratee = createCallback(iteratee, context);
-      for (key in obj) {
-        var value = obj[key];
-        if (iteratee(value, key, obj)) result[key] = value;
-      }
+    if (_.isFunction(oiteratee)) {
+      keys = _.allKeys(obj);
+      iteratee = optimizeCb(oiteratee, context);
     } else {
-      var keys = concat.apply([], slice.call(arguments, 1));
-      obj = new Object(obj);
-      for (var i = 0, length = keys.length; i < length; i++) {
-        key = keys[i];
-        if (key in obj) result[key] = obj[key];
-      }
+      keys = flatten(arguments, false, false, 1);
+      iteratee = function(value, key, obj) { return key in obj; };
+      obj = Object(obj);
+    }
+    for (var i = 0, length = keys.length; i < length; i++) {
+      var key = keys[i];
+      var value = obj[key];
+      if (iteratee(value, key, obj)) result[key] = value;
     }
     return result;
   };
@@ -42171,7 +42978,7 @@ module.exports = require('./lib/');
     if (_.isFunction(iteratee)) {
       iteratee = _.negate(iteratee);
     } else {
-      var keys = _.map(concat.apply([], slice.call(arguments, 1)), String);
+      var keys = _.map(flatten(arguments, false, false, 1), String);
       iteratee = function(value, key) {
         return !_.contains(keys, key);
       };
@@ -42180,16 +42987,7 @@ module.exports = require('./lib/');
   };
 
   // Fill in a given object with default properties.
-  _.defaults = function(obj) {
-    if (!_.isObject(obj)) return obj;
-    for (var i = 1, length = arguments.length; i < length; i++) {
-      var source = arguments[i];
-      for (var prop in source) {
-        if (obj[prop] === void 0) obj[prop] = source[prop];
-      }
-    }
-    return obj;
-  };
+  _.defaults = createAssigner(_.allKeys, true);
 
   // Create a (shallow-cloned) duplicate of an object.
   _.clone = function(obj) {
@@ -42204,6 +43002,19 @@ module.exports = require('./lib/');
     interceptor(obj);
     return obj;
   };
+
+  // Returns whether an object has a given set of `key:value` pairs.
+  _.isMatch = function(object, attrs) {
+    var keys = _.keys(attrs), length = keys.length;
+    if (object == null) return !length;
+    var obj = Object(object);
+    for (var i = 0; i < length; i++) {
+      var key = keys[i];
+      if (attrs[key] !== obj[key] || !(key in obj)) return false;
+    }
+    return true;
+  };
+
 
   // Internal recursive comparison function for `isEqual`.
   var eq = function(a, b, aStack, bStack) {
@@ -42239,74 +43050,76 @@ module.exports = require('./lib/');
         // of `NaN` are not equivalent.
         return +a === +b;
     }
-    if (typeof a != 'object' || typeof b != 'object') return false;
+
+    var areArrays = className === '[object Array]';
+    if (!areArrays) {
+      if (typeof a != 'object' || typeof b != 'object') return false;
+
+      // Objects with different constructors are not equivalent, but `Object`s or `Array`s
+      // from different frames are.
+      var aCtor = a.constructor, bCtor = b.constructor;
+      if (aCtor !== bCtor && !(_.isFunction(aCtor) && aCtor instanceof aCtor &&
+                               _.isFunction(bCtor) && bCtor instanceof bCtor)
+                          && ('constructor' in a && 'constructor' in b)) {
+        return false;
+      }
+    }
     // Assume equality for cyclic structures. The algorithm for detecting cyclic
     // structures is adapted from ES 5.1 section 15.12.3, abstract operation `JO`.
+    
+    // Initializing stack of traversed objects.
+    // It's done here since we only need them for objects and arrays comparison.
+    aStack = aStack || [];
+    bStack = bStack || [];
     var length = aStack.length;
     while (length--) {
       // Linear search. Performance is inversely proportional to the number of
       // unique nested structures.
       if (aStack[length] === a) return bStack[length] === b;
     }
-    // Objects with different constructors are not equivalent, but `Object`s
-    // from different frames are.
-    var aCtor = a.constructor, bCtor = b.constructor;
-    if (
-      aCtor !== bCtor &&
-      // Handle Object.create(x) cases
-      'constructor' in a && 'constructor' in b &&
-      !(_.isFunction(aCtor) && aCtor instanceof aCtor &&
-        _.isFunction(bCtor) && bCtor instanceof bCtor)
-    ) {
-      return false;
-    }
+
     // Add the first object to the stack of traversed objects.
     aStack.push(a);
     bStack.push(b);
-    var size, result;
+
     // Recursively compare objects and arrays.
-    if (className === '[object Array]') {
+    if (areArrays) {
       // Compare array lengths to determine if a deep comparison is necessary.
-      size = a.length;
-      result = size === b.length;
-      if (result) {
-        // Deep compare the contents, ignoring non-numeric properties.
-        while (size--) {
-          if (!(result = eq(a[size], b[size], aStack, bStack))) break;
-        }
+      length = a.length;
+      if (length !== b.length) return false;
+      // Deep compare the contents, ignoring non-numeric properties.
+      while (length--) {
+        if (!eq(a[length], b[length], aStack, bStack)) return false;
       }
     } else {
       // Deep compare objects.
       var keys = _.keys(a), key;
-      size = keys.length;
+      length = keys.length;
       // Ensure that both objects contain the same number of properties before comparing deep equality.
-      result = _.keys(b).length === size;
-      if (result) {
-        while (size--) {
-          // Deep compare each member
-          key = keys[size];
-          if (!(result = _.has(b, key) && eq(a[key], b[key], aStack, bStack))) break;
-        }
+      if (_.keys(b).length !== length) return false;
+      while (length--) {
+        // Deep compare each member
+        key = keys[length];
+        if (!(_.has(b, key) && eq(a[key], b[key], aStack, bStack))) return false;
       }
     }
     // Remove the first object from the stack of traversed objects.
     aStack.pop();
     bStack.pop();
-    return result;
+    return true;
   };
 
   // Perform a deep comparison to check if two objects are equal.
   _.isEqual = function(a, b) {
-    return eq(a, b, [], []);
+    return eq(a, b);
   };
 
   // Is a given array, string, or object empty?
   // An "empty" object has no enumerable own-properties.
   _.isEmpty = function(obj) {
     if (obj == null) return true;
-    if (_.isArray(obj) || _.isString(obj) || _.isArguments(obj)) return obj.length === 0;
-    for (var key in obj) if (_.has(obj, key)) return false;
-    return true;
+    if (isArrayLike(obj) && (_.isArray(obj) || _.isString(obj) || _.isArguments(obj))) return obj.length === 0;
+    return _.keys(obj).length === 0;
   };
 
   // Is a given value a DOM element?
@@ -42326,14 +43139,14 @@ module.exports = require('./lib/');
     return type === 'function' || type === 'object' && !!obj;
   };
 
-  // Add some isType methods: isArguments, isFunction, isString, isNumber, isDate, isRegExp.
-  _.each(['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp'], function(name) {
+  // Add some isType methods: isArguments, isFunction, isString, isNumber, isDate, isRegExp, isError.
+  _.each(['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp', 'Error'], function(name) {
     _['is' + name] = function(obj) {
       return toString.call(obj) === '[object ' + name + ']';
     };
   });
 
-  // Define a fallback version of the method in browsers (ahem, IE), where
+  // Define a fallback version of the method in browsers (ahem, IE < 9), where
   // there isn't any inspectable "Arguments" type.
   if (!_.isArguments(arguments)) {
     _.isArguments = function(obj) {
@@ -42341,8 +43154,9 @@ module.exports = require('./lib/');
     };
   }
 
-  // Optimize `isFunction` if appropriate. Work around an IE 11 bug.
-  if (typeof /./ !== 'function') {
+  // Optimize `isFunction` if appropriate. Work around some typeof bugs in old v8,
+  // IE 11 (#1621), and in Safari 8 (#1929).
+  if (typeof /./ != 'function' && typeof Int8Array != 'object') {
     _.isFunction = function(obj) {
       return typeof obj == 'function' || false;
     };
@@ -42394,6 +43208,7 @@ module.exports = require('./lib/');
     return value;
   };
 
+  // Predicate-generating functions. Often useful outside of Underscore.
   _.constant = function(value) {
     return function() {
       return value;
@@ -42404,28 +43219,30 @@ module.exports = require('./lib/');
 
   _.property = function(key) {
     return function(obj) {
+      return obj == null ? void 0 : obj[key];
+    };
+  };
+
+  // Generates a function for a given object that returns a given property.
+  _.propertyOf = function(obj) {
+    return obj == null ? function(){} : function(key) {
       return obj[key];
     };
   };
 
-  // Returns a predicate for checking whether an object has a given set of `key:value` pairs.
-  _.matches = function(attrs) {
-    var pairs = _.pairs(attrs), length = pairs.length;
+  // Returns a predicate for checking whether an object has a given set of 
+  // `key:value` pairs.
+  _.matcher = _.matches = function(attrs) {
+    attrs = _.extendOwn({}, attrs);
     return function(obj) {
-      if (obj == null) return !length;
-      obj = new Object(obj);
-      for (var i = 0; i < length; i++) {
-        var pair = pairs[i], key = pair[0];
-        if (pair[1] !== obj[key] || !(key in obj)) return false;
-      }
-      return true;
+      return _.isMatch(obj, attrs);
     };
   };
 
   // Run a function **n** times.
   _.times = function(n, iteratee, context) {
     var accum = Array(Math.max(0, n));
-    iteratee = createCallback(iteratee, context, 1);
+    iteratee = optimizeCb(iteratee, context, 1);
     for (var i = 0; i < n; i++) accum[i] = iteratee(i);
     return accum;
   };
@@ -42474,10 +43291,12 @@ module.exports = require('./lib/');
 
   // If the value of the named `property` is a function then invoke it with the
   // `object` as context; otherwise, return it.
-  _.result = function(object, property) {
-    if (object == null) return void 0;
-    var value = object[property];
-    return _.isFunction(value) ? object[property]() : value;
+  _.result = function(object, property, fallback) {
+    var value = object == null ? void 0 : object[property];
+    if (value === void 0) {
+      value = fallback;
+    }
+    return _.isFunction(value) ? value.call(object) : value;
   };
 
   // Generate a unique integer id (unique within the entire client session).
@@ -42592,8 +43411,8 @@ module.exports = require('./lib/');
   // underscore functions. Wrapped objects may be chained.
 
   // Helper function to continue chaining intermediate results.
-  var result = function(obj) {
-    return this._chain ? _(obj).chain() : obj;
+  var result = function(instance, obj) {
+    return instance._chain ? _(obj).chain() : obj;
   };
 
   // Add your own custom functions to the Underscore object.
@@ -42603,7 +43422,7 @@ module.exports = require('./lib/');
       _.prototype[name] = function() {
         var args = [this._wrapped];
         push.apply(args, arguments);
-        return result.call(this, func.apply(_, args));
+        return result(this, func.apply(_, args));
       };
     });
   };
@@ -42618,7 +43437,7 @@ module.exports = require('./lib/');
       var obj = this._wrapped;
       method.apply(obj, arguments);
       if ((name === 'shift' || name === 'splice') && obj.length === 0) delete obj[0];
-      return result.call(this, obj);
+      return result(this, obj);
     };
   });
 
@@ -42626,13 +43445,21 @@ module.exports = require('./lib/');
   _.each(['concat', 'join', 'slice'], function(name) {
     var method = ArrayProto[name];
     _.prototype[name] = function() {
-      return result.call(this, method.apply(this._wrapped, arguments));
+      return result(this, method.apply(this._wrapped, arguments));
     };
   });
 
   // Extracts the result from a wrapped and chained object.
   _.prototype.value = function() {
     return this._wrapped;
+  };
+
+  // Provide unwrapping proxy for some methods used in engine operations
+  // such as arithmetic and JSON stringification.
+  _.prototype.valueOf = _.prototype.toJSON = _.prototype.value;
+  
+  _.prototype.toString = function() {
+    return '' + this._wrapped;
   };
 
   // AMD registration happens at the end for compatibility with AMD loaders

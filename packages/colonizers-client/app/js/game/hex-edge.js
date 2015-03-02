@@ -19,7 +19,7 @@ core.util.inherits(UiHexEdge, HexEdge);
 UiHexEdge.prototype.render = function(options) {
   var rotation = MathHelper.getAngle(options.ends[0], options.ends[1]),
       height = 10,
-      width = options.hexInfo.circumradius - 30;
+      width = options.hexInfo.circumradius - 36;
 
   this.group = new Kinetic.Group({
     x: options.center.x,

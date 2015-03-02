@@ -929,33 +929,33 @@ UiHexCorner.prototype.render = function(options) {
     y: options.center.y,
     visible: false
   });
-
-  this.circle = new Kinetic.Circle({
+  
+  this.drawing = new Kinetic.Circle({
     x: 0,
     y: 0,
     radius: 8
   });
 
-  this.group.add(this.circle);
+  this.group.add(this.drawing);
 };
 
 UiHexCorner.prototype.hookupEvents = function() {
-  this.circle.on('mouseover', function() {
-    $(this.circle.getStage().container()).addClass('clickable');
+  this.drawing.on('mouseover', function() {
+    $(this.drawing.getStage().container()).addClass('clickable');
   }.bind(this));
 
-  this.circle.on('mouseout', function() {
-    $(this.circle.getStage().container()).removeClass('clickable');
+  this.drawing.on('mouseout', function() {
+    $(this.drawing.getStage().container()).removeClass('clickable');
   }.bind(this));
 
-  this.circle.on('click', function() {
+  this.drawing.on('click', function() {
     this.emit('click', {
       type: 'corner',
       id: this.id
     });
   }.bind(this));
 
-  this.circle.on('tap', function() {
+  this.drawing.on('tap', function() {
     this.emit('click', {
       type: 'corner',
       id: this.id
@@ -965,11 +965,34 @@ UiHexCorner.prototype.hookupEvents = function() {
 
 UiHexCorner.prototype.build = function(player) {
   var colors = this.board.game.getPlayerColors();
+  
+  this.drawing = new Kinetic.Shape({
+	  fill: colors[player.id],
+	  opacity: 1,
+      x: 0,
+      y: 0,
+      
+      // a Kinetic.Canvas renderer is passed into the drawFunc function
+      drawFunc: function(context) {
+           context.beginPath();
+           context.moveTo(-12, -5);
+           context.lineTo(-12, 15);
+           context.lineTo(12, 15);
+           context.lineTo(12, -5);
+           context.lineTo(-12, -5);
+           context.lineTo(0, -15);
+           context.lineTo(12, -5);
+           context.closePath();
+           context.fillStrokeShape(this);
+      }
+    });
+  
+  this.group.add(this.drawing);
 
   HexCorner.prototype.build.call(this, player);
 
-  this.circle.fill(colors[player.id]);
-  this.circle.opacity(1);
+  this.drawing.fill(colors[player.id]);
+  this.drawing.opacity(1);
   this.group.show();
   this.group.draw();
 };
@@ -978,8 +1001,8 @@ UiHexCorner.prototype.show = function(player) {
   var colors;
   if (this.isBuildable) {
     colors = this.board.game.getPlayerColors();
-    this.circle.fill(colors[player.id]);
-    this.circle.opacity(0.4);
+    this.drawing.fill(colors[player.id]);
+    this.drawing.opacity(0.4);
     this.group.show();
     this.group.draw();
   }
@@ -993,7 +1016,6 @@ UiHexCorner.prototype.hide = function() {
 };
 
 module.exports = UiHexCorner;
-
 },{"colonizers-core":46,"component-emitter":undefined,"jquery":undefined,"kinetic":undefined}],21:[function(require,module,exports){
 'use strict';
 
@@ -1016,7 +1038,7 @@ core.util.inherits(UiHexEdge, HexEdge);
 UiHexEdge.prototype.render = function(options) {
   var rotation = MathHelper.getAngle(options.ends[0], options.ends[1]),
       height = 10,
-      width = options.hexInfo.circumradius - 30;
+      width = options.hexInfo.circumradius - 36;
 
   this.group = new Kinetic.Group({
     x: options.center.x,
@@ -1087,7 +1109,6 @@ UiHexEdge.prototype.hide = function() {
 };
 
 module.exports = UiHexEdge;
-
 },{"colonizers-core":46,"component-emitter":undefined,"jquery":undefined,"kinetic":undefined}],22:[function(require,module,exports){
 'use strict';
 
