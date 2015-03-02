@@ -115,6 +115,13 @@ Game.prototype.getBuildableEdgesForPlayer = function(player, cornerId) {
   }
 };
 
+Game.prototype.getSettlementsForPlayer = function(player) {
+  return this.board.corners.query({
+    isSettlement: true,
+    owner: player
+  });
+};
+
 Game.prototype.getBuildableCornersForPlayer = function(player) {
   var edges;
 

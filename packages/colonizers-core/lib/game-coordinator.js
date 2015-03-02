@@ -28,9 +28,10 @@ GameCoordinator.prototype.onNextTurn = function(data, next) {
 GameCoordinator.prototype.onBuild = function(data, next) {
   var corner, edge, player;
   player = this.game.getPlayerById(data.playerId);
-  if (data.buildType === 'corner') {
+
+  if (data.buildType === 'settlement') {
     corner = this.game.board.corners.getById(data.buildId);
-    corner.build(player);
+    corner.buildSettlement(player);
     player.addVictoryPoint();
     if (this.game.phase !== 'setup') {
       player.spend({
@@ -40,7 +41,16 @@ GameCoordinator.prototype.onBuild = function(data, next) {
         grain: 1
       });
     }
-  } else if (data.buildType === 'edge') {
+  } else if (data.buildType === 'city') {
+    corner = this.game.board.corners.getById(data.buildId);
+    corner.buildCity(player);
+    player.addVictoryPoint();
+
+    player.spend({
+      ore: 3,
+      grain: 2
+    });
+  } else if (data.buildType === 'road') {
     edge = this.game.board.edges.getById(data.buildId);
     edge.build(player);
     if (this.game.phase !== 'setup') {

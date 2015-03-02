@@ -108,7 +108,9 @@ GameSerializer.prototype.serializeBoard = function(board) {
   corners = board.corners.map(function(corner) {
     var result = {
       id: corner.id,
-      center: corner.center
+      center: corner.center,
+      isSettlement: corner.isSettlement,
+      isCity: corner.isCity
     };
     if (corner.owner) {
       result.owner = corner.owner;
@@ -194,7 +196,11 @@ GameSerializer.prototype.deserializeBuildings = function(board, data, players) {
         return player.id === corner.owner;
       });
       hexCorner = board.corners.getById(corner.id);
-      hexCorner.build(player);
+
+      if (corner.isSettlement)
+        hexCorner.buildSettlement(player);
+      else if (corner.isCity)
+        hexCorner.buildCity(player);
     }
   });
 

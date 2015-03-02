@@ -51,12 +51,24 @@ HexCorner.prototype.getAdjacentEdges = spatialQuery(function(board) {
   };
 });
 
-HexCorner.prototype.build = function(player) {
+HexCorner.prototype.buildSettlement = function(player) {
   var corners = this.getAdjacentCorners();
 
   this.owner = player.id;
   this.isBuildable = false;
   this.buildType = 'settlement';
+
+  corners.forEach(function(corner) {
+    corner.isBuildable = false;
+  });
+};
+
+HexCorner.prototype.buildCity = function(player) {
+  var corners = this.getAdjacentCorners();
+
+  this.owner = player.id;
+  this.isBuildable = false;
+  this.buildType = 'city';
 
   corners.forEach(function(corner) {
     corner.isBuildable = false;
