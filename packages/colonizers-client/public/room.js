@@ -241,7 +241,7 @@ BuildModalModel.prototype.resetCanBuildProps = function() {
                   });
 
     this.canBuildSettlement = settlements;
-    
+
     cities = this.allowanceCities > 0 &&
              cornerSettlements.length > 0 &&
              player.hasResources({
@@ -1026,7 +1026,7 @@ UiHexCorner.prototype.buildSettlement = function(player) {
   this.drawing.opacity(1);
   this.group.show();
   this.group.draw();
-  
+
   this.hookupEvents();
 };
 
@@ -1065,7 +1065,7 @@ UiHexCorner.prototype.buildCity = function(player) {
 
 UiHexCorner.prototype.show = function(player) {
   var colors;
-  if (this.isBuildable || this.isSettlement) {
+  if (this.isBuildable) {
     colors = this.board.game.getPlayerColors();
     this.drawing.fill(colors[player.id]);
     this.drawing.opacity(0.4);
@@ -2238,7 +2238,7 @@ function UserInterface(options) {
   this.viewModel.events = {
     onBuildRoad: this.onBuildRoad,
     onBuildSettlement: this.onBuildSettlement,
-    onBuildCity: this.onBuildCity,
+    onBuildCity: this.onBuildCity
   };
 
   this.viewModel.subscribe('turn', function() {
@@ -2766,7 +2766,7 @@ GameCoordinator.prototype.onBuild = function(data, next) {
     corner = this.game.board.corners.getById(data.buildId);
     corner.buildCity(player);
     player.addVictoryPoint();
-    
+
     player.spend({
       ore: 3,
       grain: 2
@@ -3160,7 +3160,6 @@ Game.prototype.getBuildableCornersForPlayer = function(player) {
     edges = this.board.edges.query({
       owner: player
     });
-    
 
     return _.chain(edges)
       .map(function(edge) {
@@ -3251,7 +3250,7 @@ HexCorner.prototype.buildCity = function(player) {
   this.owner = player.id;
   this.isBuildable = false;
   this.buildType = 'city';
-  
+
   corners.forEach(function(corner) {
     corner.isBuildable = false;
   });
