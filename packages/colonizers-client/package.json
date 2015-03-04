@@ -6,10 +6,6 @@
   "version": "0.0.0",
   "description": "Colonizers client component",
   "main": "lib/index.js",
-  "engines": {
-    "node": "0.10.x",
-    "npm": "2.1.x"
-  },
   "dependencies": {
     "async": "0.9.0",
     "bootstrap": "3.3.2",
