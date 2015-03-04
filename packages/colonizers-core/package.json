@@ -6,10 +6,6 @@
   "version": "0.0.0",
   "description": "Core library used by Colonizers client and server",
   "main": "lib/index.js",
-  "engines": {
-    "node": "0.10.x",
-    "npm": "2.1.x"
-  },
   "dependencies": {
     "async": "0.9.0",
     "underscore": "1.8.2"
