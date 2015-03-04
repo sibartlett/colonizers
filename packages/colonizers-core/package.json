@@ -11,8 +11,8 @@
     "npm": "2.1.x"
   },
   "dependencies": {
-    "async": "^0.9.0",
-    "underscore": "^1.7.0"
+    "async": "0.9.0",
+    "underscore": "1.8.2"
   },
   "devDependencies": {
     "gulp": "^3.8.10",
