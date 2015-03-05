@@ -153,7 +153,10 @@ function BuildModalModel(roomModel) {
   this.buildCity = this.buildCity.bind(this);
   this.buildSettlement = this.buildSettlement.bind(this);
   this.buildRoad = this.buildRoad.bind(this);
+  this.resetAllowances = this.resetAllowances.bind(this);
   this.resetCanBuildProps = this.resetCanBuildProps.bind(this);
+  this.onDistributeResources = this.onDistributeResources.bind(this);
+  this.onBuild = this.onBuild.bind(this);
 
   this.roomModel = roomModel;
 
@@ -166,11 +169,10 @@ function BuildModalModel(roomModel) {
     canBuildCity: false
   });
 
-  var resetAllowances = this.resetAllowances.bind(this);
-  roomModel.subscribe('thisPlayer', resetAllowances);
-  roomModel.subscribe('game', resetAllowances);
-
-  roomModel.emitterQueue.on('Build', this.onBuild.bind(this));
+  roomModel.subscribe('thisPlayer', this.resetAllowances);
+  roomModel.subscribe('game', this.resetAllowances);
+  roomModel.emitterQueue.on('DistributeResources', this.onDistributeResources);
+  roomModel.emitterQueue.on('Build', this.onBuild);
 }
 
 BuildModalModel.prototype.resetAllowances = function() {
@@ -251,6 +253,11 @@ BuildModalModel.prototype.resetCanBuildProps = function() {
 
     this.canBuildCity = cities;
   }
+};
+
+BuildModalModel.prototype.onDistributeResources = function(data, next) {
+  this.resetCanBuildProps();
+  next();
 };
 
 BuildModalModel.prototype.onBuild = function(data, next) {
