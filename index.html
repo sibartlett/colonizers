@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="Colonizers, an open source game based on The Settlers of Catan.">
+    <meta name="keywords" content="board game, web, html5, nodejs, mongo, mongodb">
+    <meta name="author" content="Simon Bartlett">
+
+    <meta property="og:title" content="Colonizers" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://colonizers.github.io" />
+    <meta property="og:image" content="http://i.imgur.com/j91XT2y.png" />
+
+    <title>Colonizers</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+
+    <style>
+      html,
+      body {
+        height: 100%;
+      }
+      .site-wrapper {
+        display: table;
+        width: 100%;
+        height: 100%; /* For at least Firefox */
+        min-height: 100%;
+      }
+      .site-wrapper-inner {
+        display: table-cell;
+        vertical-align: top;
+      }
+      .site-info {
+        text-align: center;
+      }
+      .site-info h1 {
+        margin-top: 10px;
+      }
+      .site-info .alert {
+        display: inline-block;
+      }
+      .site-info .site-buttons > div {
+        padding-left: 5px;
+        padding-right: 5px;
+        margin-bottom: 20px;
+      }
+      @media (min-width: 768px) {
+        /* Start the vertical centering */
+        .site-wrapper {
+          padding-left: 3%;
+        }
+        .site-wrapper-inner {
+          vertical-align: middle;
+        }
+        .site-info, .site-image {
+          display: inline-block;
+          vertical-align: middle;
+          float: none;
+        }
+        .site-info {
+          padding-top: 10px;
+          padding-bottom: 10px;
+          padding-right: 0.5%;
+        }
+        .site-image {
+          padding-left: 0.5%;
+        }
+      }
+    </style>
+
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-60454804-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+
+  </head>
+  <body>
+
+    <div class="site-wrapper">
+      <div class="site-wrapper-inner">
+        <div class="container-fluid">
+          <div class="row">
+
+            <div class="col-sm-4 site-info">
+
+              <h1>Colonizers</h1>
+
+              <p class="lead">
+                An open source project, based on the popular board game "The Settlers of Catan" by Klaus Teuber.
+              </p>
+
+              <div class="alert alert-danger" role="alert">
+                <strong>Colonizers is incomplete!</strong>
+                <br>
+                Several game mechanics are yet
+                <br>
+                to be implemented.
+              </div>
+
+              <div class="row site-buttons">
+                <div class="col-xs-6 text-right">
+                  <a target="_blank" href="https://heroku.com/deploy?template=https://github.com/colonizers/colonizers">
+                    <img src="https://www.herokucdn.com/deploy/button.png"
+                         alt="Deploy to Heroku" height="30" />
+                  </a>
+                </div>
+                <div class="col-xs-6 text-left">
+                  <iframe src="https://ghbtns.com/github-btn.html?user=colonizers&repo=colonizers&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px">
+                  </iframe>
+                </div>
+              </div>
+
+              <p>Code licensed under <a target="_blank" href="https://github.com/colonizers/colonizers/blob/master/LICENSE">GNU AGPL v3.0</p>
+
+            </div><!--
+
+            --><div class="col-sm-8 site-image">
+              <img src="http://i.imgur.com/j91XT2y.png" class="img-responsive"
+                   alt="Screenshot of Colonizers" />
+
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </body>
+</html>
