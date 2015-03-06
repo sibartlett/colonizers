@@ -42,10 +42,23 @@
       .site-info .alert {
         display: inline-block;
       }
-      .site-info .site-buttons > div {
-        padding-left: 5px;
-        padding-right: 5px;
-        margin-bottom: 20px;
+      .btn-heroku {
+        background-color: #fff;
+        border: 2px solid #58488a;
+        color: #58488a;
+      }
+      .btn-heroku:hover {
+        background-color: #58488a;
+        color: #f5f5f5;
+      }
+      .btn-github {
+        background-color: #fff;
+        border: 2px solid #151515;
+        color: #333;
+      }
+      .btn-github:hover {
+        background-color: #333;
+        color: #f5f5f5;
       }
       @media (min-width: 768px) {
         /* Start the vertical centering */
@@ -105,20 +118,20 @@
                 to be implemented.
               </div>
 
-              <div class="row site-buttons">
-                <div class="col-xs-6 text-right">
-                  <a target="_blank" href="https://heroku.com/deploy?template=https://github.com/colonizers/colonizers">
-                    <img src="https://www.herokucdn.com/deploy/button.svg"
-                         alt="Deploy to Heroku" height="30" />
-                  </a>
-                </div>
-                <div class="col-xs-6 text-left">
-                  <iframe src="https://ghbtns.com/github-btn.html?user=colonizers&repo=colonizers&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px">
-                  </iframe>
-                </div>
-              </div>
+              <p>
+                <button type="button" class="btn btn-heroku">
+                  Deploy to Heroku
+                </button>
+                <button type="button" class="btn btn-github">
+                  View on GitHub
+                </button>
+              </p>
 
-              <p>Code licensed under <a target="_blank" href="https://github.com/colonizers/colonizers/blob/master/LICENSE">GNU AGPL v3.0</p>
+              <p>
+                Code licensed under
+                  <a target="_blank" href="https://github.com/colonizers/colonizers/blob/master/LICENSE">GNU AGPL v3.0
+                  </a>
+                </p>
 
             </div><!--
 
