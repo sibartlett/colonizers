@@ -17,6 +17,10 @@ function HexEdge(factory, options) {
 
 util.inherits(HexEdge, BoardEntity);
 
+HexEdge.prototype.addToBoard = function(board) {
+  this.board = board;
+};
+
 HexEdge.prototype.getAdjacentCorners = spatialQuery(function(board) {
   return {
     collection: board.corners,

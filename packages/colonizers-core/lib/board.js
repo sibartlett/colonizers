@@ -50,12 +50,12 @@ Board.prototype.addTile = function(tile) {
 
 Board.prototype.addCorner = function(corner) {
   this.corners.push(corner);
-  corner.board = this;
+  corner.addToBoard(this);
 };
 
 Board.prototype.addEdge = function(edge) {
   this.edges.push(edge);
-  edge.board = this;
+  edge.addToBoard(this);
 };
 
 module.exports = Board;

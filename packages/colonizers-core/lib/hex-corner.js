@@ -19,6 +19,10 @@ function HexCorner(factory, options) {
 
 util.inherits(HexCorner, BoardEntity);
 
+HexCorner.prototype.addToBoard = function(board) {
+  this.board = board;
+};
+
 HexCorner.prototype.isSettlement = function() {
   return this.owner && this.buildType === 'settlement';
 };

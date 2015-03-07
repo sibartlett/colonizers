@@ -17,12 +17,12 @@ function HexTile(factory, options) {
 
 util.inherits(HexTile, BoardEntity);
 
-HexTile.prototype.isResource = function() {
-  return this.type !== 'sea' && this.type !== 'desert';
-};
-
 HexTile.prototype.addToBoard = function(board) {
   this.board = board;
+};
+
+HexTile.prototype.isResource = function() {
+  return this.type !== 'sea' && this.type !== 'desert';
 };
 
 HexTile.prototype.getAdjacentTiles = spatialQuery(function(board) {
