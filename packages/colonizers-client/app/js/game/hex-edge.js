@@ -68,6 +68,8 @@ UiHexEdge.prototype.build = function(player) {
   HexEdge.prototype.build.call(this, player);
 
   this.rect.fill(colors[player.id]);
+  this.rect.height(6);
+  this.rect.y(-6 / 2);
   this.rect.opacity(1);
   this.rect.show();
   this.rect.draw();

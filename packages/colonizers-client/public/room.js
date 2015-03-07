@@ -857,7 +857,7 @@ UiGame.prototype.draw = function() {
 UiGame.prototype.getPlayerColors = function() {
   if (!this._playerColors) {
 
-    var colors = ['#ff0000', '#00ff00', '#0000ff'],
+    var colors = ['#d9534f', '#5cb85c', '#428bca', '#d9534f'],
         players1 = [],
         players2 = [],
         result = {};
@@ -1005,21 +1005,25 @@ UiHexCorner.prototype.hookupEvents = function() {
 };
 
 UiHexCorner.prototype.buildSettlement = function(player) {
+  HexCorner.prototype.buildSettlement.call(this, player);
+
   var colors = this.board.game.getPlayerColors();
 
   this.drawing = new Konva.Shape({
+    stroke: 'white',
+    strokeWidth: 1,
     fill: colors[player.id],
     opacity: 1,
     x: 0,
     y: 0,
     drawFunc: function(context) {
-      context.moveTo(-12, -5);
+      context.moveTo(-10, -5);
       context.beginPath();
-      context.lineTo(-12, 15);
-      context.lineTo(12, 15);
-      context.lineTo(12, -5);
+      context.lineTo(-10, 11);
+      context.lineTo(10, 11);
+      context.lineTo(10, -5);
       context.lineTo(0, -15);
-      context.lineTo(-12, -5);
+      context.lineTo(-10, -5);
       context.closePath();
       context.fillStrokeShape(this);
     }
@@ -1027,10 +1031,6 @@ UiHexCorner.prototype.buildSettlement = function(player) {
 
   this.group.add(this.drawing);
 
-  HexCorner.prototype.buildSettlement.call(this, player);
-
-  this.drawing.fill(colors[player.id]);
-  this.drawing.opacity(1);
   this.group.show();
   this.group.draw();
 
@@ -1038,23 +1038,27 @@ UiHexCorner.prototype.buildSettlement = function(player) {
 };
 
 UiHexCorner.prototype.buildCity = function(player) {
+  HexCorner.prototype.buildCity.call(this, player);
+
   var colors = this.board.game.getPlayerColors();
 
   this.drawing = new Konva.Shape({
+    stroke: 'white',
+    strokeWidth: 1,
     fill: colors[player.id],
     opacity: 1,
     x: 0,
     y: 0,
     drawFunc: function(context) {
-      context.moveTo(-12, -5);
+      context.moveTo(-19, -9);
       context.beginPath();
-      context.lineTo(-12, 15);
-      context.lineTo(28, 15);
-      context.lineTo(28, 0);
-      context.lineTo(12, 0);
-      context.lineTo(12, -5);
-      context.lineTo(0, -15);
-      context.lineTo(-12, -5);
+      context.lineTo(-19, 17);
+      context.lineTo(19, 17);
+      context.lineTo(19, -1);
+      context.lineTo(1, -1);
+      context.lineTo(1, -9);
+      context.lineTo(-9, -19);
+      context.lineTo(-19, -9);
       context.closePath();
       context.fillStrokeShape(this);
     }
@@ -1062,10 +1066,6 @@ UiHexCorner.prototype.buildCity = function(player) {
 
   this.group.add(this.drawing);
 
-  HexCorner.prototype.buildCity.call(this, player);
-
-  this.drawing.fill(colors[player.id]);
-  this.drawing.opacity(1);
   this.group.show();
   this.group.draw();
 };
@@ -1169,6 +1169,8 @@ UiHexEdge.prototype.build = function(player) {
   HexEdge.prototype.build.call(this, player);
 
   this.rect.fill(colors[player.id]);
+  this.rect.height(6);
+  this.rect.y(-6 / 2);
   this.rect.opacity(1);
   this.rect.show();
   this.rect.draw();
@@ -2999,8 +3001,8 @@ GameSerializer.prototype.deserializeBoard = function(data) {
   }, this);
 
   board.addTiles(tiles);
-  board.addCorners(corners);
   board.addEdges(edges);
+  board.addCorners(corners);
 
   return board;
 };

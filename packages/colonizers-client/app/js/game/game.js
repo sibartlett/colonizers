@@ -23,7 +23,7 @@ UiGame.prototype.draw = function() {
 UiGame.prototype.getPlayerColors = function() {
   if (!this._playerColors) {
 
-    var colors = ['#ff0000', '#00ff00', '#0000ff'],
+    var colors = ['#d9534f', '#5cb85c', '#428bca', '#d9534f'],
         players1 = [],
         players2 = [],
         result = {};
