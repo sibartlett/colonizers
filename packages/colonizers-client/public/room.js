@@ -587,7 +587,7 @@ ko.bindingHandlers.stageInternal = {
 };
 
 module.exports = {
-  template: '<div class="canvas-kinetic" data-bind="stageInternal: game"></div>'
+  template: '<div class="canvas-konva" data-bind="stageInternal: game"></div>'
 };
 
 },{"./../stage":31,"jquery":undefined,"knockout":undefined}],15:[function(require,module,exports){
@@ -693,7 +693,7 @@ module.exports = {
 'use strict';
 
 var emitter = require('component-emitter'),
-    Kinetic = require('kinetic'),
+    Konva = require('konva'),
     core = require('colonizers-core'),
     Board = core.Board;
 
@@ -708,9 +708,9 @@ function UiBoard() {
   Board.apply(this, arguments);
   emitter(this);
 
-  this.bgGroup = new Kinetic.Group();
-  this.fgGroup = new Kinetic.Group();
-  this.layer = new Kinetic.Layer({
+  this.bgGroup = new Konva.Group();
+  this.fgGroup = new Konva.Group();
+  this.layer = new Konva.Layer({
     rotation: 0,
     draggable: true
   });
@@ -779,7 +779,7 @@ UiBoard.prototype.onStageTransformEnd = function() {
 
 module.exports = UiBoard;
 
-},{"colonizers-core":46,"component-emitter":undefined,"kinetic":undefined}],18:[function(require,module,exports){
+},{"colonizers-core":46,"component-emitter":undefined,"konva":undefined}],18:[function(require,module,exports){
   'use strict';
 
 var Game = require('./game'),
@@ -943,7 +943,7 @@ module.exports = UiGame;
 
 var $ = require('jquery'),
     emitter = require('component-emitter'),
-    Kinetic = require('kinetic'),
+    Konva = require('konva'),
     core = require('colonizers-core'),
     HexCorner = core.HexCorner;
 
@@ -957,13 +957,13 @@ function UiHexCorner(factory, options) {
 core.util.inherits(UiHexCorner, HexCorner);
 
 UiHexCorner.prototype.render = function(options) {
-  this.group = new Kinetic.Group({
+  this.group = new Konva.Group({
     x: options.center.x,
     y: options.center.y,
     visible: false
   });
 
-  this.drawing = new Kinetic.Circle({
+  this.drawing = new Konva.Circle({
     x: 0,
     y: 0,
     radius: 8
@@ -1007,7 +1007,7 @@ UiHexCorner.prototype.hookupEvents = function() {
 UiHexCorner.prototype.buildSettlement = function(player) {
   var colors = this.board.game.getPlayerColors();
 
-  this.drawing = new Kinetic.Shape({
+  this.drawing = new Konva.Shape({
     fill: colors[player.id],
     opacity: 1,
     x: 0,
@@ -1040,7 +1040,7 @@ UiHexCorner.prototype.buildSettlement = function(player) {
 UiHexCorner.prototype.buildCity = function(player) {
   var colors = this.board.game.getPlayerColors();
 
-  this.drawing = new Kinetic.Shape({
+  this.drawing = new Konva.Shape({
     fill: colors[player.id],
     opacity: 1,
     x: 0,
@@ -1090,12 +1090,12 @@ UiHexCorner.prototype.hide = function() {
 
 module.exports = UiHexCorner;
 
-},{"colonizers-core":46,"component-emitter":undefined,"jquery":undefined,"kinetic":undefined}],21:[function(require,module,exports){
+},{"colonizers-core":46,"component-emitter":undefined,"jquery":undefined,"konva":undefined}],21:[function(require,module,exports){
 'use strict';
 
 var $ = require('jquery'),
     emitter = require('component-emitter'),
-    Kinetic = require('kinetic'),
+    Konva = require('konva'),
     core = require('colonizers-core'),
     HexEdge = core.HexEdge,
     MathHelper = core.MathHelper;
@@ -1114,13 +1114,13 @@ UiHexEdge.prototype.render = function(options) {
       height = 10,
       width = options.hexInfo.circumradius - 36;
 
-  this.group = new Kinetic.Group({
+  this.group = new Konva.Group({
     x: options.center.x,
     y: options.center.y,
     rotation: rotation
   });
 
-  this.rect = new Kinetic.Rect({
+  this.rect = new Konva.Rect({
     x: -width / 2,
     y: -height / 2,
     width: width,
@@ -1184,11 +1184,11 @@ UiHexEdge.prototype.hide = function() {
 
 module.exports = UiHexEdge;
 
-},{"colonizers-core":46,"component-emitter":undefined,"jquery":undefined,"kinetic":undefined}],22:[function(require,module,exports){
+},{"colonizers-core":46,"component-emitter":undefined,"jquery":undefined,"konva":undefined}],22:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore'),
-    Kinetic = require('kinetic'),
+    Konva = require('konva'),
     core = require('colonizers-core'),
     HexTile = core.HexTile,
     NumberToken = require('./number-token');
@@ -1208,8 +1208,8 @@ UiHexTile.prototype.render = function(options, tileset) {
 
   this.numberToken = null;
 
-  this.hexagon = new Kinetic.RegularPolygon(hexagonOpts);
-  this.group = new Kinetic.Group({
+  this.hexagon = new Konva.RegularPolygon(hexagonOpts);
+  this.group = new Konva.Group({
     x: options.center.x,
     y: options.center.y
   });
@@ -1217,7 +1217,7 @@ UiHexTile.prototype.render = function(options, tileset) {
   this.group.add(this.hexagon);
 
   if (tileStyle.stroke) {
-    this.hexagon2 = new Kinetic.RegularPolygon({
+    this.hexagon2 = new Konva.RegularPolygon({
       x: 0,
       y: 0,
       sides: 6,
@@ -1230,7 +1230,7 @@ UiHexTile.prototype.render = function(options, tileset) {
   }
 
   if (tileset.board && tileset.board.bgcolor) {
-    this.bgHexagon = new Kinetic.RegularPolygon({
+    this.bgHexagon = new Konva.RegularPolygon({
       x: options.center.x,
       y: options.center.y,
       sides: 6,
@@ -1287,10 +1287,10 @@ UiHexTile.prototype.addToBoard = function(board) {
 
 module.exports = UiHexTile;
 
-},{"./number-token":23,"colonizers-core":46,"kinetic":undefined,"underscore":undefined}],23:[function(require,module,exports){
+},{"./number-token":23,"colonizers-core":46,"konva":undefined,"underscore":undefined}],23:[function(require,module,exports){
 'use strict';
 
-var Kinetic = require('kinetic');
+var Konva = require('konva');
 
 function NumberToken(value) {
   this.onBoardRotate = this.onBoardRotate.bind(this);
@@ -1319,7 +1319,7 @@ NumberToken.prototype.getDotInfo = function(value) {
 NumberToken.prototype.render = function(value) {
   var dotInfo = this.getDotInfo(value);
 
-  this.group = new Kinetic.Group({
+  this.group = new Konva.Group({
     x: 0,
     y: 0,
     rotation: 0
@@ -1331,7 +1331,7 @@ NumberToken.prototype.render = function(value) {
 };
 
 NumberToken.prototype.renderCircle = function() {
-  var circle = new Kinetic.Circle({
+  var circle = new Konva.Circle({
     x: 0,
     y: 0,
     radius: 20,
@@ -1343,7 +1343,7 @@ NumberToken.prototype.renderCircle = function() {
 };
 
 NumberToken.prototype.renderText = function(dotInfo, value) {
-  var text = new Kinetic.Text({
+  var text = new Konva.Text({
     text: value.toString(),
     fill: dotInfo.color,
     fontSize: 16,
@@ -1356,7 +1356,7 @@ NumberToken.prototype.renderText = function(dotInfo, value) {
 
 NumberToken.prototype.renderDots = function(dotInfo) {
   for (var i = 1; i <= dotInfo.count; i++) {
-    this.group.add(new Kinetic.Circle({
+    this.group.add(new Konva.Circle({
       x: (4 * i) + dotInfo.offset,
       y: 12,
       radius: 1,
@@ -1371,7 +1371,7 @@ NumberToken.prototype.onBoardRotate = function(rotation) {
 
 module.exports = NumberToken;
 
-},{"kinetic":undefined}],24:[function(require,module,exports){
+},{"konva":undefined}],24:[function(require,module,exports){
 /*!
  * Based on Knockout ES5 plugin - https://github.com/SteveSanderson/knockout-es5
  * Copyright (c) Steve Sanderson
@@ -2101,7 +2101,7 @@ module.exports = StageNavigator;
 
 var StageNavigator = require('./stage-navigator'),
     $ = require('jquery'),
-    Kinetic = require('kinetic');
+    Konva = require('konva');
 
 function Stage(container) {
   this.onResize = this.onResize.bind(this);
@@ -2113,7 +2113,7 @@ function Stage(container) {
   this.minScale = 1;
   this.height = $(this.container).height();
   this.width = $(this.container).width();
-  this.stage = new Kinetic.Stage({
+  this.stage = new Konva.Stage({
     container: this.container,
     width: this.width,
     height: this.height
@@ -2125,11 +2125,11 @@ function Stage(container) {
 }
 
 Stage.prototype.getWaitingLayer = function() {
-  var layer = new Kinetic.Layer({
+  var layer = new Konva.Layer({
         x: this.width / 2,
         y: this.height / 2
       }),
-      text = new Kinetic.Text({
+      text = new Konva.Text({
         width: this.width - 40,
         align: 'center',
         text: 'Waiting for more players...',
@@ -2193,7 +2193,7 @@ Stage.prototype.onResize = function() {
 
 module.exports = Stage;
 
-},{"./stage-navigator":30,"jquery":undefined,"kinetic":undefined}],32:[function(require,module,exports){
+},{"./stage-navigator":30,"jquery":undefined,"konva":undefined}],32:[function(require,module,exports){
 'use strict';
 
 var ko = require('knockout'),

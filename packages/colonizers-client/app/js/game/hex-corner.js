@@ -2,7 +2,7 @@
 
 var $ = require('jquery'),
     emitter = require('component-emitter'),
-    Kinetic = require('kinetic'),
+    Konva = require('konva'),
     core = require('colonizers-core'),
     HexCorner = core.HexCorner;
 
@@ -16,13 +16,13 @@ function UiHexCorner(factory, options) {
 core.util.inherits(UiHexCorner, HexCorner);
 
 UiHexCorner.prototype.render = function(options) {
-  this.group = new Kinetic.Group({
+  this.group = new Konva.Group({
     x: options.center.x,
     y: options.center.y,
     visible: false
   });
 
-  this.drawing = new Kinetic.Circle({
+  this.drawing = new Konva.Circle({
     x: 0,
     y: 0,
     radius: 8
@@ -66,7 +66,7 @@ UiHexCorner.prototype.hookupEvents = function() {
 UiHexCorner.prototype.buildSettlement = function(player) {
   var colors = this.board.game.getPlayerColors();
 
-  this.drawing = new Kinetic.Shape({
+  this.drawing = new Konva.Shape({
     fill: colors[player.id],
     opacity: 1,
     x: 0,
@@ -99,7 +99,7 @@ UiHexCorner.prototype.buildSettlement = function(player) {
 UiHexCorner.prototype.buildCity = function(player) {
   var colors = this.board.game.getPlayerColors();
 
-  this.drawing = new Kinetic.Shape({
+  this.drawing = new Konva.Shape({
     fill: colors[player.id],
     opacity: 1,
     x: 0,

@@ -15,7 +15,7 @@ clientDependencies = [
   'hammerjs',
   'jquery',
   'jquery-mousewheel',
-  'kinetic',
+  'konva',
   'knockout',
   'screenfull',
   'socket.io-client',

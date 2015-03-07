@@ -4749,7 +4749,7 @@ body {
   padding: 0;
   height: 100%;
 }
-.canvas-kinetic {
+.canvas-konva {
   width: 100%;
   height: 100%;
   background: #eee;
@@ -4763,13 +4763,13 @@ body {
   cursor: -webkit-grab;
   cursor: -moz-grab;
 }
-.canvas-kinetic:active {
+.canvas-konva:active {
   cursor: pointer;
   cursor: grabbing;
   cursor: -webkit-grabbing;
   cursor: -moz-grabbing;
 }
-.canvas-kinetic.clickable {
+.canvas-konva.clickable {
   cursor: default;
 }
 .sidebar {

@@ -1,7 +1,7 @@
 'use strict';
 
 var _ = require('underscore'),
-    Kinetic = require('kinetic'),
+    Konva = require('konva'),
     core = require('colonizers-core'),
     HexTile = core.HexTile,
     NumberToken = require('./number-token');
@@ -21,8 +21,8 @@ UiHexTile.prototype.render = function(options, tileset) {
 
   this.numberToken = null;
 
-  this.hexagon = new Kinetic.RegularPolygon(hexagonOpts);
-  this.group = new Kinetic.Group({
+  this.hexagon = new Konva.RegularPolygon(hexagonOpts);
+  this.group = new Konva.Group({
     x: options.center.x,
     y: options.center.y
   });
@@ -30,7 +30,7 @@ UiHexTile.prototype.render = function(options, tileset) {
   this.group.add(this.hexagon);
 
   if (tileStyle.stroke) {
-    this.hexagon2 = new Kinetic.RegularPolygon({
+    this.hexagon2 = new Konva.RegularPolygon({
       x: 0,
       y: 0,
       sides: 6,
@@ -43,7 +43,7 @@ UiHexTile.prototype.render = function(options, tileset) {
   }
 
   if (tileset.board && tileset.board.bgcolor) {
-    this.bgHexagon = new Kinetic.RegularPolygon({
+    this.bgHexagon = new Konva.RegularPolygon({
       x: options.center.x,
       y: options.center.y,
       sides: 6,

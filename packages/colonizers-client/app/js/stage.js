@@ -2,7 +2,7 @@
 
 var StageNavigator = require('./stage-navigator'),
     $ = require('jquery'),
-    Kinetic = require('kinetic');
+    Konva = require('konva');
 
 function Stage(container) {
   this.onResize = this.onResize.bind(this);
@@ -14,7 +14,7 @@ function Stage(container) {
   this.minScale = 1;
   this.height = $(this.container).height();
   this.width = $(this.container).width();
-  this.stage = new Kinetic.Stage({
+  this.stage = new Konva.Stage({
     container: this.container,
     width: this.width,
     height: this.height
@@ -26,11 +26,11 @@ function Stage(container) {
 }
 
 Stage.prototype.getWaitingLayer = function() {
-  var layer = new Kinetic.Layer({
+  var layer = new Konva.Layer({
         x: this.width / 2,
         y: this.height / 2
       }),
-      text = new Kinetic.Text({
+      text = new Konva.Text({
         width: this.width - 40,
         align: 'center',
         text: 'Waiting for more players...',

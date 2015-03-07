@@ -1,7 +1,7 @@
 'use strict';
 
 var emitter = require('component-emitter'),
-    Kinetic = require('kinetic'),
+    Konva = require('konva'),
     core = require('colonizers-core'),
     Board = core.Board;
 
@@ -16,9 +16,9 @@ function UiBoard() {
   Board.apply(this, arguments);
   emitter(this);
 
-  this.bgGroup = new Kinetic.Group();
-  this.fgGroup = new Kinetic.Group();
-  this.layer = new Kinetic.Layer({
+  this.bgGroup = new Konva.Group();
+  this.fgGroup = new Konva.Group();
+  this.layer = new Konva.Layer({
     rotation: 0,
     draggable: true
   });

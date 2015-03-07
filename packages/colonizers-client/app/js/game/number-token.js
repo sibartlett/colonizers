@@ -1,6 +1,6 @@
 'use strict';
 
-var Kinetic = require('kinetic');
+var Konva = require('konva');
 
 function NumberToken(value) {
   this.onBoardRotate = this.onBoardRotate.bind(this);
@@ -29,7 +29,7 @@ NumberToken.prototype.getDotInfo = function(value) {
 NumberToken.prototype.render = function(value) {
   var dotInfo = this.getDotInfo(value);
 
-  this.group = new Kinetic.Group({
+  this.group = new Konva.Group({
     x: 0,
     y: 0,
     rotation: 0
@@ -41,7 +41,7 @@ NumberToken.prototype.render = function(value) {
 };
 
 NumberToken.prototype.renderCircle = function() {
-  var circle = new Kinetic.Circle({
+  var circle = new Konva.Circle({
     x: 0,
     y: 0,
     radius: 20,
@@ -53,7 +53,7 @@ NumberToken.prototype.renderCircle = function() {
 };
 
 NumberToken.prototype.renderText = function(dotInfo, value) {
-  var text = new Kinetic.Text({
+  var text = new Konva.Text({
     text: value.toString(),
     fill: dotInfo.color,
     fontSize: 16,
@@ -66,7 +66,7 @@ NumberToken.prototype.renderText = function(dotInfo, value) {
 
 NumberToken.prototype.renderDots = function(dotInfo) {
   for (var i = 1; i <= dotInfo.count; i++) {
-    this.group.add(new Kinetic.Circle({
+    this.group.add(new Konva.Circle({
       x: (4 * i) + dotInfo.offset,
       y: 12,
       radius: 1,

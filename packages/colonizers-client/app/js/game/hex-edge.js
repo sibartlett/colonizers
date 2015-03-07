@@ -2,7 +2,7 @@
 
 var $ = require('jquery'),
     emitter = require('component-emitter'),
-    Kinetic = require('kinetic'),
+    Konva = require('konva'),
     core = require('colonizers-core'),
     HexEdge = core.HexEdge,
     MathHelper = core.MathHelper;
@@ -21,13 +21,13 @@ UiHexEdge.prototype.render = function(options) {
       height = 10,
       width = options.hexInfo.circumradius - 36;
 
-  this.group = new Kinetic.Group({
+  this.group = new Konva.Group({
     x: options.center.x,
     y: options.center.y,
     rotation: rotation
   });
 
-  this.rect = new Kinetic.Rect({
+  this.rect = new Konva.Rect({
     x: -width / 2,
     y: -height / 2,
     width: width,

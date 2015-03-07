@@ -29,5 +29,5 @@ ko.bindingHandlers.stageInternal = {
 };
 
 module.exports = {
-  template: '<div class="canvas-kinetic" data-bind="stageInternal: game"></div>'
+  template: '<div class="canvas-konva" data-bind="stageInternal: game"></div>'
 };
