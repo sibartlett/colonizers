@@ -180,8 +180,8 @@ GameSerializer.prototype.deserializeBoard = function(data) {
   }, this);
 
   board.addTiles(tiles);
-  board.addCorners(corners);
   board.addEdges(edges);
+  board.addCorners(corners);
 
   return board;
 };
