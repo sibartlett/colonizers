@@ -88,13 +88,13 @@ UiHexTile.prototype.getHexOptions = function(tileStyle, tileSpacing, hexInfo) {
 
 UiHexTile.prototype.addNumberToken = function(value) {
   this.numberToken = new NumberToken(value);
-  return this.group.add(this.numberToken.group);
+  this.group.add(this.numberToken.group);
 };
 
 UiHexTile.prototype.addToBoard = function(board) {
   HexTile.prototype.addToBoard.call(this, board);
   if (this.numberToken) {
-    return board.on('board:rotate', this.numberToken.onBoardRotate);
+    board.on('board:rotate', this.numberToken.onBoardRotate);
   }
 };
 

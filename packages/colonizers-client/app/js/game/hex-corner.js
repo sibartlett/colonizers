@@ -147,4 +147,12 @@ UiHexCorner.prototype.hide = function() {
   }
 };
 
+UiHexCorner.prototype.addToBoard = function(board) {
+  HexCorner.prototype.addToBoard.call(this, board);
+
+  board.on('board:rotate', function(rotation) {
+    this.group.rotation(-rotation);
+  }.bind(this));
+};
+
 module.exports = UiHexCorner;

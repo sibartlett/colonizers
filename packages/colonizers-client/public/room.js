@@ -1088,6 +1088,14 @@ UiHexCorner.prototype.hide = function() {
   }
 };
 
+UiHexCorner.prototype.addToBoard = function(board) {
+  HexCorner.prototype.addToBoard.call(this, board);
+
+  board.on('board:rotate', function(rotation) {
+    this.group.rotation(-rotation);
+  }.bind(this));
+};
+
 module.exports = UiHexCorner;
 
 },{"colonizers-core":46,"component-emitter":undefined,"jquery":undefined,"konva":undefined}],21:[function(require,module,exports){
@@ -1275,13 +1283,13 @@ UiHexTile.prototype.getHexOptions = function(tileStyle, tileSpacing, hexInfo) {
 
 UiHexTile.prototype.addNumberToken = function(value) {
   this.numberToken = new NumberToken(value);
-  return this.group.add(this.numberToken.group);
+  this.group.add(this.numberToken.group);
 };
 
 UiHexTile.prototype.addToBoard = function(board) {
   HexTile.prototype.addToBoard.call(this, board);
   if (this.numberToken) {
-    return board.on('board:rotate', this.numberToken.onBoardRotate);
+    board.on('board:rotate', this.numberToken.onBoardRotate);
   }
 };
 
@@ -1366,7 +1374,7 @@ NumberToken.prototype.renderDots = function(dotInfo) {
 };
 
 NumberToken.prototype.onBoardRotate = function(rotation) {
-  return this.group.rotation(-rotation);
+  this.group.rotation(-rotation);
 };
 
 module.exports = NumberToken;
@@ -2446,12 +2454,12 @@ Board.prototype.addTile = function(tile) {
 
 Board.prototype.addCorner = function(corner) {
   this.corners.push(corner);
-  corner.board = this;
+  corner.addToBoard(this);
 };
 
 Board.prototype.addEdge = function(edge) {
   this.edges.push(edge);
-  edge.board = this;
+  edge.addToBoard(this);
 };
 
 module.exports = Board;
@@ -3207,6 +3215,10 @@ function HexCorner(factory, options) {
 
 util.inherits(HexCorner, BoardEntity);
 
+HexCorner.prototype.addToBoard = function(board) {
+  this.board = board;
+};
+
 HexCorner.prototype.isSettlement = function() {
   return this.owner && this.buildType === 'settlement';
 };
@@ -3285,6 +3297,10 @@ function HexEdge(factory, options) {
 
 util.inherits(HexEdge, BoardEntity);
 
+HexEdge.prototype.addToBoard = function(board) {
+  this.board = board;
+};
+
 HexEdge.prototype.getAdjacentCorners = spatialQuery(function(board) {
   return {
     collection: board.corners,
@@ -3336,12 +3352,12 @@ function HexTile(factory, options) {
 
 util.inherits(HexTile, BoardEntity);
 
-HexTile.prototype.isResource = function() {
-  return this.type !== 'sea' && this.type !== 'desert';
-};
-
 HexTile.prototype.addToBoard = function(board) {
   this.board = board;
+};
+
+HexTile.prototype.isResource = function() {
+  return this.type !== 'sea' && this.type !== 'desert';
 };
 
 HexTile.prototype.getAdjacentTiles = spatialQuery(function(board) {

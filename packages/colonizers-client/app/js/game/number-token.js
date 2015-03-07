@@ -76,7 +76,7 @@ NumberToken.prototype.renderDots = function(dotInfo) {
 };
 
 NumberToken.prototype.onBoardRotate = function(rotation) {
-  return this.group.rotation(-rotation);
+  this.group.rotation(-rotation);
 };
 
 module.exports = NumberToken;
