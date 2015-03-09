@@ -24,7 +24,7 @@ Contributions (both issues and pull requests) are very welcome!
 
 Make sure you have [Node.js](https://github.com/joyent/node/wiki/Installation) and [MongoDB](http://www.mongodb.org/display/DOCS/Quickstart) installed.
 
-```
+```sh
 git clone https://github.com/sibartlett/colonizers.git
 cd colonizers
 npm install
@@ -44,48 +44,11 @@ The following script does the following:
 * uses ```npm link``` to symlink dependencies from the NPM global store into components
 * installs third-party dependencies using ```npm install```
 
-```
-mkdir colonizers
+```sh
+# Clone Colonizers repository
+git clone git@github.com:colonizers/colonizers.git
+
 cd colonizers
 
-git clone git@github.com:colonizers/colonizers-dev.git dev
-cd dev
-npm install
-npm link
-cd ..
-
-git clone git@github.com:colonizers/colonizers-core.git core
-cd core
-npm install
-npm link
-cd ..
-
-git clone git@github.com:colonizers/colonizers-client-tilesets.git tilesets
-cd tilesets
-npm install
-npm link
-cd ..
-
-git clone git@github.com:colonizers/colonizers-client.git client
-cd client
-npm link colonizers-dev
-npm link colonizers-core
-npm install
-npm link
-cd ..
-
-git clone git@github.com:colonizers/colonizers-server.git server
-cd server
-npm link colonizers-dev
-npm link colonizers-core
-npm install
-npm link
-cd ..
-
-git clone git@github.com:colonizers/colonizers.git app
-cd app
-npm link colonizers-client
-npm link colonizers-client-tilesets
-npm link colonizers-server
-npm install
+sh setup-dev-env.sh
 ```
