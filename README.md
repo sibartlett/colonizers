@@ -36,13 +36,7 @@ The app should now be running at [http://localhost:8080](http://localhost:8080)
 
 ## Setting up a development environment
 
-The following script does the following:
-
-* creates a directory named colonizers
-* clones each component into a subdirectory
-* uses ```npm link``` to symlink components into the NPM global store
-* uses ```npm link``` to symlink dependencies from the NPM global store into components
-* installs third-party dependencies using ```npm install```
+The ```setup-dev-env.sh``` script clones various Colonizers modules into subdirectories, and symlinks them using the ```npm link``` command.
 
 ```sh
 # Clone Colonizers repository
@@ -50,5 +44,6 @@ git clone git@github.com:colonizers/colonizers.git
 
 cd colonizers
 
+# Run setup script
 sh setup-dev-env.sh
 ```
