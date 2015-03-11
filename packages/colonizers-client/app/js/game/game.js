@@ -1,15 +1,15 @@
 'use strict';
 
 var emitter = require('component-emitter'),
-    core = require('colonizers-core'),
-    Game = core.Game;
+    util = require('colonizers-core/lib/util'),
+    Game = require('colonizers-core/lib/game-objects/game');
 
 function UiGame() {
   Game.apply(this, arguments);
   emitter(this);
 }
 
-core.util.inherits(UiGame, Game);
+util.inherits(UiGame, Game);
 
 UiGame.prototype.offerTrade = function(options) {
   Game.prototype.offerTrade.call(this, options);

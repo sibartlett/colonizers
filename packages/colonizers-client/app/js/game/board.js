@@ -2,8 +2,8 @@
 
 var emitter = require('component-emitter'),
     Konva = require('konva'),
-    core = require('colonizers-core'),
-    Board = core.Board;
+    util = require('colonizers-core/lib/util'),
+    Board = require('colonizers-core/lib/game-objects/board');
 
 function UiBoard() {
   this.onStageTransformEnd = this.onStageTransformEnd.bind(this);
@@ -27,7 +27,7 @@ function UiBoard() {
   this.layer.add(this.fgGroup);
 }
 
-core.util.inherits(UiBoard, Board);
+util.inherits(UiBoard, Board);
 
 UiBoard.prototype.redraw = function() {
   this.layer.batchDraw();

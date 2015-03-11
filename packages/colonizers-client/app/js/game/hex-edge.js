@@ -3,9 +3,9 @@
 var $ = require('jquery'),
     emitter = require('component-emitter'),
     Konva = require('konva'),
-    core = require('colonizers-core'),
-    HexEdge = core.HexEdge,
-    MathHelper = core.MathHelper;
+    util = require('colonizers-core/lib/util'),
+    MathHelper = require('colonizers-core/lib/math-helper'),
+    HexEdge = require('colonizers-core/lib/game-objects/hex-edge');
 
 function UiHexEdge(factory, options) {
   HexEdge.apply(this, arguments);
@@ -14,7 +14,7 @@ function UiHexEdge(factory, options) {
   this.hookupEvents();
 }
 
-core.util.inherits(UiHexEdge, HexEdge);
+util.inherits(UiHexEdge, HexEdge);
 
 UiHexEdge.prototype.render = function(options) {
   var rotation = MathHelper.getAngle(options.ends[0], options.ends[1]),

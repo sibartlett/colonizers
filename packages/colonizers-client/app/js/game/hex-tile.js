@@ -2,8 +2,8 @@
 
 var _ = require('underscore'),
     Konva = require('konva'),
-    core = require('colonizers-core'),
-    HexTile = core.HexTile,
+    util = require('colonizers-core/lib/util'),
+    HexTile = require('colonizers-core/lib/game-objects/hex-tile'),
     NumberToken = require('./number-token');
 
 function UiHexTile(factory, options, tileset) {
@@ -12,7 +12,7 @@ function UiHexTile(factory, options, tileset) {
   this.render(options, tileset);
 }
 
-core.util.inherits(UiHexTile, HexTile);
+util.inherits(UiHexTile, HexTile);
 
 UiHexTile.prototype.render = function(options, tileset) {
   var tileStyle = tileset.tiles[options.type],

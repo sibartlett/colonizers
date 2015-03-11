@@ -1,15 +1,15 @@
 'use strict';
 
 var emitter = require('component-emitter'),
-    core = require('colonizers-core'),
-    Player = core.Player;
+    util = require('colonizers-core/lib/util'),
+    Player = require('colonizers-core/lib/game-objects/player');
 
 function UiPlayer() {
   Player.apply(this, arguments);
   emitter(this);
 }
 
-core.util.inherits(UiPlayer, Player);
+util.inherits(UiPlayer, Player);
 
 UiPlayer.prototype.distribute = function(resources) {
   Player.prototype.distribute.call(this, resources);

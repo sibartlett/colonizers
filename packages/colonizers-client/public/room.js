@@ -5,7 +5,9 @@ require('jquery-plugins');
 
 var jquery = require('jquery'),
     io = require('socket.io-client'),
-    core = require('colonizers-core'),
+    GameSerializer = require('colonizers-core/lib/game-serializer'),
+    EmitterQueue = require('colonizers-core/lib/emitter-queue'),
+    GameCoordinator = require('colonizers-core/lib/game-coordinator'),
     Factory = require('./game/factory'),
     Notifications = require('./notifications'),
     UserInterface = require('./user-interface');
@@ -14,9 +16,9 @@ jquery.get('/tilesets/modern.json', function(tileset) {
 
   var factory = new Factory(tileset),
       socket = io(),
-      gameSerializer = new core.GameSerializer(factory),
-      emitterQueue = new core.EmitterQueue(socket),
-      gameCoordinator = new core.GameCoordinator(emitterQueue),
+      gameSerializer = new GameSerializer(factory),
+      emitterQueue = new EmitterQueue(socket),
+      gameCoordinator = new GameCoordinator(emitterQueue),
       notifications = new Notifications(emitterQueue),
       ui = new UserInterface({
         socket: socket,
@@ -45,7 +47,7 @@ jquery.get('/tilesets/modern.json', function(tileset) {
 
 });
 
-},{"./game/factory":18,"./notifications":29,"./user-interface":32,"colonizers-core":46,"jquery":undefined,"jquery-plugins":undefined,"socket.io-client":undefined}],2:[function(require,module,exports){
+},{"./game/factory":18,"./notifications":29,"./user-interface":32,"colonizers-core/lib/emitter-queue":34,"colonizers-core/lib/game-coordinator":35,"colonizers-core/lib/game-serializer":46,"jquery":undefined,"jquery-plugins":undefined,"socket.io-client":undefined}],2:[function(require,module,exports){
 module.exports = "<div class=\"alert alert-info alert-fixed-top\" style=\"display: none\" data-bind=\"visible: message\">\n  <button type=\"button\" class=\"close\" data-bind=\"click: dismiss\">\n    <span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span>\n  </button>\n  <span data-bind=\"text: message\"></span>\n  <div class=\"dice\" data-bind=\"visible: showDice\">\n    <img border=\"0\" width=\"32\" height=\"32\"\n      data-bind=\"attr: { src: die1.imageSrc }\" />\n    <img border=\"0\" width=\"32\" height=\"32\"\n      data-bind=\"attr: { src: die2.imageSrc }\" />\n  </div>\n</div>\n";
 
 },{}],3:[function(require,module,exports){
@@ -694,8 +696,8 @@ module.exports = {
 
 var emitter = require('component-emitter'),
     Konva = require('konva'),
-    core = require('colonizers-core'),
-    Board = core.Board;
+    util = require('colonizers-core/lib/util'),
+    Board = require('colonizers-core/lib/game-objects/board');
 
 function UiBoard() {
   this.onStageTransformEnd = this.onStageTransformEnd.bind(this);
@@ -719,7 +721,7 @@ function UiBoard() {
   this.layer.add(this.fgGroup);
 }
 
-core.util.inherits(UiBoard, Board);
+util.inherits(UiBoard, Board);
 
 UiBoard.prototype.redraw = function() {
   this.layer.batchDraw();
@@ -779,7 +781,7 @@ UiBoard.prototype.onStageTransformEnd = function() {
 
 module.exports = UiBoard;
 
-},{"colonizers-core":46,"component-emitter":undefined,"konva":undefined}],18:[function(require,module,exports){
+},{"colonizers-core/lib/game-objects/board":37,"colonizers-core/lib/util":48,"component-emitter":undefined,"konva":undefined}],18:[function(require,module,exports){
   'use strict';
 
 var Game = require('./game'),
@@ -835,15 +837,15 @@ module.exports = Factory;
 'use strict';
 
 var emitter = require('component-emitter'),
-    core = require('colonizers-core'),
-    Game = core.Game;
+    util = require('colonizers-core/lib/util'),
+    Game = require('colonizers-core/lib/game-objects/game');
 
 function UiGame() {
   Game.apply(this, arguments);
   emitter(this);
 }
 
-core.util.inherits(UiGame, Game);
+util.inherits(UiGame, Game);
 
 UiGame.prototype.offerTrade = function(options) {
   Game.prototype.offerTrade.call(this, options);
@@ -938,14 +940,14 @@ UiGame.prototype.hideBuildableEntities = function() {
 
 module.exports = UiGame;
 
-},{"colonizers-core":46,"component-emitter":undefined}],20:[function(require,module,exports){
+},{"colonizers-core/lib/game-objects/game":41,"colonizers-core/lib/util":48,"component-emitter":undefined}],20:[function(require,module,exports){
 'use strict';
 
 var $ = require('jquery'),
     emitter = require('component-emitter'),
     Konva = require('konva'),
-    core = require('colonizers-core'),
-    HexCorner = core.HexCorner;
+    util = require('colonizers-core/lib/util'),
+    HexCorner = require('colonizers-core/lib/game-objects/hex-corner');
 
 function UiHexCorner(factory, options) {
   HexCorner.apply(this, arguments);
@@ -954,7 +956,7 @@ function UiHexCorner(factory, options) {
   this.hookupEvents();
 }
 
-core.util.inherits(UiHexCorner, HexCorner);
+util.inherits(UiHexCorner, HexCorner);
 
 UiHexCorner.prototype.render = function(options) {
   this.group = new Konva.Group({
@@ -1098,15 +1100,15 @@ UiHexCorner.prototype.addToBoard = function(board) {
 
 module.exports = UiHexCorner;
 
-},{"colonizers-core":46,"component-emitter":undefined,"jquery":undefined,"konva":undefined}],21:[function(require,module,exports){
+},{"colonizers-core/lib/game-objects/hex-corner":42,"colonizers-core/lib/util":48,"component-emitter":undefined,"jquery":undefined,"konva":undefined}],21:[function(require,module,exports){
 'use strict';
 
 var $ = require('jquery'),
     emitter = require('component-emitter'),
     Konva = require('konva'),
-    core = require('colonizers-core'),
-    HexEdge = core.HexEdge,
-    MathHelper = core.MathHelper;
+    util = require('colonizers-core/lib/util'),
+    MathHelper = require('colonizers-core/lib/math-helper'),
+    HexEdge = require('colonizers-core/lib/game-objects/hex-edge');
 
 function UiHexEdge(factory, options) {
   HexEdge.apply(this, arguments);
@@ -1115,7 +1117,7 @@ function UiHexEdge(factory, options) {
   this.hookupEvents();
 }
 
-core.util.inherits(UiHexEdge, HexEdge);
+util.inherits(UiHexEdge, HexEdge);
 
 UiHexEdge.prototype.render = function(options) {
   var rotation = MathHelper.getAngle(options.ends[0], options.ends[1]),
@@ -1194,13 +1196,13 @@ UiHexEdge.prototype.hide = function() {
 
 module.exports = UiHexEdge;
 
-},{"colonizers-core":46,"component-emitter":undefined,"jquery":undefined,"konva":undefined}],22:[function(require,module,exports){
+},{"colonizers-core/lib/game-objects/hex-edge":43,"colonizers-core/lib/math-helper":47,"colonizers-core/lib/util":48,"component-emitter":undefined,"jquery":undefined,"konva":undefined}],22:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore'),
     Konva = require('konva'),
-    core = require('colonizers-core'),
-    HexTile = core.HexTile,
+    util = require('colonizers-core/lib/util'),
+    HexTile = require('colonizers-core/lib/game-objects/hex-tile'),
     NumberToken = require('./number-token');
 
 function UiHexTile(factory, options, tileset) {
@@ -1209,7 +1211,7 @@ function UiHexTile(factory, options, tileset) {
   this.render(options, tileset);
 }
 
-core.util.inherits(UiHexTile, HexTile);
+util.inherits(UiHexTile, HexTile);
 
 UiHexTile.prototype.render = function(options, tileset) {
   var tileStyle = tileset.tiles[options.type],
@@ -1297,7 +1299,7 @@ UiHexTile.prototype.addToBoard = function(board) {
 
 module.exports = UiHexTile;
 
-},{"./number-token":23,"colonizers-core":46,"konva":undefined,"underscore":undefined}],23:[function(require,module,exports){
+},{"./number-token":23,"colonizers-core/lib/game-objects/hex-tile":44,"colonizers-core/lib/util":48,"konva":undefined,"underscore":undefined}],23:[function(require,module,exports){
 'use strict';
 
 var Konva = require('konva');
@@ -1620,15 +1622,15 @@ module.exports = {
 'use strict';
 
 var emitter = require('component-emitter'),
-    core = require('colonizers-core'),
-    Player = core.Player;
+    util = require('colonizers-core/lib/util'),
+    Player = require('colonizers-core/lib/game-objects/player');
 
 function UiPlayer() {
   Player.apply(this, arguments);
   emitter(this);
 }
 
-core.util.inherits(UiPlayer, Player);
+util.inherits(UiPlayer, Player);
 
 UiPlayer.prototype.distribute = function(resources) {
   Player.prototype.distribute.call(this, resources);
@@ -1647,7 +1649,7 @@ UiPlayer.prototype.addVictoryPoint = function(devCard) {
 
 module.exports = UiPlayer;
 
-},{"colonizers-core":46,"component-emitter":undefined}],27:[function(require,module,exports){
+},{"colonizers-core/lib/game-objects/player":45,"colonizers-core/lib/util":48,"component-emitter":undefined}],27:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore'),
@@ -2384,6 +2386,163 @@ module.exports = ViewActions;
 },{}],34:[function(require,module,exports){
 'use strict';
 
+var async = require('async');
+
+function EmitterQueue(source) {
+  this.source = source;
+  this.processTask = this.processTask.bind(this);
+  this.queue = async.queue(this.processTask, 1);
+}
+
+EmitterQueue.prototype.getTasks = function(event, data) {
+  var listeners;
+
+  this.callbacks = this.callbacks || {};
+
+  listeners = this.callbacks[event] || [];
+  listeners = listeners.slice(0);
+
+  return listeners.map(function(listener) {
+    return function(next) {
+      listener(data, function() {
+        // next function must be called asynchronously
+        // this allows us to write synchronous callbacks
+        setTimeout(next, 0);
+      });
+    };
+  });
+};
+
+EmitterQueue.prototype.processTask = function(task, next) {
+  var tasks = this.getTasks(task.event, task.data);
+  async.series(tasks, function() {
+    // next function must be called asynchronously
+    // this allows us to write synchronous callbacks
+    setTimeout(next, 0);
+  });
+};
+
+EmitterQueue.prototype.emit = function(event, data) {
+  var task = {
+    event: event,
+    data: data
+  };
+  this.queue.push(task);
+};
+
+EmitterQueue.prototype.on = function(event, fn) {
+  this.callbacks = this.callbacks || {};
+
+  if (this.callbacks[event] == null) {
+    this.callbacks[event] = [];
+    this.source.on(event, function(data) {
+      return this.emit(event, data);
+    }.bind(this));
+  }
+
+  this.callbacks[event].push(fn);
+};
+
+EmitterQueue.prototype.onceDrain = function(fn) {
+  var onDrain = function() {
+    this.queue.drain = null;
+    fn();
+  }.bind(this);
+  this.queue.drain = onDrain;
+};
+
+EmitterQueue.prototype.kill = function() {
+  this.queue.kill();
+};
+
+module.exports = EmitterQueue;
+
+},{"async":undefined}],35:[function(require,module,exports){
+'use strict';
+
+function GameCoordinator(emitterQueue, game) {
+  this.emitterQueue = emitterQueue;
+  this.game = game;
+
+  this.onDistributeResources = this.onDistributeResources.bind(this);
+  this.onBuild = this.onBuild.bind(this);
+  this.onNextTurn = this.onNextTurn.bind(this);
+  this.onOfferTrade = this.onOfferTrade.bind(this);
+
+  this.emitterQueue.on('NextTurn', this.onNextTurn);
+  this.emitterQueue.on('Build', this.onBuild);
+  this.emitterQueue.on('DistributeResources', this.onDistributeResources);
+  this.emitterQueue.on('OfferTrade', this.onOfferTrade);
+}
+
+GameCoordinator.prototype.setGame = function(game) {
+  this.game = game;
+};
+
+GameCoordinator.prototype.onNextTurn = function(data, next) {
+  var turn = this.game.turn + 1;
+  this.game.setTurn(turn);
+  next();
+};
+
+GameCoordinator.prototype.onBuild = function(data, next) {
+  var corner, edge, player;
+  player = this.game.getPlayerById(data.playerId);
+
+  if (data.buildType === 'settlement') {
+    corner = this.game.board.corners.getById(data.buildId);
+    corner.buildSettlement(player);
+    player.addVictoryPoint();
+    if (this.game.phase !== 'setup') {
+      player.spend({
+        lumber: 1,
+        brick: 1,
+        wool: 1,
+        grain: 1
+      });
+    }
+  } else if (data.buildType === 'city') {
+    corner = this.game.board.corners.getById(data.buildId);
+    corner.buildCity(player);
+    player.addVictoryPoint();
+
+    player.spend({
+      ore: 3,
+      grain: 2
+    });
+  } else if (data.buildType === 'road') {
+    edge = this.game.board.edges.getById(data.buildId);
+    edge.build(player);
+    if (this.game.phase !== 'setup') {
+      player.spend({
+        lumber: 1,
+        brick: 1
+      });
+    }
+  }
+  next();
+};
+
+GameCoordinator.prototype.onDistributeResources = function(data, next) {
+  var player, playerId, resources;
+  for (playerId in data) {
+    resources = data[playerId];
+    player = this.game.getPlayerById(playerId);
+    player.distribute(resources);
+  }
+  next();
+};
+
+GameCoordinator.prototype.onOfferTrade = function(data, next) {
+  this.game.offerTrade(data);
+  next();
+};
+
+module.exports = GameCoordinator;
+
+},{}],36:[function(require,module,exports){
+'use strict';
+
 function BoardEntity(factory, options) {
   factory.defineProperties(this, {
     center: options.center,
@@ -2403,7 +2562,7 @@ BoardEntity.spatialQuery = function(callback) {
 
 module.exports = BoardEntity;
 
-},{}],35:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 'use strict';
 
 var collections = require('./collections/hex-collections');
@@ -2466,12 +2625,12 @@ Board.prototype.addEdge = function(edge) {
 
 module.exports = Board;
 
-},{"./collections/hex-collections":36}],36:[function(require,module,exports){
+},{"./collections/hex-collections":38}],38:[function(require,module,exports){
 'use strict';
 
 var QueryableCollection = require('./queryable-collection'),
     clauses = require('./query-clauses'),
-    util = require('./../util');
+    util = require('./../../util');
 
 function HexCornerCollection() {
   QueryableCollection.call(this, [
@@ -2511,10 +2670,10 @@ module.exports = {
   HexTileCollection: HexTileCollection
 };
 
-},{"./../util":49,"./query-clauses":37,"./queryable-collection":38}],37:[function(require,module,exports){
+},{"./../../util":48,"./query-clauses":39,"./queryable-collection":40}],39:[function(require,module,exports){
 'use strict';
 
-var MathHelper = require('./../math-helper');
+var MathHelper = require('./../../math-helper');
 
 module.exports = {
 
@@ -2607,7 +2766,7 @@ module.exports = {
 
 };
 
-},{"./../math-helper":47}],38:[function(require,module,exports){
+},{"./../../math-helper":47}],40:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore');
@@ -2661,164 +2820,436 @@ QueryableCollection.prototype.query = function(options) {
 
 module.exports = QueryableCollection;
 
-},{"underscore":undefined}],39:[function(require,module,exports){
+},{"underscore":undefined}],41:[function(require,module,exports){
 'use strict';
 
-var async = require('async');
+var _ = require('underscore');
 
-function EmitterQueue(source) {
-  this.source = source;
-  this.processTask = this.processTask.bind(this);
-  this.queue = async.queue(this.processTask, 1);
+function Game(factory, options) {
+  factory.defineProperties(this, {
+    board: options.board,
+    players: options.players,
+    allowance: options.allowance,
+    currentTrade: options.currentTrade || null,
+    turn: null,
+    phase: null,
+    currentPlayer: null
+  });
+
+  this.board.game = this;
+  this.setTurn(options.turn || 0);
 }
 
-EmitterQueue.prototype.getTasks = function(event, data) {
-  var listeners;
-
-  this.callbacks = this.callbacks || {};
-
-  listeners = this.callbacks[event] || [];
-  listeners = listeners.slice(0);
-
-  return listeners.map(function(listener) {
-    return function(next) {
-      listener(data, function() {
-        // next function must be called asynchronously
-        // this allows us to write synchronous callbacks
-        setTimeout(next, 0);
-      });
-    };
-  });
-};
-
-EmitterQueue.prototype.processTask = function(task, next) {
-  var tasks = this.getTasks(task.event, task.data);
-  async.series(tasks, function() {
-    // next function must be called asynchronously
-    // this allows us to write synchronous callbacks
-    setTimeout(next, 0);
-  });
-};
-
-EmitterQueue.prototype.emit = function(event, data) {
-  var task = {
-    event: event,
-    data: data
+Game.prototype.offerTrade = function(options) {
+  this.currentTrade = {
+    owner: options.playerId,
+    resources: options.resources
   };
-  this.queue.push(task);
 };
 
-EmitterQueue.prototype.on = function(event, fn) {
-  this.callbacks = this.callbacks || {};
+Game.prototype.setTurn = function(turn) {
+  var data = this.getDataForTurn(turn);
+  this.turn = data.turn;
+  this.phase = data.phase;
+  this.currentPlayer = this.players[data.playerIndex] || null;
+};
 
-  if (this.callbacks[event] == null) {
-    this.callbacks[event] = [];
-    this.source.on(event, function(data) {
-      return this.emit(event, data);
-    }.bind(this));
+Game.prototype.getPlayerById = function(id) {
+  return _.find(this.players, function(player) {
+    return player.id === id;
+  });
+};
+
+Game.prototype.getDataForTurn = function(turn) {
+  var phase = 'waiting',
+      playerIndex = null,
+      prevTurn;
+
+  if (turn > 0) {
+    prevTurn = turn - 1;
+    if (turn <= this.players.length * 2) {
+      phase = 'setup';
+      if (turn <= this.players.length) {
+        playerIndex = prevTurn % this.players.length;
+      } else {
+        playerIndex =
+          this.players.length - 1 - (prevTurn % this.players.length);
+      }
+    } else {
+      phase = 'playing';
+      playerIndex = prevTurn % this.players.length;
+    }
   }
 
-  this.callbacks[event].push(fn);
+  return {
+    turn: turn,
+    phase: phase,
+    playerIndex: playerIndex,
+    playerId: playerIndex != null ? this.players[playerIndex].id : null
+  };
 };
 
-EmitterQueue.prototype.onceDrain = function(fn) {
-  var onDrain = function() {
-    this.queue.drain = null;
-    fn();
-  }.bind(this);
-  this.queue.drain = onDrain;
+Game.prototype.getBuildableEdgesForCurrentPlayer = function(cornerId) {
+  return this.getBuildableEdgesForPlayer(this.currentPlayer, cornerId);
 };
 
-EmitterQueue.prototype.kill = function() {
-  this.queue.kill();
+Game.prototype.getBuildableCornersForCurrentPlayer = function() {
+  return this.getBuildableCornersForPlayer(this.currentPlayer);
 };
 
-module.exports = EmitterQueue;
+Game.prototype.getBuildableEdgesForPlayer = function(player, cornerId) {
+  var corner,
+      ownedCorners,
+      edges;
 
-},{"async":undefined}],40:[function(require,module,exports){
+  if (this.phase === 'setup') {
+    if (cornerId != null) {
+      corner = this.board.corners.getById(cornerId);
+    } else {
+      ownedCorners = this.board.corners.query({
+        owner: this.currentPlayer
+      });
+
+      corner = _.find(ownedCorners, function(corner) {
+        var edges = corner.getAdjacentEdges();
+        return _.every(edges, function(edge) {
+          return edge.isBuildable;
+        });
+      });
+    }
+    return corner ? corner.getAdjacentEdges() : [];
+  } else {
+    edges = this.board.edges.query({
+      owner: this.currentPlayer
+    });
+
+    return _.chain(edges)
+      .map(function(edge) {
+        return edge.getAdjacentEdges();
+      })
+      .flatten(true)
+      .uniq(function(edge) {
+        return edge.id;
+      })
+      .filter(function(edge) {
+        return edge.isBuildable;
+      })
+      .value();
+  }
+};
+
+Game.prototype.getSettlementsForPlayer = function(player) {
+  return this.board.corners.query({
+    isSettlement: true,
+    owner: player
+  });
+};
+
+Game.prototype.getBuildableCornersForPlayer = function(player) {
+  var edges;
+
+  if (this.phase === 'setup') {
+    return this.board.corners.query({
+      buildable: true
+    });
+  } else {
+    edges = this.board.edges.query({
+      owner: player
+    });
+
+    return _.chain(edges)
+      .map(function(edge) {
+        return edge.getAdjacentCorners();
+      })
+      .flatten(true)
+      .uniq(function(corner) {
+        return corner.id;
+      })
+      .filter(function(corner) {
+        return corner.isBuildable;
+      })
+      .value();
+  }
+};
+
+module.exports = Game;
+
+},{"underscore":undefined}],42:[function(require,module,exports){
 'use strict';
 
-function GameCoordinator(emitterQueue, game) {
-  this.emitterQueue = emitterQueue;
-  this.game = game;
+var BoardEntity = require('./board-entity'),
+    spatialQuery = BoardEntity.spatialQuery,
+    util = require('./../util');
 
-  this.onDistributeResources = this.onDistributeResources.bind(this);
-  this.onBuild = this.onBuild.bind(this);
-  this.onNextTurn = this.onNextTurn.bind(this);
-  this.onOfferTrade = this.onOfferTrade.bind(this);
+function HexCorner(factory, options) {
+  BoardEntity.apply(this, arguments);
 
-  this.emitterQueue.on('NextTurn', this.onNextTurn);
-  this.emitterQueue.on('Build', this.onBuild);
-  this.emitterQueue.on('DistributeResources', this.onDistributeResources);
-  this.emitterQueue.on('OfferTrade', this.onOfferTrade);
+  factory.defineProperties(this, {
+    id: options.id,
+    owner: null,
+    isBuildable: true,
+    buildType: null,
+    isSettlement: this.isSettlement,
+    isCity: this.isCity
+  });
 }
 
-GameCoordinator.prototype.setGame = function(game) {
-  this.game = game;
+util.inherits(HexCorner, BoardEntity);
+
+HexCorner.prototype.addToBoard = function(board) {
+  this.board = board;
 };
 
-GameCoordinator.prototype.onNextTurn = function(data, next) {
-  var turn = this.game.turn + 1;
-  this.game.setTurn(turn);
-  next();
+HexCorner.prototype.isSettlement = function() {
+  return this.owner && this.buildType === 'settlement';
 };
 
-GameCoordinator.prototype.onBuild = function(data, next) {
-  var corner, edge, player;
-  player = this.game.getPlayerById(data.playerId);
+HexCorner.prototype.isCity = function() {
+  return this.owner && this.buildType === 'city';
+};
 
-  if (data.buildType === 'settlement') {
-    corner = this.game.board.corners.getById(data.buildId);
-    corner.buildSettlement(player);
-    player.addVictoryPoint();
-    if (this.game.phase !== 'setup') {
-      player.spend({
-        lumber: 1,
-        brick: 1,
-        wool: 1,
-        grain: 1
-      });
-    }
-  } else if (data.buildType === 'city') {
-    corner = this.game.board.corners.getById(data.buildId);
-    corner.buildCity(player);
-    player.addVictoryPoint();
+HexCorner.prototype.getAdjacentTiles = spatialQuery(function(board) {
+  return {
+    collection: board.tiles,
+    radius: board.hexInfo.circumradius * 1.1,
+    center: this.center
+  };
+});
 
-    player.spend({
-      ore: 3,
-      grain: 2
-    });
-  } else if (data.buildType === 'road') {
-    edge = this.game.board.edges.getById(data.buildId);
-    edge.build(player);
-    if (this.game.phase !== 'setup') {
-      player.spend({
-        lumber: 1,
-        brick: 1
-      });
+HexCorner.prototype.getAdjacentCorners = spatialQuery(function(board) {
+  return {
+    collection: board.corners,
+    radius: board.hexInfo.circumradius * 1.1,
+    center: this.center
+  };
+});
+
+HexCorner.prototype.getAdjacentEdges = spatialQuery(function(board) {
+  return {
+    collection: board.edges,
+    radius: board.hexInfo.circumradius * 0.6,
+    center: this.center
+  };
+});
+
+HexCorner.prototype.buildSettlement = function(player) {
+  var corners = this.getAdjacentCorners();
+
+  this.owner = player.id;
+  this.isBuildable = false;
+  this.buildType = 'settlement';
+
+  corners.forEach(function(corner) {
+    corner.isBuildable = false;
+  });
+};
+
+HexCorner.prototype.buildCity = function(player) {
+  var corners = this.getAdjacentCorners();
+
+  this.owner = player.id;
+  this.isBuildable = false;
+  this.buildType = 'city';
+
+  corners.forEach(function(corner) {
+    corner.isBuildable = false;
+  });
+};
+
+module.exports = HexCorner;
+
+},{"./../util":48,"./board-entity":36}],43:[function(require,module,exports){
+'use strict';
+
+var BoardEntity = require('./board-entity'),
+    spatialQuery = BoardEntity.spatialQuery,
+    util = require('./../util');
+
+function HexEdge(factory, options) {
+  BoardEntity.apply(this, arguments);
+
+  factory.defineProperties(this, {
+    id: options.id,
+    ends: options.ends,
+    owner: null,
+    isBuildable: true
+  });
+}
+
+util.inherits(HexEdge, BoardEntity);
+
+HexEdge.prototype.addToBoard = function(board) {
+  this.board = board;
+};
+
+HexEdge.prototype.getAdjacentCorners = spatialQuery(function(board) {
+  return {
+    collection: board.corners,
+    radius: board.hexInfo.circumradius * 0.6,
+    center: this.center
+  };
+});
+
+HexEdge.prototype.getAdjacentEdges = spatialQuery(function(board) {
+  return {
+    collection: board.edges,
+    radius: board.hexInfo.apothem * 1.1,
+    center: this.center
+  };
+});
+
+HexEdge.prototype.getAdjacentTiles = spatialQuery(function(board) {
+  return {
+    collection: board.tiles,
+    radius: board.hexInfo.apothem * 1.1,
+    center: this.center
+  };
+});
+
+HexEdge.prototype.build = function(player) {
+  this.owner = player.id;
+  this.isBuildable = false;
+};
+
+module.exports = HexEdge;
+
+},{"./../util":48,"./board-entity":36}],44:[function(require,module,exports){
+'use strict';
+
+var BoardEntity = require('./board-entity'),
+    spatialQuery = BoardEntity.spatialQuery,
+    util = require('./../util');
+
+function HexTile(factory, options) {
+  BoardEntity.apply(this, arguments);
+
+  factory.defineProperties(this, {
+    id: options.id,
+    type: options.type,
+    value: options.value,
+    isResource: this.isResource
+  });
+}
+
+util.inherits(HexTile, BoardEntity);
+
+HexTile.prototype.addToBoard = function(board) {
+  this.board = board;
+};
+
+HexTile.prototype.isResource = function() {
+  return this.type !== 'sea' && this.type !== 'desert';
+};
+
+HexTile.prototype.getAdjacentTiles = spatialQuery(function(board) {
+  return {
+    collection: board.tiles,
+    radius: board.hexInfo.apothem * 2.1,
+    center: this.center
+  };
+});
+
+HexTile.prototype.getAdjacentCorners = spatialQuery(function(board) {
+  return {
+    collection: board.corners,
+    radius: board.hexInfo.circumradius * 1.1,
+    center: this.center
+  };
+});
+
+module.exports = HexTile;
+
+},{"./../util":48,"./board-entity":36}],45:[function(require,module,exports){
+'use strict';
+
+function Resources(factory) {
+  factory.defineProperties(this, {
+    total: 0,
+    brick: 0,
+    grain: 0,
+    lumber: 0,
+    ore: 0,
+    wool: 0
+  });
+}
+
+function DevelopmentCards(factory) {
+  factory.defineProperties(this, {
+    total: 0
+  });
+}
+
+function VictoryPoints(factory) {
+  factory.defineProperties(this, {
+    public: 0,
+    actual: 0
+  });
+}
+
+function Player(factory, options) {
+  factory.defineProperties(this, {
+    id: options.id,
+    resources: new Resources(factory),
+    developmentCards: new DevelopmentCards(factory),
+    victoryPoints: new VictoryPoints(factory),
+    knightsPlayed: 0,
+    longestRoad: 0
+  });
+}
+
+Player.prototype.hasResources = function(resources) {
+  var value,
+      resource;
+
+  for (resource in resources) {
+    value = resources[resource];
+    if (this.resources[resource] < value) {
+      return false;
     }
   }
-  next();
+
+  return true;
 };
 
-GameCoordinator.prototype.onDistributeResources = function(data, next) {
-  var player, playerId, resources;
-  for (playerId in data) {
-    resources = data[playerId];
-    player = this.game.getPlayerById(playerId);
-    player.distribute(resources);
+Player.prototype.distribute = function(resources) {
+  var total = 0,
+      value,
+      resource;
+
+  for (resource in resources) {
+    value = resources[resource];
+    total += value;
+    this.resources[resource] += value;
   }
-  next();
+
+  this.resources.total += total;
+  this.longestRoad = 0;
 };
 
-GameCoordinator.prototype.onOfferTrade = function(data, next) {
-  this.game.offerTrade(data);
-  next();
+Player.prototype.spend = function(resources) {
+  var total = 0,
+      value,
+      resource;
+
+  for (resource in resources) {
+    value = resources[resource];
+    total -= value;
+    this.resources[resource] -= value;
+  }
+
+  this.resources.total -= total;
 };
 
-module.exports = GameCoordinator;
+Player.prototype.addVictoryPoint = function(devCard) {
+  if (devCard) {
+    this.victoryPoints.public++;
+  }
+  this.victoryPoints.actual++;
+};
 
-},{}],41:[function(require,module,exports){
+module.exports = Player;
+
+},{}],46:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore');
@@ -3041,363 +3472,7 @@ GameSerializer.prototype.deserializeBuildings = function(board, data, players) {
 
 module.exports = GameSerializer;
 
-},{"underscore":undefined}],42:[function(require,module,exports){
-'use strict';
-
-var _ = require('underscore');
-
-function Game(factory, options) {
-  factory.defineProperties(this, {
-    board: options.board,
-    players: options.players,
-    allowance: options.allowance,
-    currentTrade: options.currentTrade || null,
-    turn: null,
-    phase: null,
-    currentPlayer: null
-  });
-
-  this.board.game = this;
-  this.setTurn(options.turn || 0);
-}
-
-Game.prototype.offerTrade = function(options) {
-  this.currentTrade = {
-    owner: options.playerId,
-    resources: options.resources
-  };
-};
-
-Game.prototype.setTurn = function(turn) {
-  var data = this.getDataForTurn(turn);
-  this.turn = data.turn;
-  this.phase = data.phase;
-  this.currentPlayer = this.players[data.playerIndex] || null;
-};
-
-Game.prototype.getPlayerById = function(id) {
-  return _.find(this.players, function(player) {
-    return player.id === id;
-  });
-};
-
-Game.prototype.getDataForTurn = function(turn) {
-  var phase = 'waiting',
-      playerIndex = null,
-      prevTurn;
-
-  if (turn > 0) {
-    prevTurn = turn - 1;
-    if (turn <= this.players.length * 2) {
-      phase = 'setup';
-      if (turn <= this.players.length) {
-        playerIndex = prevTurn % this.players.length;
-      } else {
-        playerIndex =
-          this.players.length - 1 - (prevTurn % this.players.length);
-      }
-    } else {
-      phase = 'playing';
-      playerIndex = prevTurn % this.players.length;
-    }
-  }
-
-  return {
-    turn: turn,
-    phase: phase,
-    playerIndex: playerIndex,
-    playerId: playerIndex != null ? this.players[playerIndex].id : null
-  };
-};
-
-Game.prototype.getBuildableEdgesForCurrentPlayer = function(cornerId) {
-  return this.getBuildableEdgesForPlayer(this.currentPlayer, cornerId);
-};
-
-Game.prototype.getBuildableCornersForCurrentPlayer = function() {
-  return this.getBuildableCornersForPlayer(this.currentPlayer);
-};
-
-Game.prototype.getBuildableEdgesForPlayer = function(player, cornerId) {
-  var corner,
-      ownedCorners,
-      edges;
-
-  if (this.phase === 'setup') {
-    if (cornerId != null) {
-      corner = this.board.corners.getById(cornerId);
-    } else {
-      ownedCorners = this.board.corners.query({
-        owner: this.currentPlayer
-      });
-
-      corner = _.find(ownedCorners, function(corner) {
-        var edges = corner.getAdjacentEdges();
-        return _.every(edges, function(edge) {
-          return edge.isBuildable;
-        });
-      });
-    }
-    return corner ? corner.getAdjacentEdges() : [];
-  } else {
-    edges = this.board.edges.query({
-      owner: this.currentPlayer
-    });
-
-    return _.chain(edges)
-      .map(function(edge) {
-        return edge.getAdjacentEdges();
-      })
-      .flatten(true)
-      .uniq(function(edge) {
-        return edge.id;
-      })
-      .filter(function(edge) {
-        return edge.isBuildable;
-      })
-      .value();
-  }
-};
-
-Game.prototype.getSettlementsForPlayer = function(player) {
-  return this.board.corners.query({
-    isSettlement: true,
-    owner: player
-  });
-};
-
-Game.prototype.getBuildableCornersForPlayer = function(player) {
-  var edges;
-
-  if (this.phase === 'setup') {
-    return this.board.corners.query({
-      buildable: true
-    });
-  } else {
-    edges = this.board.edges.query({
-      owner: player
-    });
-
-    return _.chain(edges)
-      .map(function(edge) {
-        return edge.getAdjacentCorners();
-      })
-      .flatten(true)
-      .uniq(function(corner) {
-        return corner.id;
-      })
-      .filter(function(corner) {
-        return corner.isBuildable;
-      })
-      .value();
-  }
-};
-
-module.exports = Game;
-
-},{"underscore":undefined}],43:[function(require,module,exports){
-'use strict';
-
-var BoardEntity = require('./board-entity'),
-    spatialQuery = BoardEntity.spatialQuery,
-    util = require('./util');
-
-function HexCorner(factory, options) {
-  BoardEntity.apply(this, arguments);
-
-  factory.defineProperties(this, {
-    id: options.id,
-    owner: null,
-    isBuildable: true,
-    buildType: null,
-    isSettlement: this.isSettlement,
-    isCity: this.isCity
-  });
-}
-
-util.inherits(HexCorner, BoardEntity);
-
-HexCorner.prototype.addToBoard = function(board) {
-  this.board = board;
-};
-
-HexCorner.prototype.isSettlement = function() {
-  return this.owner && this.buildType === 'settlement';
-};
-
-HexCorner.prototype.isCity = function() {
-  return this.owner && this.buildType === 'city';
-};
-
-HexCorner.prototype.getAdjacentTiles = spatialQuery(function(board) {
-  return {
-    collection: board.tiles,
-    radius: board.hexInfo.circumradius * 1.1,
-    center: this.center
-  };
-});
-
-HexCorner.prototype.getAdjacentCorners = spatialQuery(function(board) {
-  return {
-    collection: board.corners,
-    radius: board.hexInfo.circumradius * 1.1,
-    center: this.center
-  };
-});
-
-HexCorner.prototype.getAdjacentEdges = spatialQuery(function(board) {
-  return {
-    collection: board.edges,
-    radius: board.hexInfo.circumradius * 0.6,
-    center: this.center
-  };
-});
-
-HexCorner.prototype.buildSettlement = function(player) {
-  var corners = this.getAdjacentCorners();
-
-  this.owner = player.id;
-  this.isBuildable = false;
-  this.buildType = 'settlement';
-
-  corners.forEach(function(corner) {
-    corner.isBuildable = false;
-  });
-};
-
-HexCorner.prototype.buildCity = function(player) {
-  var corners = this.getAdjacentCorners();
-
-  this.owner = player.id;
-  this.isBuildable = false;
-  this.buildType = 'city';
-
-  corners.forEach(function(corner) {
-    corner.isBuildable = false;
-  });
-};
-
-module.exports = HexCorner;
-
-},{"./board-entity":34,"./util":49}],44:[function(require,module,exports){
-'use strict';
-
-var BoardEntity = require('./board-entity'),
-    spatialQuery = BoardEntity.spatialQuery,
-    util = require('./util');
-
-function HexEdge(factory, options) {
-  BoardEntity.apply(this, arguments);
-
-  factory.defineProperties(this, {
-    id: options.id,
-    ends: options.ends,
-    owner: null,
-    isBuildable: true
-  });
-}
-
-util.inherits(HexEdge, BoardEntity);
-
-HexEdge.prototype.addToBoard = function(board) {
-  this.board = board;
-};
-
-HexEdge.prototype.getAdjacentCorners = spatialQuery(function(board) {
-  return {
-    collection: board.corners,
-    radius: board.hexInfo.circumradius * 0.6,
-    center: this.center
-  };
-});
-
-HexEdge.prototype.getAdjacentEdges = spatialQuery(function(board) {
-  return {
-    collection: board.edges,
-    radius: board.hexInfo.apothem * 1.1,
-    center: this.center
-  };
-});
-
-HexEdge.prototype.getAdjacentTiles = spatialQuery(function(board) {
-  return {
-    collection: board.tiles,
-    radius: board.hexInfo.apothem * 1.1,
-    center: this.center
-  };
-});
-
-HexEdge.prototype.build = function(player) {
-  this.owner = player.id;
-  this.isBuildable = false;
-};
-
-module.exports = HexEdge;
-
-},{"./board-entity":34,"./util":49}],45:[function(require,module,exports){
-'use strict';
-
-var BoardEntity = require('./board-entity'),
-    spatialQuery = BoardEntity.spatialQuery,
-    util = require('./util');
-
-function HexTile(factory, options) {
-  BoardEntity.apply(this, arguments);
-
-  factory.defineProperties(this, {
-    id: options.id,
-    type: options.type,
-    value: options.value,
-    isResource: this.isResource
-  });
-}
-
-util.inherits(HexTile, BoardEntity);
-
-HexTile.prototype.addToBoard = function(board) {
-  this.board = board;
-};
-
-HexTile.prototype.isResource = function() {
-  return this.type !== 'sea' && this.type !== 'desert';
-};
-
-HexTile.prototype.getAdjacentTiles = spatialQuery(function(board) {
-  return {
-    collection: board.tiles,
-    radius: board.hexInfo.apothem * 2.1,
-    center: this.center
-  };
-});
-
-HexTile.prototype.getAdjacentCorners = spatialQuery(function(board) {
-  return {
-    collection: board.corners,
-    radius: board.hexInfo.circumradius * 1.1,
-    center: this.center
-  };
-});
-
-module.exports = HexTile;
-
-},{"./board-entity":34,"./util":49}],46:[function(require,module,exports){
-'use strict';
-
-module.exports = {
-  EmitterQueue: require('./emitter-queue'),
-  GameCoordinator: require('./game-coordinator'),
-  GameSerializer: require('./game-serializer'),
-  MathHelper: require('./math-helper'),
-  Board: require('./board'),
-  Game: require('./game'),
-  HexCorner: require('./hex-corner'),
-  HexEdge: require('./hex-edge'),
-  HexTile: require('./hex-tile'),
-  Player: require('./player'),
-  util: require('./util')
-};
-
-},{"./board":35,"./emitter-queue":39,"./game":42,"./game-coordinator":40,"./game-serializer":41,"./hex-corner":43,"./hex-edge":44,"./hex-tile":45,"./math-helper":47,"./player":48,"./util":49}],47:[function(require,module,exports){
+},{"underscore":undefined}],47:[function(require,module,exports){
 'use strict';
 
 function round(number, dp) {
@@ -3429,96 +3504,6 @@ module.exports = {
 };
 
 },{}],48:[function(require,module,exports){
-'use strict';
-
-function Resources(factory) {
-  factory.defineProperties(this, {
-    total: 0,
-    brick: 0,
-    grain: 0,
-    lumber: 0,
-    ore: 0,
-    wool: 0
-  });
-}
-
-function DevelopmentCards(factory) {
-  factory.defineProperties(this, {
-    total: 0
-  });
-}
-
-function VictoryPoints(factory) {
-  factory.defineProperties(this, {
-    public: 0,
-    actual: 0
-  });
-}
-
-function Player(factory, options) {
-  factory.defineProperties(this, {
-    id: options.id,
-    resources: new Resources(factory),
-    developmentCards: new DevelopmentCards(factory),
-    victoryPoints: new VictoryPoints(factory),
-    knightsPlayed: 0,
-    longestRoad: 0
-  });
-}
-
-Player.prototype.hasResources = function(resources) {
-  var value,
-      resource;
-
-  for (resource in resources) {
-    value = resources[resource];
-    if (this.resources[resource] < value) {
-      return false;
-    }
-  }
-
-  return true;
-};
-
-Player.prototype.distribute = function(resources) {
-  var total = 0,
-      value,
-      resource;
-
-  for (resource in resources) {
-    value = resources[resource];
-    total += value;
-    this.resources[resource] += value;
-  }
-
-  this.resources.total += total;
-  this.longestRoad = 0;
-};
-
-Player.prototype.spend = function(resources) {
-  var total = 0,
-      value,
-      resource;
-
-  for (resource in resources) {
-    value = resources[resource];
-    total -= value;
-    this.resources[resource] -= value;
-  }
-
-  this.resources.total -= total;
-};
-
-Player.prototype.addVictoryPoint = function(devCard) {
-  if (devCard) {
-    this.victoryPoints.public++;
-  }
-  this.victoryPoints.actual++;
-};
-
-module.exports = Player;
-
-},{}],49:[function(require,module,exports){
 'use strict';
 
 var inherits = function(ctor, superCtor) {

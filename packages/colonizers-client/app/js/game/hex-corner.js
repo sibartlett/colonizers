@@ -3,8 +3,8 @@
 var $ = require('jquery'),
     emitter = require('component-emitter'),
     Konva = require('konva'),
-    core = require('colonizers-core'),
-    HexCorner = core.HexCorner;
+    util = require('colonizers-core/lib/util'),
+    HexCorner = require('colonizers-core/lib/game-objects/hex-corner');
 
 function UiHexCorner(factory, options) {
   HexCorner.apply(this, arguments);
@@ -13,7 +13,7 @@ function UiHexCorner(factory, options) {
   this.hookupEvents();
 }
 
-core.util.inherits(UiHexCorner, HexCorner);
+util.inherits(UiHexCorner, HexCorner);
 
 UiHexCorner.prototype.render = function(options) {
   this.group = new Konva.Group({
