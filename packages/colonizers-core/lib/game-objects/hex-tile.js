@@ -2,7 +2,7 @@
 
 var BoardEntity = require('./board-entity'),
     spatialQuery = BoardEntity.spatialQuery,
-    util = require('./util');
+    util = require('./../util');
 
 function HexTile(factory, options) {
   BoardEntity.apply(this, arguments);

@@ -1,6 +1,6 @@
 'use strict';
 
-var MathHelper = require('./../math-helper');
+var MathHelper = require('./../../math-helper');
 
 module.exports = {
 
