@@ -66,6 +66,10 @@ UiHexCorner.prototype.hookupEvents = function() {
 UiHexCorner.prototype.buildSettlement = function(player) {
   HexCorner.prototype.buildSettlement.call(this, player);
 
+  if (this.drawing) {
+    this.drawing.destroy();
+  }
+
   var colors = this.board.game.getPlayerColors();
 
   this.drawing = new Konva.Shape({
@@ -98,6 +102,10 @@ UiHexCorner.prototype.buildSettlement = function(player) {
 
 UiHexCorner.prototype.buildCity = function(player) {
   HexCorner.prototype.buildCity.call(this, player);
+
+  if (this.drawing) {
+    this.drawing.destroy();
+  }
 
   var colors = this.board.game.getPlayerColors();
 
