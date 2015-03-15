@@ -5,14 +5,18 @@ function GameCoordinator(emitterQueue, game) {
   this.game = game;
 
   this.onDistributeResources = this.onDistributeResources.bind(this);
-  this.onBuild = this.onBuild.bind(this);
+  this.onBuildRoad = this.onBuildRoad.bind(this);
+  this.onBuildSettlement = this.onBuildSettlement.bind(this);
+  this.onBuildCity = this.onBuildCity.bind(this);
   this.onNextTurn = this.onNextTurn.bind(this);
   this.onOfferTrade = this.onOfferTrade.bind(this);
 
-  this.emitterQueue.on('NextTurn', this.onNextTurn);
-  this.emitterQueue.on('Build', this.onBuild);
-  this.emitterQueue.on('DistributeResources', this.onDistributeResources);
-  this.emitterQueue.on('OfferTrade', this.onOfferTrade);
+  this.emitterQueue.on('start-turn', this.onNextTurn);
+  this.emitterQueue.on('build-road', this.onBuildRoad);
+  this.emitterQueue.on('build-settlement', this.onBuildSettlement);
+  this.emitterQueue.on('build-city', this.onBuildCity);
+  this.emitterQueue.on('distribute-resources', this.onDistributeResources);
+  this.emitterQueue.on('trade-offer', this.onOfferTrade);
 }
 
 GameCoordinator.prototype.setGame = function(game) {
@@ -25,41 +29,51 @@ GameCoordinator.prototype.onNextTurn = function(data, next) {
   next();
 };
 
-GameCoordinator.prototype.onBuild = function(data, next) {
-  var corner, edge, player;
-  player = this.game.getPlayerById(data.playerId);
+GameCoordinator.prototype.onBuildRoad = function(data, next) {
+  var player = this.game.getPlayerById(data.playerId),
+      edge = this.game.board.edges.getById(data.buildId);
 
-  if (data.buildType === 'settlement') {
-    corner = this.game.board.corners.getById(data.buildId);
-    corner.buildSettlement(player);
-    player.addVictoryPoint();
-    if (this.game.phase !== 'setup') {
-      player.spend({
-        lumber: 1,
-        brick: 1,
-        wool: 1,
-        grain: 1
-      });
-    }
-  } else if (data.buildType === 'city') {
-    corner = this.game.board.corners.getById(data.buildId);
-    corner.buildCity(player);
-    player.addVictoryPoint();
-
+  edge.build(player);
+  if (this.game.phase !== 'setup') {
     player.spend({
-      ore: 3,
-      grain: 2
+      lumber: 1,
+      brick: 1
     });
-  } else if (data.buildType === 'road') {
-    edge = this.game.board.edges.getById(data.buildId);
-    edge.build(player);
-    if (this.game.phase !== 'setup') {
-      player.spend({
-        lumber: 1,
-        brick: 1
-      });
-    }
   }
+
+  next();
+};
+
+GameCoordinator.prototype.onBuildSettlement = function(data, next) {
+  var player = this.game.getPlayerById(data.playerId),
+      corner = this.game.board.corners.getById(data.buildId);
+
+  corner.buildSettlement(player);
+  player.addVictoryPoint();
+  if (this.game.phase !== 'setup') {
+    player.spend({
+      lumber: 1,
+      brick: 1,
+      wool: 1,
+      grain: 1
+    });
+  }
+
+  next();
+};
+
+GameCoordinator.prototype.onBuildCity = function(data, next) {
+  var player = this.game.getPlayerById(data.playerId),
+      corner = this.game.board.corners.getById(data.buildId);
+
+  corner.buildCity(player);
+  player.addVictoryPoint();
+
+  player.spend({
+    ore: 3,
+    grain: 2
+  });
+
   next();
 };
 
