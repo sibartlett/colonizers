@@ -17,7 +17,7 @@ function AlertModel(roomModel) {
   this.die2 = new DieModel();
 
   roomModel.subscribe('game', this.onGameLoaded.bind(this));
-  roomModel.emitterQueue.on('NextTurn', this.onNextTurn.bind(this));
+  roomModel.emitterQueue.on('start-turn', this.onNextTurn.bind(this));
   roomModel.emitterQueue.on('DiceRoll', this.onDiceRoll.bind(this));
 }
 

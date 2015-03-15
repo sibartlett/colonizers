@@ -8,11 +8,11 @@ function ViewActions(socket) {
 }
 
 ViewActions.prototype.endTurn = function() {
-  this.socket.emit('EndTurn');
+  this.socket.emit('end-turn');
 };
 
 ViewActions.prototype.offerTrade = function(resources) {
-  this.socket.emit('OfferTrade', {
+  this.socket.emit('trade-offer', {
     resources: resources
   });
 };

@@ -107,7 +107,7 @@ Notifications.prototype.closeNotification = function() {
 };
 
 Notifications.prototype.setupNotifications = function() {
-  this.emitterQueue.on('NextTurn', this.onNextTurn.bind(this));
+  this.emitterQueue.on('start-turn', this.onNextTurn.bind(this));
 };
 
 Notifications.prototype.onNextTurn = function(data, next) {

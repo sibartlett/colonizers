@@ -135,8 +135,7 @@ UserInterface.prototype.onBoardClick = function(data) {
   }
   if (this.game.phase === 'setup') {
     this.game.hideBuildableEntities();
-    this.socket.emit('Build', {
-      buildType: data.type,
+    this.socket.emit('build-' + data.type, {
       buildId: data.id
     });
     if (data.type === 'settlement') {
@@ -144,8 +143,7 @@ UserInterface.prototype.onBoardClick = function(data) {
     }
   } else {
     this.game.hideBuildableEntities();
-    this.socket.emit('Build', {
-      buildType: data.type,
+    this.socket.emit('build-' + data.type, {
       buildId: data.id
     });
   }

@@ -12,7 +12,9 @@ function BuildModalModel(roomModel) {
   this.resetAllowances = this.resetAllowances.bind(this);
   this.resetCanBuildProps = this.resetCanBuildProps.bind(this);
   this.onDistributeResources = this.onDistributeResources.bind(this);
-  this.onBuild = this.onBuild.bind(this);
+  this.onBuildRoad = this.onBuildRoad.bind(this);
+  this.onBuildSettlement = this.onBuildSettlement.bind(this);
+  this.onBuildCity = this.onBuildCity.bind(this);
 
   this.roomModel = roomModel;
 
@@ -27,8 +29,10 @@ function BuildModalModel(roomModel) {
 
   roomModel.subscribe('thisPlayer', this.resetAllowances);
   roomModel.subscribe('game', this.resetAllowances);
-  roomModel.emitterQueue.on('DistributeResources', this.onDistributeResources);
-  roomModel.emitterQueue.on('Build', this.onBuild);
+  roomModel.emitterQueue.on('distribute-resources', this.onDistributeResources);
+  roomModel.emitterQueue.on('build-road', this.onBuildRoad);
+  roomModel.emitterQueue.on('build-settlement', this.onBuildSettlement);
+  roomModel.emitterQueue.on('build-city', this.onBuildCity);
 }
 
 BuildModalModel.prototype.resetAllowances = function() {
@@ -116,24 +120,37 @@ BuildModalModel.prototype.onDistributeResources = function(data, next) {
   next();
 };
 
-BuildModalModel.prototype.onBuild = function(data, next) {
+BuildModalModel.prototype.onBuildRoad = function(data, next) {
   var thisPlayer = this.roomModel.thisPlayer;
 
-  if (thisPlayer) {
-    if (thisPlayer.id === data.playerId) {
-      if (data.buildType === 'road') {
-        this.allowanceRoads = this.allowanceRoads - 1;
-      }
-      if (data.buildType === 'settlement') {
-        this.allowanceSettlements = this.allowanceSettlements - 1;
-      }
-      if (data.buildType === 'city') {
-        this.allowanceSettlements = this.allowanceSettlements + 1;
-        this.allowanceCities = this.allowanceCities - 1;
-      }
-    }
+  if (thisPlayer && thisPlayer.id === data.playerId) {
+    this.allowanceRoads = this.allowanceRoads - 1;
+    this.resetCanBuildProps();
   }
-  this.resetCanBuildProps();
+
+  next();
+};
+
+BuildModalModel.prototype.onBuildSettlement = function(data, next) {
+  var thisPlayer = this.roomModel.thisPlayer;
+
+  if (thisPlayer && thisPlayer.id === data.playerId) {
+    this.allowanceSettlements = this.allowanceSettlements - 1;
+    this.resetCanBuildProps();
+  }
+
+  next();
+};
+
+BuildModalModel.prototype.onBuildCity = function(data, next) {
+  var thisPlayer = this.roomModel.thisPlayer;
+
+  if (thisPlayer && thisPlayer.id === data.playerId) {
+    this.allowanceSettlements = this.allowanceSettlements + 1;
+    this.allowanceCities = this.allowanceCities - 1;
+    this.resetCanBuildProps();
+  }
+
   next();
 };
 

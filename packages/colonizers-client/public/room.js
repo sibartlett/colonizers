@@ -70,7 +70,7 @@ function AlertModel(roomModel) {
   this.die2 = new DieModel();
 
   roomModel.subscribe('game', this.onGameLoaded.bind(this));
-  roomModel.emitterQueue.on('NextTurn', this.onNextTurn.bind(this));
+  roomModel.emitterQueue.on('start-turn', this.onNextTurn.bind(this));
   roomModel.emitterQueue.on('DiceRoll', this.onDiceRoll.bind(this));
 }
 
@@ -158,7 +158,9 @@ function BuildModalModel(roomModel) {
   this.resetAllowances = this.resetAllowances.bind(this);
   this.resetCanBuildProps = this.resetCanBuildProps.bind(this);
   this.onDistributeResources = this.onDistributeResources.bind(this);
-  this.onBuild = this.onBuild.bind(this);
+  this.onBuildRoad = this.onBuildRoad.bind(this);
+  this.onBuildSettlement = this.onBuildSettlement.bind(this);
+  this.onBuildCity = this.onBuildCity.bind(this);
 
   this.roomModel = roomModel;
 
@@ -173,8 +175,10 @@ function BuildModalModel(roomModel) {
 
   roomModel.subscribe('thisPlayer', this.resetAllowances);
   roomModel.subscribe('game', this.resetAllowances);
-  roomModel.emitterQueue.on('DistributeResources', this.onDistributeResources);
-  roomModel.emitterQueue.on('Build', this.onBuild);
+  roomModel.emitterQueue.on('distribute-resources', this.onDistributeResources);
+  roomModel.emitterQueue.on('build-road', this.onBuildRoad);
+  roomModel.emitterQueue.on('build-settlement', this.onBuildSettlement);
+  roomModel.emitterQueue.on('build-city', this.onBuildCity);
 }
 
 BuildModalModel.prototype.resetAllowances = function() {
@@ -262,24 +266,37 @@ BuildModalModel.prototype.onDistributeResources = function(data, next) {
   next();
 };
 
-BuildModalModel.prototype.onBuild = function(data, next) {
+BuildModalModel.prototype.onBuildRoad = function(data, next) {
   var thisPlayer = this.roomModel.thisPlayer;
 
-  if (thisPlayer) {
-    if (thisPlayer.id === data.playerId) {
-      if (data.buildType === 'road') {
-        this.allowanceRoads = this.allowanceRoads - 1;
-      }
-      if (data.buildType === 'settlement') {
-        this.allowanceSettlements = this.allowanceSettlements - 1;
-      }
-      if (data.buildType === 'city') {
-        this.allowanceSettlements = this.allowanceSettlements + 1;
-        this.allowanceCities = this.allowanceCities - 1;
-      }
-    }
+  if (thisPlayer && thisPlayer.id === data.playerId) {
+    this.allowanceRoads = this.allowanceRoads - 1;
+    this.resetCanBuildProps();
   }
-  this.resetCanBuildProps();
+
+  next();
+};
+
+BuildModalModel.prototype.onBuildSettlement = function(data, next) {
+  var thisPlayer = this.roomModel.thisPlayer;
+
+  if (thisPlayer && thisPlayer.id === data.playerId) {
+    this.allowanceSettlements = this.allowanceSettlements - 1;
+    this.resetCanBuildProps();
+  }
+
+  next();
+};
+
+BuildModalModel.prototype.onBuildCity = function(data, next) {
+  var thisPlayer = this.roomModel.thisPlayer;
+
+  if (thisPlayer && thisPlayer.id === data.playerId) {
+    this.allowanceSettlements = this.allowanceSettlements + 1;
+    this.allowanceCities = this.allowanceCities - 1;
+    this.resetCanBuildProps();
+  }
+
   next();
 };
 
@@ -1921,7 +1938,7 @@ Notifications.prototype.closeNotification = function() {
 };
 
 Notifications.prototype.setupNotifications = function() {
-  this.emitterQueue.on('NextTurn', this.onNextTurn.bind(this));
+  this.emitterQueue.on('start-turn', this.onNextTurn.bind(this));
 };
 
 Notifications.prototype.onNextTurn = function(data, next) {
@@ -2351,8 +2368,7 @@ UserInterface.prototype.onBoardClick = function(data) {
   }
   if (this.game.phase === 'setup') {
     this.game.hideBuildableEntities();
-    this.socket.emit('Build', {
-      buildType: data.type,
+    this.socket.emit('build-' + data.type, {
       buildId: data.id
     });
     if (data.type === 'settlement') {
@@ -2360,8 +2376,7 @@ UserInterface.prototype.onBoardClick = function(data) {
     }
   } else {
     this.game.hideBuildableEntities();
-    this.socket.emit('Build', {
-      buildType: data.type,
+    this.socket.emit('build-' + data.type, {
       buildId: data.id
     });
   }
@@ -2380,11 +2395,11 @@ function ViewActions(socket) {
 }
 
 ViewActions.prototype.endTurn = function() {
-  this.socket.emit('EndTurn');
+  this.socket.emit('end-turn');
 };
 
 ViewActions.prototype.offerTrade = function(resources) {
-  this.socket.emit('OfferTrade', {
+  this.socket.emit('trade-offer', {
     resources: resources
   });
 };
@@ -2473,14 +2488,18 @@ function GameCoordinator(emitterQueue, game) {
   this.game = game;
 
   this.onDistributeResources = this.onDistributeResources.bind(this);
-  this.onBuild = this.onBuild.bind(this);
+  this.onBuildRoad = this.onBuildRoad.bind(this);
+  this.onBuildSettlement = this.onBuildSettlement.bind(this);
+  this.onBuildCity = this.onBuildCity.bind(this);
   this.onNextTurn = this.onNextTurn.bind(this);
   this.onOfferTrade = this.onOfferTrade.bind(this);
 
-  this.emitterQueue.on('NextTurn', this.onNextTurn);
-  this.emitterQueue.on('Build', this.onBuild);
-  this.emitterQueue.on('DistributeResources', this.onDistributeResources);
-  this.emitterQueue.on('OfferTrade', this.onOfferTrade);
+  this.emitterQueue.on('start-turn', this.onNextTurn);
+  this.emitterQueue.on('build-road', this.onBuildRoad);
+  this.emitterQueue.on('build-settlement', this.onBuildSettlement);
+  this.emitterQueue.on('build-city', this.onBuildCity);
+  this.emitterQueue.on('distribute-resources', this.onDistributeResources);
+  this.emitterQueue.on('trade-offer', this.onOfferTrade);
 }
 
 GameCoordinator.prototype.setGame = function(game) {
@@ -2493,41 +2512,51 @@ GameCoordinator.prototype.onNextTurn = function(data, next) {
   next();
 };
 
-GameCoordinator.prototype.onBuild = function(data, next) {
-  var corner, edge, player;
-  player = this.game.getPlayerById(data.playerId);
+GameCoordinator.prototype.onBuildRoad = function(data, next) {
+  var player = this.game.getPlayerById(data.playerId),
+      edge = this.game.board.edges.getById(data.buildId);
 
-  if (data.buildType === 'settlement') {
-    corner = this.game.board.corners.getById(data.buildId);
-    corner.buildSettlement(player);
-    player.addVictoryPoint();
-    if (this.game.phase !== 'setup') {
-      player.spend({
-        lumber: 1,
-        brick: 1,
-        wool: 1,
-        grain: 1
-      });
-    }
-  } else if (data.buildType === 'city') {
-    corner = this.game.board.corners.getById(data.buildId);
-    corner.buildCity(player);
-    player.addVictoryPoint();
-
+  edge.build(player);
+  if (this.game.phase !== 'setup') {
     player.spend({
-      ore: 3,
-      grain: 2
+      lumber: 1,
+      brick: 1
     });
-  } else if (data.buildType === 'road') {
-    edge = this.game.board.edges.getById(data.buildId);
-    edge.build(player);
-    if (this.game.phase !== 'setup') {
-      player.spend({
-        lumber: 1,
-        brick: 1
-      });
-    }
   }
+
+  next();
+};
+
+GameCoordinator.prototype.onBuildSettlement = function(data, next) {
+  var player = this.game.getPlayerById(data.playerId),
+      corner = this.game.board.corners.getById(data.buildId);
+
+  corner.buildSettlement(player);
+  player.addVictoryPoint();
+  if (this.game.phase !== 'setup') {
+    player.spend({
+      lumber: 1,
+      brick: 1,
+      wool: 1,
+      grain: 1
+    });
+  }
+
+  next();
+};
+
+GameCoordinator.prototype.onBuildCity = function(data, next) {
+  var player = this.game.getPlayerById(data.playerId),
+      corner = this.game.board.corners.getById(data.buildId);
+
+  corner.buildCity(player);
+  player.addVictoryPoint();
+
+  player.spend({
+    ore: 3,
+    grain: 2
+  });
+
   next();
 };
 
