@@ -4,30 +4,29 @@ require('jquery-plugins');
 
 var jquery = require('jquery'),
     io = require('socket.io-client'),
+    Client = require('./client'),
     GameSerializer = require('colonizers-core/lib/game-serializer'),
     EmitterQueue = require('colonizers-core/lib/emitter-queue'),
     GameCoordinator = require('colonizers-core/lib/game-coordinator'),
-    Factory = require('./game/factory'),
-    Notifications = require('./notifications'),
-    UserInterface = require('./user-interface');
+    Factory = require('./game/factory');
 
 jquery.get('/tilesets/modern.json', function(tileset) {
 
-  var factory = new Factory(tileset),
-      socket = io(),
-      gameSerializer = new GameSerializer(factory),
+  var socket = io(),
       emitterQueue = new EmitterQueue(socket),
+      factory = new Factory(tileset),
       gameCoordinator = new GameCoordinator(emitterQueue),
-      notifications = new Notifications(emitterQueue),
-      ui = new UserInterface({
-        socket: socket,
-        emitterQueue: emitterQueue,
-        notifications: notifications,
-        factory: factory
-      }),
-      game = null;
+      game,
+      client;
 
-  ui.bind();
+  client = new Client({
+    factory: factory,
+    tileset: tileset,
+    socket: socket,
+    emitterQueue: emitterQueue
+  });
+
+  client.bindUI();
 
   socket.on('room_closed', function() {
     window.location = '/lobby';
@@ -38,10 +37,9 @@ jquery.get('/tilesets/modern.json', function(tileset) {
   });
 
   socket.on('GameData', function(data) {
-    game = gameSerializer.deserialize(data);
+    game = new GameSerializer(factory).deserialize(data);
     emitterQueue.kill();
     gameCoordinator.setGame(game);
-    ui.setGame(game);
+    client.setGame(game);
   });
-
 });

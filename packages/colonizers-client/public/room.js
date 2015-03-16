@@ -5,30 +5,29 @@ require('jquery-plugins');
 
 var jquery = require('jquery'),
     io = require('socket.io-client'),
+    Client = require('./client'),
     GameSerializer = require('colonizers-core/lib/game-serializer'),
     EmitterQueue = require('colonizers-core/lib/emitter-queue'),
     GameCoordinator = require('colonizers-core/lib/game-coordinator'),
-    Factory = require('./game/factory'),
-    Notifications = require('./notifications'),
-    UserInterface = require('./user-interface');
+    Factory = require('./game/factory');
 
 jquery.get('/tilesets/modern.json', function(tileset) {
 
-  var factory = new Factory(tileset),
-      socket = io(),
-      gameSerializer = new GameSerializer(factory),
+  var socket = io(),
       emitterQueue = new EmitterQueue(socket),
+      factory = new Factory(tileset),
       gameCoordinator = new GameCoordinator(emitterQueue),
-      notifications = new Notifications(emitterQueue),
-      ui = new UserInterface({
-        socket: socket,
-        emitterQueue: emitterQueue,
-        notifications: notifications,
-        factory: factory
-      }),
-      game = null;
+      game,
+      client;
 
-  ui.bind();
+  client = new Client({
+    factory: factory,
+    tileset: tileset,
+    socket: socket,
+    emitterQueue: emitterQueue
+  });
+
+  client.bindUI();
 
   socket.on('room_closed', function() {
     window.location = '/lobby';
@@ -39,22 +38,46 @@ jquery.get('/tilesets/modern.json', function(tileset) {
   });
 
   socket.on('GameData', function(data) {
-    game = gameSerializer.deserialize(data);
+    game = new GameSerializer(factory).deserialize(data);
     emitterQueue.kill();
     gameCoordinator.setGame(game);
-    ui.setGame(game);
+    client.setGame(game);
   });
-
 });
 
-},{"./game/factory":18,"./notifications":29,"./user-interface":32,"colonizers-core/lib/emitter-queue":34,"colonizers-core/lib/game-coordinator":35,"colonizers-core/lib/game-serializer":46,"jquery":undefined,"jquery-plugins":undefined,"socket.io-client":undefined}],2:[function(require,module,exports){
-module.exports = "<div class=\"alert alert-info alert-fixed-top\" style=\"display: none\" data-bind=\"visible: message\">\n  <button type=\"button\" class=\"close\" data-bind=\"click: dismiss\">\n    <span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span>\n  </button>\n  <span data-bind=\"text: message\"></span>\n  <div class=\"dice\" data-bind=\"visible: showDice\">\n    <img border=\"0\" width=\"32\" height=\"32\"\n      data-bind=\"attr: { src: die1.imageSrc }\" />\n    <img border=\"0\" width=\"32\" height=\"32\"\n      data-bind=\"attr: { src: die2.imageSrc }\" />\n  </div>\n</div>\n";
+},{"./client":2,"./game/factory":14,"colonizers-core/lib/emitter-queue":30,"colonizers-core/lib/game-coordinator":31,"colonizers-core/lib/game-serializer":42,"jquery":undefined,"jquery-plugins":undefined,"socket.io-client":undefined}],2:[function(require,module,exports){
+'use strict';
 
-},{}],3:[function(require,module,exports){
+var Notifications = require('./notifications'),
+    UserInterface = require('./user-interface');
+
+function Client(options) {
+  this.options = options;
+
+  this.notifications = new Notifications(options.emitterQueue);
+  this.ui = new UserInterface({
+    socket: options.socket,
+    emitterQueue: options.emitterQueue,
+    factory: options.factory,
+    notifications: this.notifications
+  });
+}
+
+Client.prototype.bindUI = function() {
+  this.ui.bind();
+};
+
+Client.prototype.setGame = function(game) {
+  this.ui.setGame(game);
+};
+
+module.exports = Client;
+
+},{"./notifications":25,"./user-interface":28}],3:[function(require,module,exports){
 'use strict';
 
 var async = require('async'),
-    template = require('./alert.html'),
+    template = require('./templates').alert,
     observableProps = require('./../game/observable-properties'),
     DieModel = require('./d6');
 
@@ -140,14 +163,11 @@ module.exports = {
   template: template
 };
 
-},{"./../game/observable-properties":25,"./alert.html":2,"./d6":7,"async":undefined}],4:[function(require,module,exports){
-module.exports = "<div class=\"modal fade\" id=\"buildModal\">\n  <div class=\"modal-dialog\">\n    <div class=\"modal-content\">\n      <div class=\"modal-header\">\n        <button type=\"button\" class=\"close\" data-dismiss=\"modal\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>\n        <h4 class=\"modal-title\">Build/upgrade</h4>\n      </div>\n      <div class=\"modal-body\">\n\n        <div class=\"media\">\n          <a class=\"media-left\" href=\"#\">\n            <img class=\"media-object\" src=\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZWVlIi8+PHRleHQgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMzIiIHk9IjMyIiBzdHlsZT0iZmlsbDojYWFhO2ZvbnQtd2VpZ2h0OmJvbGQ7Zm9udC1zaXplOjEycHg7Zm9udC1mYW1pbHk6QXJpYWwsSGVsdmV0aWNhLHNhbnMtc2VyaWY7ZG9taW5hbnQtYmFzZWxpbmU6Y2VudHJhbCI+NjR4NjQ8L3RleHQ+PC9zdmc+\" alt=\"...\">\n          </a>\n          <div class=\"media-body\">\n            <h4 class=\"media-heading\">\n              Road\n              <span class=\"badge lumber\" title=\"Lumber\">1</span>\n              <span class=\"badge brick\" title=\"Brick\">1</span>\n            </h4>\n          </div>\n          <div class=\"media-right\">\n            <button type=\"button\" class=\"btn btn-default\" data-bind=\"enable: canBuildRoad, click: buildRoad\">Build</button>\n            <br>\n            <em><span data-bind=\"text: allowanceRoads\"></span> available</em>\n          </div>\n        </div>\n\n        <div class=\"media\">\n          <a class=\"media-left\" href=\"#\">\n            <img class=\"media-object\" src=\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZWVlIi8+PHRleHQgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMzIiIHk9IjMyIiBzdHlsZT0iZmlsbDojYWFhO2ZvbnQtd2VpZ2h0OmJvbGQ7Zm9udC1zaXplOjEycHg7Zm9udC1mYW1pbHk6QXJpYWwsSGVsdmV0aWNhLHNhbnMtc2VyaWY7ZG9taW5hbnQtYmFzZWxpbmU6Y2VudHJhbCI+NjR4NjQ8L3RleHQ+PC9zdmc+\" alt=\"...\">\n          </a>\n          <div class=\"media-body\">\n            <h4 class=\"media-heading\">\n              Settlement\n              <span class=\"badge lumber\" title=\"Lumber\">1</span>\n              <span class=\"badge brick\" title=\"Brick\">1</span>\n              <span class=\"badge wool\" title=\"Wool\">1</span>\n              <span class=\"badge grain\" title=\"Grain\">1</span>\n            </h4>\n          </div>\n          <div class=\"media-right\">\n            <button type=\"button\" class=\"btn btn-default\" data-bind=\"enable: canBuildSettlement, click: buildSettlement\">Build</button>\n            <br>\n            <em><span data-bind=\"text: allowanceSettlements\"></span> available</em>\n          </div>\n        </div>\n\n        <div class=\"media\">\n          <a class=\"media-left\" href=\"#\">\n            <img class=\"media-object\" src=\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZWVlIi8+PHRleHQgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMzIiIHk9IjMyIiBzdHlsZT0iZmlsbDojYWFhO2ZvbnQtd2VpZ2h0OmJvbGQ7Zm9udC1zaXplOjEycHg7Zm9udC1mYW1pbHk6QXJpYWwsSGVsdmV0aWNhLHNhbnMtc2VyaWY7ZG9taW5hbnQtYmFzZWxpbmU6Y2VudHJhbCI+NjR4NjQ8L3RleHQ+PC9zdmc+\" alt=\"...\">\n          </a>\n          <div class=\"media-body\">\n            <h4 class=\"media-heading\">\n              City\n              <span class=\"badge grain\" title=\"Grain\">2</span>\n              <span class=\"badge ore\" title=\"Ore\">3</span>\n            </h4>\n          </div>\n          <div class=\"media-right\">\n            <button type=\"button\" class=\"btn btn-default\" data-bind=\"enable: canBuildCity, click: buildCity\">Build</button>\n            <br>\n            <em><span data-bind=\"text: allowanceCities\"></span> available</em>\n          </div>\n        </div>\n\n\n      </div>\n    </div>\n  </div>\n</div>\n";
-
-},{}],5:[function(require,module,exports){
+},{"./../game/observable-properties":21,"./d6":6,"./templates":11,"async":undefined}],4:[function(require,module,exports){
 'use strict';
 
 var $ = require('jquery'),
-    template = require('./build-modal.html'),
+    template = require('./templates').buildModal,
     observableProps = require('./../game/observable-properties');
 
 function BuildModalModel(roomModel) {
@@ -320,7 +340,7 @@ module.exports = {
   template: template
 };
 
-},{"./../game/observable-properties":25,"./build-modal.html":4,"jquery":undefined}],6:[function(require,module,exports){
+},{"./../game/observable-properties":21,"./templates":11,"jquery":undefined}],5:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -357,7 +377,7 @@ module.exports = {
   }
 };
 
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 'use strict';
 
 var ko = require('knockout'),
@@ -467,15 +487,12 @@ DieModel.prototype.reInitSeed = function() {
 
 module.exports = DieModel;
 
-},{"./d6-images":6,"knockout":undefined}],8:[function(require,module,exports){
-module.exports = "<div>\n  <button type=\"button\"\n          class=\"btn btn-default btn-block\"\n          data-bind=\"\n          click: toggleNotifications,\n          text: notificationsText\n          visible: notifications.isSupported\n          \"\n          >\n  </button>\n\n  <button type=\"button\"\n          class=\"btn btn-default btn-block\"\n          data-bind=\"click: toggleFullscreen, visible: fullScreen\"\n          >\n    Toggle full screen\n  </button>\n\n  <a href=\"/lobby\" class=\"btn btn-default btn-block\">Back to lobby</a>\n</div>\n";
-
-},{}],9:[function(require,module,exports){
+},{"./d6-images":5,"knockout":undefined}],7:[function(require,module,exports){
 'use strict';
 
 var ko = require('knockout'),
     screenfull = require('screenfull'),
-    template = require('./menu.html');
+    template = require('./templates').menu;
 
 function MenuModel(params) {
   var notificationsEnabled = ko.observable(params.notifications.isEnabled);
@@ -511,13 +528,10 @@ module.exports = {
   template: template
 };
 
-},{"./menu.html":8,"knockout":undefined,"screenfull":undefined}],10:[function(require,module,exports){
-module.exports = "<div class=\"container-fluid this-user\" data-bind=\"visible: !isPlayer\">\n  <div class=\"row\">\n    <div class=\"col-xs-9\">\n      <p>You are spectating this game.</p>\n    </div>\n\n    <div class=\"col-xs-3 visible-xs mobile-controls\" style=\"padding-left: 0\">\n      <div class=\"btn-toolbar pull-right\" role=\"toolbar\">\n\n        <div class=\"btn-group\">\n          <button type=\"button\" class=\"btn btn-default sidebar-toggle\" data-toggle=\"offcanvas\" data-target=\".sidebar\">\n            <span class=\"icon-bar\"></span>\n            <span class=\"icon-bar\"></span>\n            <span class=\"icon-bar\"></span>\n          </button>\n        </div>\n\n      </div>\n    </div>\n  </div>\n</div>\n\n<div class=\"container-fluid this-user player\" data-bind=\"visible: isPlayer\">\n  <div class=\"row\">\n    <div class=\"col-sm-3 col-md-2 col-lg-4 hidden-xs\">\n      <div class=\"row\">\n        <div class=\"col-xs-12 name\">\n          <img class=\"avatar\"\n            data-bind=\"attr: { src: user.avatarUrl }\" />\n          <span data-bind=\"text: user.name\"></span>\n          <span class=\"icon-star\"\n            data-bind=\"text: player.victoryPoints.actual\"></span>\n        </div>\n      </div>\n    </div>\n\n    <div class=\"col-xs-9 col-sm-3 col-md-5 col-lg-4\" style=\"padding-right: 0\">\n      <div class=\"row hidden-sm hidden-md hidden-lg\">\n        <div class=\"col-xs-12 name\">\n          <span data-bind=\"text: user.name\"></span>\n          <span class=\"icon-star\"\n            data-bind=\"text: player.victoryPoints.actual\"></span>\n        </div>\n      </div>\n      <div class=\"row badges\">\n        <div class=\"col-xs-12\">\n          <span class=\"icon-gift\" title=\"Resources\"></span>\n          <span class=\"badge lumber\" title=\"Lumber\">\n            <span data-bind=\"text: player.resources.lumber\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Lumber</span>\n          </span>\n          <span class=\"badge brick\" title=\"Brick\">\n            <span data-bind=\"text: player.resources.brick\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Brick</span>\n          </span>\n          <span class=\"badge wool\" title=\"Wool\">\n            <span data-bind=\"text: player.resources.wool\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Wool</span>\n          </span>\n          <span class=\"badge grain\" title=\"Grain\">\n            <span data-bind=\"text: player.resources.grain\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Grain</span>\n          </span>\n          <span class=\"badge ore\" title=\"Ore\">\n            <span data-bind=\"text: player.resources.ore\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Ore</span>\n          </span>\n        </div>\n      </div>\n\n      <div class=\"row badges\">\n        <div class=\"col-xs-12\">\n          <span class=\"icon-hammer\" title=\"Development Cards\"></span>\n          <span class=\"badge\" title=\"Development Cards\">\n            <span data-bind=\"text: player.developmentCards.total\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Dev Cards</span>\n          </span>\n\n          &nbsp;\n\n          <span class=\"icon-shield\" title=\"Largest Army\"></span>\n          <span class=\"badge\" title=\"Largest Army\">\n            <span data-bind=\"text: player.knightsPlayed\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Army</span>\n          </span>\n\n          &nbsp;\n\n          <span class=\"icon-road\" title=\"Longest Road\"></span>\n          <span class=\"badge\" title=\"Longest Road\">\n            <span data-bind=\"text: player.longestRoad\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Longest Road</span>\n          </span>\n        </div>\n      </div>\n    </div>\n\n    <div class=\"col-sm-6 col-md-5 col-lg-4 hidden-xs controls\">\n      <div class=\"pull-right\">\n        <button type=\"button\" class=\"btn btn-default navbar-btn\" data-bind=\"enable: $root.ui.buttons\" data-toggle=\"modal\" data-target=\"#buildModal\">Build</button>\n        <button type=\"button\" class=\"btn btn-default navbar-btn\" data-bind=\"enable: $root.ui.buttons\" data-toggle=\"modal\" data-target=\"#tradeModal\">Trade</button>\n        <button type=\"button\" class=\"btn btn-default navbar-btn\" data-bind=\"enable: $root.ui.buttons\">Dev Cards</button>\n        <button type=\"button\" class=\"btn btn-default navbar-btn\" data-bind=\"enable: $root.ui.buttons, click: actions.endTurn\">End Turn</button>\n      </div>\n    </div>\n\n    <div class=\"col-xs-3 visible-xs mobile-controls\" style=\"padding-left: 0\">\n      <div class=\"btn-toolbar pull-right\" role=\"toolbar\">\n        <div class=\"btn-group-vertical\">\n\n          <div class=\"btn-group dropup\">\n\n            <button type=\"button\" class=\"btn btn-success dropdown-toggle\" data-toggle=\"dropdown\" data-bind=\"enable: $root.ui.buttons\">\n              <span class=\"caret\"></span>\n              <span class=\"sr-only\">Toggle Dropdown</span>\n            </button>\n\n            <ul class=\"dropdown-menu dropdown-menu-right\" role=\"menu\">\n              <li><a href=\"#\" data-toggle=\"modal\" data-target=\"#buildModal\">Build</a></li>\n              <li><a href=\"#\" data-toggle=\"modal\" data-target=\"#tradeModal\">Trade</a></li>\n              <li><a href=\"#\">Dev Cards</a></li>\n              <li class=\"divider\"></li>\n              <li><a data-bind=\"enable: $root.ui.endTurnButton, click: $root.events.onEndTurnClick\">End Turn</a></li>\n            </ul>\n\n          </div>\n\n          <div class=\"btn-group\">\n            <button type=\"button\" class=\"btn btn-default sidebar-toggle\" data-toggle=\"offcanvas\" data-target=\".sidebar\">\n              <span class=\"icon-bar\"></span>\n              <span class=\"icon-bar\"></span>\n              <span class=\"icon-bar\"></span>\n            </button>\n          </div>\n\n        </div>\n\n      </div>\n    </div>\n  </div>\n</div>\n";
-
-},{}],11:[function(require,module,exports){
+},{"./templates":11,"knockout":undefined,"screenfull":undefined}],8:[function(require,module,exports){
 'use strict';
 
-var template = require('./player.html'),
+var template = require('./templates').player,
     observableProps = require('./../game/observable-properties');
 
 function PlayerModel(roomModel) {
@@ -548,13 +562,10 @@ module.exports = {
   template: template
 };
 
-},{"./../game/observable-properties":25,"./player.html":10}],12:[function(require,module,exports){
-module.exports = "<div class=\"players\" data-bind=\"foreach: players\">\n\n  <div class=\"player\">\n    <h4>\n      <img class=\"avatar\" data-bind=\"attr: { src: user.avatarUrl }\" />\n      <span data-bind=\"text: user.name\"></span>\n      <span class=\"icon-star\" data-bind=\"text: player.victoryPoints.public\"></span>\n    </h4>\n    <div class=\"well well-sm\">\n      <div class=\"row\">\n        <div class=\"col-xs-3\" title=\"Resource Cards\">\n          <p>\n            <span class=\"icon-gift\"></span>\n            <span class=\"badge\" data-bind=\"text: player.resources.total\"></span>\n          </p>\n        </div>\n        <div class=\"col-xs-3\" title=\"Development Cards\">\n          <p>\n            <span class=\"icon-hammer\"></span>\n            <span class=\"badge\" data-bind=\"text: player.developmentCards.total\"></span>\n          </p>\n        </div>\n        <div class=\"col-xs-3\" title=\"Knights\">\n          <p>\n            <span class=\"icon-shield\"></span>\n            <span class=\"badge\" data-bind=\"text: player.knightsPlayed\"></span>\n          </p>\n        </div>\n        <div class=\"col-xs-3\" title=\"Longest Road\">\n          <p>\n            <span class=\"icon-road\"></span>\n            <span class=\"badge\" data-bind=\"text: player.longestRoad\"></span>\n          </p>\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n";
-
-},{}],13:[function(require,module,exports){
+},{"./../game/observable-properties":21,"./templates":11}],9:[function(require,module,exports){
 'use strict';
 
-var template = require('./players.html'),
+var template = require('./templates').players,
     observableProps = require('./../game/observable-properties');
 
 function PlayersModel(roomModel) {
@@ -574,7 +585,7 @@ module.exports = {
   template: template
 };
 
-},{"./../game/observable-properties":25,"./players.html":12}],14:[function(require,module,exports){
+},{"./../game/observable-properties":21,"./templates":11}],10:[function(require,module,exports){
 'use strict';
 
 var $ = require('jquery'),
@@ -609,13 +620,24 @@ module.exports = {
   template: '<div class="canvas-konva" data-bind="stageInternal: game"></div>'
 };
 
-},{"./../stage":31,"jquery":undefined,"knockout":undefined}],15:[function(require,module,exports){
-module.exports = "<div class=\"modal fade\" id=\"tradeModal\">\n  <div class=\"modal-dialog\">\n    <div class=\"modal-content\">\n      <div class=\"modal-header\">\n        <button type=\"button\" class=\"close\" data-dismiss=\"modal\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>\n        <h4 class=\"modal-title\">Trade</h4>\n      </div>\n      <div class=\"modal-body\">\n\n        <p>Offering a trade to other players.</p>\n\n        <div class=\"row\">\n          <div class=\"col-xs-3\">\n            Want\n          </div>\n          <div class=\"col-xs-6\">\n          </div>\n          <div class=\"col-xs-3\">\n            Give\n          </div>\n        </div>\n\n        <div data-bind=\"foreach: resources\">\n\n          <div class=\"row\" data-bind=\"css: key\">\n            <div class=\"col-xs-3\" data-bind=\"text: want\">\n            </div>\n            <div class=\"col-xs-6\">\n\n              <div class=\"input-group\">\n                <span class=\"input-group-btn\">\n                  <button class=\"btn btn-default\" type=\"button\" data-bind=\"click: wantUp\">&#10094;</button>\n                </span>\n                <input type=\"text\" class=\"form-control\" data-bind=\"value: inventory\">\n                <span class=\"input-group-btn\">\n                  <button class=\"btn btn-default\" type=\"button\" data-bind=\"click: giveUp\">&#10095;</button>\n                </span>\n              </div>\n\n            </div>\n            <div class=\"col-xs-3\" data-bind=\"text: give\">\n            </div>\n          </div>\n\n        </div>\n\n      </div>\n      <div class=\"modal-footer\">\n        <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button>\n        <button type=\"button\" class=\"btn btn-primary\"\n          data-bind=\"click: offerTrade\">Offer trade</button>\n      </div>\n    </div>\n  </div>\n</div>\n";
-
-},{}],16:[function(require,module,exports){
+},{"./../stage":27,"jquery":undefined,"knockout":undefined}],11:[function(require,module,exports){
 'use strict';
 
-var template = require('./trade-modal.html'),
+
+
+module.exports = {
+  alert: "<div class=\"alert alert-info alert-fixed-top\" style=\"display: none\" data-bind=\"visible: message\">\n  <button type=\"button\" class=\"close\" data-bind=\"click: dismiss\">\n    <span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span>\n  </button>\n  <span data-bind=\"text: message\"></span>\n  <div class=\"dice\" data-bind=\"visible: showDice\">\n    <img border=\"0\" width=\"32\" height=\"32\"\n      data-bind=\"attr: { src: die1.imageSrc }\" />\n    <img border=\"0\" width=\"32\" height=\"32\"\n      data-bind=\"attr: { src: die2.imageSrc }\" />\n  </div>\n</div>\n",
+  buildModal: "<div class=\"modal fade\" id=\"buildModal\">\n  <div class=\"modal-dialog\">\n    <div class=\"modal-content\">\n      <div class=\"modal-header\">\n        <button type=\"button\" class=\"close\" data-dismiss=\"modal\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>\n        <h4 class=\"modal-title\">Build/upgrade</h4>\n      </div>\n      <div class=\"modal-body\">\n\n        <div class=\"media\">\n          <a class=\"media-left\" href=\"#\">\n            <img class=\"media-object\" src=\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZWVlIi8+PHRleHQgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMzIiIHk9IjMyIiBzdHlsZT0iZmlsbDojYWFhO2ZvbnQtd2VpZ2h0OmJvbGQ7Zm9udC1zaXplOjEycHg7Zm9udC1mYW1pbHk6QXJpYWwsSGVsdmV0aWNhLHNhbnMtc2VyaWY7ZG9taW5hbnQtYmFzZWxpbmU6Y2VudHJhbCI+NjR4NjQ8L3RleHQ+PC9zdmc+\" alt=\"...\">\n          </a>\n          <div class=\"media-body\">\n            <h4 class=\"media-heading\">\n              Road\n              <span class=\"badge lumber\" title=\"Lumber\">1</span>\n              <span class=\"badge brick\" title=\"Brick\">1</span>\n            </h4>\n          </div>\n          <div class=\"media-right\">\n            <button type=\"button\" class=\"btn btn-default\" data-bind=\"enable: canBuildRoad, click: buildRoad\">Build</button>\n            <br>\n            <em><span data-bind=\"text: allowanceRoads\"></span> available</em>\n          </div>\n        </div>\n\n        <div class=\"media\">\n          <a class=\"media-left\" href=\"#\">\n            <img class=\"media-object\" src=\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZWVlIi8+PHRleHQgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMzIiIHk9IjMyIiBzdHlsZT0iZmlsbDojYWFhO2ZvbnQtd2VpZ2h0OmJvbGQ7Zm9udC1zaXplOjEycHg7Zm9udC1mYW1pbHk6QXJpYWwsSGVsdmV0aWNhLHNhbnMtc2VyaWY7ZG9taW5hbnQtYmFzZWxpbmU6Y2VudHJhbCI+NjR4NjQ8L3RleHQ+PC9zdmc+\" alt=\"...\">\n          </a>\n          <div class=\"media-body\">\n            <h4 class=\"media-heading\">\n              Settlement\n              <span class=\"badge lumber\" title=\"Lumber\">1</span>\n              <span class=\"badge brick\" title=\"Brick\">1</span>\n              <span class=\"badge wool\" title=\"Wool\">1</span>\n              <span class=\"badge grain\" title=\"Grain\">1</span>\n            </h4>\n          </div>\n          <div class=\"media-right\">\n            <button type=\"button\" class=\"btn btn-default\" data-bind=\"enable: canBuildSettlement, click: buildSettlement\">Build</button>\n            <br>\n            <em><span data-bind=\"text: allowanceSettlements\"></span> available</em>\n          </div>\n        </div>\n\n        <div class=\"media\">\n          <a class=\"media-left\" href=\"#\">\n            <img class=\"media-object\" src=\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZWVlIi8+PHRleHQgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMzIiIHk9IjMyIiBzdHlsZT0iZmlsbDojYWFhO2ZvbnQtd2VpZ2h0OmJvbGQ7Zm9udC1zaXplOjEycHg7Zm9udC1mYW1pbHk6QXJpYWwsSGVsdmV0aWNhLHNhbnMtc2VyaWY7ZG9taW5hbnQtYmFzZWxpbmU6Y2VudHJhbCI+NjR4NjQ8L3RleHQ+PC9zdmc+\" alt=\"...\">\n          </a>\n          <div class=\"media-body\">\n            <h4 class=\"media-heading\">\n              City\n              <span class=\"badge grain\" title=\"Grain\">2</span>\n              <span class=\"badge ore\" title=\"Ore\">3</span>\n            </h4>\n          </div>\n          <div class=\"media-right\">\n            <button type=\"button\" class=\"btn btn-default\" data-bind=\"enable: canBuildCity, click: buildCity\">Build</button>\n            <br>\n            <em><span data-bind=\"text: allowanceCities\"></span> available</em>\n          </div>\n        </div>\n\n\n      </div>\n    </div>\n  </div>\n</div>\n",
+  menu: "<div>\n  <button type=\"button\"\n          class=\"btn btn-default btn-block\"\n          data-bind=\"\n          click: toggleNotifications,\n          text: notificationsText\n          visible: notifications.isSupported\n          \"\n          >\n  </button>\n\n  <button type=\"button\"\n          class=\"btn btn-default btn-block\"\n          data-bind=\"click: toggleFullscreen, visible: fullScreen\"\n          >\n    Toggle full screen\n  </button>\n\n  <a href=\"/lobby\" class=\"btn btn-default btn-block\">Back to lobby</a>\n</div>\n",
+  player: "<div class=\"container-fluid this-user\" data-bind=\"visible: !isPlayer\">\n  <div class=\"row\">\n    <div class=\"col-xs-9\">\n      <p>You are spectating this game.</p>\n    </div>\n\n    <div class=\"col-xs-3 visible-xs mobile-controls\" style=\"padding-left: 0\">\n      <div class=\"btn-toolbar pull-right\" role=\"toolbar\">\n\n        <div class=\"btn-group\">\n          <button type=\"button\" class=\"btn btn-default sidebar-toggle\" data-toggle=\"offcanvas\" data-target=\".sidebar\">\n            <span class=\"icon-bar\"></span>\n            <span class=\"icon-bar\"></span>\n            <span class=\"icon-bar\"></span>\n          </button>\n        </div>\n\n      </div>\n    </div>\n  </div>\n</div>\n\n<div class=\"container-fluid this-user player\" data-bind=\"visible: isPlayer\">\n  <div class=\"row\">\n    <div class=\"col-sm-3 col-md-2 col-lg-4 hidden-xs\">\n      <div class=\"row\">\n        <div class=\"col-xs-12 name\">\n          <img class=\"avatar\"\n            data-bind=\"attr: { src: user.avatarUrl }\" />\n          <span data-bind=\"text: user.name\"></span>\n          <span class=\"icon-star\"\n            data-bind=\"text: player.victoryPoints.actual\"></span>\n        </div>\n      </div>\n    </div>\n\n    <div class=\"col-xs-9 col-sm-3 col-md-5 col-lg-4\" style=\"padding-right: 0\">\n      <div class=\"row hidden-sm hidden-md hidden-lg\">\n        <div class=\"col-xs-12 name\">\n          <span data-bind=\"text: user.name\"></span>\n          <span class=\"icon-star\"\n            data-bind=\"text: player.victoryPoints.actual\"></span>\n        </div>\n      </div>\n      <div class=\"row badges\">\n        <div class=\"col-xs-12\">\n          <span class=\"icon-gift\" title=\"Resources\"></span>\n          <span class=\"badge lumber\" title=\"Lumber\">\n            <span data-bind=\"text: player.resources.lumber\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Lumber</span>\n          </span>\n          <span class=\"badge brick\" title=\"Brick\">\n            <span data-bind=\"text: player.resources.brick\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Brick</span>\n          </span>\n          <span class=\"badge wool\" title=\"Wool\">\n            <span data-bind=\"text: player.resources.wool\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Wool</span>\n          </span>\n          <span class=\"badge grain\" title=\"Grain\">\n            <span data-bind=\"text: player.resources.grain\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Grain</span>\n          </span>\n          <span class=\"badge ore\" title=\"Ore\">\n            <span data-bind=\"text: player.resources.ore\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Ore</span>\n          </span>\n        </div>\n      </div>\n\n      <div class=\"row badges\">\n        <div class=\"col-xs-12\">\n          <span class=\"icon-hammer\" title=\"Development Cards\"></span>\n          <span class=\"badge\" title=\"Development Cards\">\n            <span data-bind=\"text: player.developmentCards.total\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Dev Cards</span>\n          </span>\n\n          &nbsp;\n\n          <span class=\"icon-shield\" title=\"Largest Army\"></span>\n          <span class=\"badge\" title=\"Largest Army\">\n            <span data-bind=\"text: player.knightsPlayed\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Army</span>\n          </span>\n\n          &nbsp;\n\n          <span class=\"icon-road\" title=\"Longest Road\"></span>\n          <span class=\"badge\" title=\"Longest Road\">\n            <span data-bind=\"text: player.longestRoad\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Longest Road</span>\n          </span>\n        </div>\n      </div>\n    </div>\n\n    <div class=\"col-sm-6 col-md-5 col-lg-4 hidden-xs controls\">\n      <div class=\"pull-right\">\n        <button type=\"button\" class=\"btn btn-default navbar-btn\" data-bind=\"enable: $root.ui.buttons\" data-toggle=\"modal\" data-target=\"#buildModal\">Build</button>\n        <button type=\"button\" class=\"btn btn-default navbar-btn\" data-bind=\"enable: $root.ui.buttons\" data-toggle=\"modal\" data-target=\"#tradeModal\">Trade</button>\n        <button type=\"button\" class=\"btn btn-default navbar-btn\" data-bind=\"enable: $root.ui.buttons\">Dev Cards</button>\n        <button type=\"button\" class=\"btn btn-default navbar-btn\" data-bind=\"enable: $root.ui.buttons, click: actions.endTurn\">End Turn</button>\n      </div>\n    </div>\n\n    <div class=\"col-xs-3 visible-xs mobile-controls\" style=\"padding-left: 0\">\n      <div class=\"btn-toolbar pull-right\" role=\"toolbar\">\n        <div class=\"btn-group-vertical\">\n\n          <div class=\"btn-group dropup\">\n\n            <button type=\"button\" class=\"btn btn-success dropdown-toggle\" data-toggle=\"dropdown\" data-bind=\"enable: $root.ui.buttons\">\n              <span class=\"caret\"></span>\n              <span class=\"sr-only\">Toggle Dropdown</span>\n            </button>\n\n            <ul class=\"dropdown-menu dropdown-menu-right\" role=\"menu\">\n              <li><a href=\"#\" data-toggle=\"modal\" data-target=\"#buildModal\">Build</a></li>\n              <li><a href=\"#\" data-toggle=\"modal\" data-target=\"#tradeModal\">Trade</a></li>\n              <li><a href=\"#\">Dev Cards</a></li>\n              <li class=\"divider\"></li>\n              <li><a data-bind=\"enable: $root.ui.endTurnButton, click: $root.events.onEndTurnClick\">End Turn</a></li>\n            </ul>\n\n          </div>\n\n          <div class=\"btn-group\">\n            <button type=\"button\" class=\"btn btn-default sidebar-toggle\" data-toggle=\"offcanvas\" data-target=\".sidebar\">\n              <span class=\"icon-bar\"></span>\n              <span class=\"icon-bar\"></span>\n              <span class=\"icon-bar\"></span>\n            </button>\n          </div>\n\n        </div>\n\n      </div>\n    </div>\n  </div>\n</div>\n",
+  players: "<div class=\"players\" data-bind=\"foreach: players\">\n\n  <div class=\"player\">\n    <h4>\n      <img class=\"avatar\" data-bind=\"attr: { src: user.avatarUrl }\" />\n      <span data-bind=\"text: user.name\"></span>\n      <span class=\"icon-star\" data-bind=\"text: player.victoryPoints.public\"></span>\n    </h4>\n    <div class=\"well well-sm\">\n      <div class=\"row\">\n        <div class=\"col-xs-3\" title=\"Resource Cards\">\n          <p>\n            <span class=\"icon-gift\"></span>\n            <span class=\"badge\" data-bind=\"text: player.resources.total\"></span>\n          </p>\n        </div>\n        <div class=\"col-xs-3\" title=\"Development Cards\">\n          <p>\n            <span class=\"icon-hammer\"></span>\n            <span class=\"badge\" data-bind=\"text: player.developmentCards.total\"></span>\n          </p>\n        </div>\n        <div class=\"col-xs-3\" title=\"Knights\">\n          <p>\n            <span class=\"icon-shield\"></span>\n            <span class=\"badge\" data-bind=\"text: player.knightsPlayed\"></span>\n          </p>\n        </div>\n        <div class=\"col-xs-3\" title=\"Longest Road\">\n          <p>\n            <span class=\"icon-road\"></span>\n            <span class=\"badge\" data-bind=\"text: player.longestRoad\"></span>\n          </p>\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n",
+  tradeModal: "<div class=\"modal fade\" id=\"tradeModal\">\n  <div class=\"modal-dialog\">\n    <div class=\"modal-content\">\n      <div class=\"modal-header\">\n        <button type=\"button\" class=\"close\" data-dismiss=\"modal\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>\n        <h4 class=\"modal-title\">Trade</h4>\n      </div>\n      <div class=\"modal-body\">\n\n        <p>Offering a trade to other players.</p>\n\n        <div class=\"row\">\n          <div class=\"col-xs-3\">\n            Want\n          </div>\n          <div class=\"col-xs-6\">\n          </div>\n          <div class=\"col-xs-3\">\n            Give\n          </div>\n        </div>\n\n        <div data-bind=\"foreach: resources\">\n\n          <div class=\"row\" data-bind=\"css: key\">\n            <div class=\"col-xs-3\" data-bind=\"text: want\">\n            </div>\n            <div class=\"col-xs-6\">\n\n              <div class=\"input-group\">\n                <span class=\"input-group-btn\">\n                  <button class=\"btn btn-default\" type=\"button\" data-bind=\"click: wantUp\">&#10094;</button>\n                </span>\n                <input type=\"text\" class=\"form-control\" data-bind=\"value: inventory\">\n                <span class=\"input-group-btn\">\n                  <button class=\"btn btn-default\" type=\"button\" data-bind=\"click: giveUp\">&#10095;</button>\n                </span>\n              </div>\n\n            </div>\n            <div class=\"col-xs-3\" data-bind=\"text: give\">\n            </div>\n          </div>\n\n        </div>\n\n      </div>\n      <div class=\"modal-footer\">\n        <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button>\n        <button type=\"button\" class=\"btn btn-primary\"\n          data-bind=\"click: offerTrade\">Offer trade</button>\n      </div>\n    </div>\n  </div>\n</div>\n"
+};
+
+},{}],12:[function(require,module,exports){
+'use strict';
+
+var template = require('./templates').tradeModal,
     observableProps = require('./../game/observable-properties');
 
 function ResourceModel(key, player) {
@@ -708,7 +730,7 @@ module.exports = {
   template: template
 };
 
-},{"./../game/observable-properties":25,"./trade-modal.html":15}],17:[function(require,module,exports){
+},{"./../game/observable-properties":21,"./templates":11}],13:[function(require,module,exports){
 'use strict';
 
 var emitter = require('component-emitter'),
@@ -798,7 +820,7 @@ UiBoard.prototype.onStageTransformEnd = function() {
 
 module.exports = UiBoard;
 
-},{"colonizers-core/lib/game-objects/board":37,"colonizers-core/lib/util":48,"component-emitter":undefined,"konva":undefined}],18:[function(require,module,exports){
+},{"colonizers-core/lib/game-objects/board":33,"colonizers-core/lib/util":44,"component-emitter":undefined,"konva":undefined}],14:[function(require,module,exports){
   'use strict';
 
 var Game = require('./game'),
@@ -850,7 +872,7 @@ Factory.prototype.defineProperties = observableProps.defineProperties;
 
 module.exports = Factory;
 
-},{"./board":17,"./game":19,"./hex-corner":20,"./hex-edge":21,"./hex-tile":22,"./observable-properties":25,"./player":26}],19:[function(require,module,exports){
+},{"./board":13,"./game":15,"./hex-corner":16,"./hex-edge":17,"./hex-tile":18,"./observable-properties":21,"./player":22}],15:[function(require,module,exports){
 'use strict';
 
 var emitter = require('component-emitter'),
@@ -957,7 +979,7 @@ UiGame.prototype.hideBuildableEntities = function() {
 
 module.exports = UiGame;
 
-},{"colonizers-core/lib/game-objects/game":41,"colonizers-core/lib/util":48,"component-emitter":undefined}],20:[function(require,module,exports){
+},{"colonizers-core/lib/game-objects/game":37,"colonizers-core/lib/util":44,"component-emitter":undefined}],16:[function(require,module,exports){
 'use strict';
 
 var $ = require('jquery'),
@@ -1125,7 +1147,7 @@ UiHexCorner.prototype.addToBoard = function(board) {
 
 module.exports = UiHexCorner;
 
-},{"colonizers-core/lib/game-objects/hex-corner":42,"colonizers-core/lib/util":48,"component-emitter":undefined,"jquery":undefined,"konva":undefined}],21:[function(require,module,exports){
+},{"colonizers-core/lib/game-objects/hex-corner":38,"colonizers-core/lib/util":44,"component-emitter":undefined,"jquery":undefined,"konva":undefined}],17:[function(require,module,exports){
 'use strict';
 
 var $ = require('jquery'),
@@ -1221,7 +1243,7 @@ UiHexEdge.prototype.hide = function() {
 
 module.exports = UiHexEdge;
 
-},{"colonizers-core/lib/game-objects/hex-edge":43,"colonizers-core/lib/math-helper":47,"colonizers-core/lib/util":48,"component-emitter":undefined,"jquery":undefined,"konva":undefined}],22:[function(require,module,exports){
+},{"colonizers-core/lib/game-objects/hex-edge":39,"colonizers-core/lib/math-helper":43,"colonizers-core/lib/util":44,"component-emitter":undefined,"jquery":undefined,"konva":undefined}],18:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore'),
@@ -1324,7 +1346,7 @@ UiHexTile.prototype.addToBoard = function(board) {
 
 module.exports = UiHexTile;
 
-},{"./number-token":23,"colonizers-core/lib/game-objects/hex-tile":44,"colonizers-core/lib/util":48,"konva":undefined,"underscore":undefined}],23:[function(require,module,exports){
+},{"./number-token":19,"colonizers-core/lib/game-objects/hex-tile":40,"colonizers-core/lib/util":44,"konva":undefined,"underscore":undefined}],19:[function(require,module,exports){
 'use strict';
 
 var Konva = require('konva');
@@ -1408,7 +1430,7 @@ NumberToken.prototype.onBoardRotate = function(rotation) {
 
 module.exports = NumberToken;
 
-},{"konva":undefined}],24:[function(require,module,exports){
+},{"konva":undefined}],20:[function(require,module,exports){
 /*!
  * Based on Knockout ES5 plugin - https://github.com/SteveSanderson/knockout-es5
  * Copyright (c) Steve Sanderson
@@ -1538,7 +1560,7 @@ function notifyWhenPresentOrFutureArrayValuesMutate(ko, observable) {
 
 module.exports = notifyWhenPresentOrFutureArrayValuesMutate;
 
-},{}],25:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /*!
  * Based on Knockout ES5 plugin - https://github.com/SteveSanderson/knockout-es5
  * Copyright (c) Steve Sanderson
@@ -1643,7 +1665,7 @@ module.exports = {
   copyObservables: copyObservables
 };
 
-},{"./observable-arrays":24,"knockout":undefined}],26:[function(require,module,exports){
+},{"./observable-arrays":20,"knockout":undefined}],22:[function(require,module,exports){
 'use strict';
 
 var emitter = require('component-emitter'),
@@ -1674,7 +1696,7 @@ UiPlayer.prototype.addVictoryPoint = function(devCard) {
 
 module.exports = UiPlayer;
 
-},{"colonizers-core/lib/game-objects/player":45,"colonizers-core/lib/util":48,"component-emitter":undefined}],27:[function(require,module,exports){
+},{"colonizers-core/lib/game-objects/player":41,"colonizers-core/lib/util":44,"component-emitter":undefined}],23:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore'),
@@ -1812,7 +1834,7 @@ RoomModel.prototype.getOtherPlayersOrdered = function() {
 
 module.exports = RoomModel;
 
-},{"./../game/observable-properties":25,"./player.js":28,"underscore":undefined}],28:[function(require,module,exports){
+},{"./../game/observable-properties":21,"./player.js":24,"underscore":undefined}],24:[function(require,module,exports){
 'use strict';
 
 var emitter = require('component-emitter'),
@@ -1828,7 +1850,7 @@ function PlayerModel(user, player) {
 
 module.exports = PlayerModel;
 
-},{"./../game/observable-properties":25,"component-emitter":undefined}],29:[function(require,module,exports){
+},{"./../game/observable-properties":21,"component-emitter":undefined}],25:[function(require,module,exports){
 'use strict';
 
 var PERMISSION_DEFAULT = 'default',
@@ -1951,7 +1973,7 @@ Notifications.prototype.onNextTurn = function(data, next) {
 
 module.exports = Notifications;
 
-},{}],30:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 var $ = require('jquery'),
@@ -2133,7 +2155,7 @@ StageNavigator.prototype.onWiiuInput = function() {
 
 module.exports = StageNavigator;
 
-},{"component-emitter":undefined,"hammerjs":undefined,"jquery":undefined,"jquery-mousewheel":undefined}],31:[function(require,module,exports){
+},{"component-emitter":undefined,"hammerjs":undefined,"jquery":undefined,"jquery-mousewheel":undefined}],27:[function(require,module,exports){
 'use strict';
 
 var StageNavigator = require('./stage-navigator'),
@@ -2230,7 +2252,7 @@ Stage.prototype.onResize = function() {
 
 module.exports = Stage;
 
-},{"./stage-navigator":30,"jquery":undefined,"konva":undefined}],32:[function(require,module,exports){
+},{"./stage-navigator":26,"jquery":undefined,"konva":undefined}],28:[function(require,module,exports){
 'use strict';
 
 var ko = require('knockout'),
@@ -2384,7 +2406,7 @@ UserInterface.prototype.onBoardClick = function(data) {
 
 module.exports = UserInterface;
 
-},{"./components/alert":3,"./components/build-modal":5,"./components/menu":9,"./components/player":11,"./components/players":13,"./components/stage":14,"./components/trade-modal":16,"./model/index":27,"./view-actions":33,"knockout":undefined}],33:[function(require,module,exports){
+},{"./components/alert":3,"./components/build-modal":4,"./components/menu":7,"./components/player":8,"./components/players":9,"./components/stage":10,"./components/trade-modal":12,"./model/index":23,"./view-actions":29,"knockout":undefined}],29:[function(require,module,exports){
 'use strict';
 
 function ViewActions(socket) {
@@ -2406,7 +2428,7 @@ ViewActions.prototype.offerTrade = function(resources) {
 
 module.exports = ViewActions;
 
-},{}],34:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 
 var async = require('async');
@@ -2480,7 +2502,7 @@ EmitterQueue.prototype.kill = function() {
 
 module.exports = EmitterQueue;
 
-},{"async":undefined}],35:[function(require,module,exports){
+},{"async":undefined}],31:[function(require,module,exports){
 'use strict';
 
 function GameCoordinator(emitterQueue, game) {
@@ -2577,7 +2599,7 @@ GameCoordinator.prototype.onOfferTrade = function(data, next) {
 
 module.exports = GameCoordinator;
 
-},{}],36:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 function BoardEntity(factory, options) {
@@ -2599,7 +2621,7 @@ BoardEntity.spatialQuery = function(callback) {
 
 module.exports = BoardEntity;
 
-},{}],37:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 var collections = require('./collections/hex-collections');
@@ -2662,7 +2684,7 @@ Board.prototype.addEdge = function(edge) {
 
 module.exports = Board;
 
-},{"./collections/hex-collections":38}],38:[function(require,module,exports){
+},{"./collections/hex-collections":34}],34:[function(require,module,exports){
 'use strict';
 
 var QueryableCollection = require('./queryable-collection'),
@@ -2707,7 +2729,7 @@ module.exports = {
   HexTileCollection: HexTileCollection
 };
 
-},{"./../../util":48,"./query-clauses":39,"./queryable-collection":40}],39:[function(require,module,exports){
+},{"./../../util":44,"./query-clauses":35,"./queryable-collection":36}],35:[function(require,module,exports){
 'use strict';
 
 var MathHelper = require('./../../math-helper');
@@ -2803,7 +2825,7 @@ module.exports = {
 
 };
 
-},{"./../../math-helper":47}],40:[function(require,module,exports){
+},{"./../../math-helper":43}],36:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore');
@@ -2857,7 +2879,7 @@ QueryableCollection.prototype.query = function(options) {
 
 module.exports = QueryableCollection;
 
-},{"underscore":undefined}],41:[function(require,module,exports){
+},{"underscore":undefined}],37:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore');
@@ -3011,7 +3033,7 @@ Game.prototype.getBuildableCornersForPlayer = function(player) {
 
 module.exports = Game;
 
-},{"underscore":undefined}],42:[function(require,module,exports){
+},{"underscore":undefined}],38:[function(require,module,exports){
 'use strict';
 
 var BoardEntity = require('./board-entity'),
@@ -3095,7 +3117,7 @@ HexCorner.prototype.buildCity = function(player) {
 
 module.exports = HexCorner;
 
-},{"./../util":48,"./board-entity":36}],43:[function(require,module,exports){
+},{"./../util":44,"./board-entity":32}],39:[function(require,module,exports){
 'use strict';
 
 var BoardEntity = require('./board-entity'),
@@ -3150,7 +3172,7 @@ HexEdge.prototype.build = function(player) {
 
 module.exports = HexEdge;
 
-},{"./../util":48,"./board-entity":36}],44:[function(require,module,exports){
+},{"./../util":44,"./board-entity":32}],40:[function(require,module,exports){
 'use strict';
 
 var BoardEntity = require('./board-entity'),
@@ -3196,7 +3218,7 @@ HexTile.prototype.getAdjacentCorners = spatialQuery(function(board) {
 
 module.exports = HexTile;
 
-},{"./../util":48,"./board-entity":36}],45:[function(require,module,exports){
+},{"./../util":44,"./board-entity":32}],41:[function(require,module,exports){
 'use strict';
 
 function Resources(factory) {
@@ -3286,7 +3308,7 @@ Player.prototype.addVictoryPoint = function(devCard) {
 
 module.exports = Player;
 
-},{}],46:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore');
@@ -3509,7 +3531,7 @@ GameSerializer.prototype.deserializeBuildings = function(board, data, players) {
 
 module.exports = GameSerializer;
 
-},{"underscore":undefined}],47:[function(require,module,exports){
+},{"underscore":undefined}],43:[function(require,module,exports){
 'use strict';
 
 function round(number, dp) {
@@ -3540,7 +3562,7 @@ module.exports = {
   round: round
 };
 
-},{}],48:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 'use strict';
 
 var inherits = function(ctor, superCtor) {

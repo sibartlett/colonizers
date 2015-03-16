@@ -2,7 +2,7 @@
 
 var ko = require('knockout'),
     screenfull = require('screenfull'),
-    template = require('./menu.html');
+    template = require('./templates').menu;
 
 function MenuModel(params) {
   var notificationsEnabled = ko.observable(params.notifications.isEnabled);

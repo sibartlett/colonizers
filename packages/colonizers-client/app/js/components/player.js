@@ -1,6 +1,6 @@
 'use strict';
 
-var template = require('./player.html'),
+var template = require('./templates').player,
     observableProps = require('./../game/observable-properties');
 
 function PlayerModel(roomModel) {
