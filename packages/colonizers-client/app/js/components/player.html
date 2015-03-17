@@ -26,7 +26,7 @@
       <div class="row">
         <div class="col-xs-12 name">
           <img class="avatar"
-            data-bind="attr: { src: user.avatarUrl }" />
+            data-bind="attr: { src: user.avatarUrl }, visible: user.avatarUrl" />
           <span data-bind="text: user.name"></span>
           <span class="icon-star"
             data-bind="text: player.victoryPoints.actual"></span>

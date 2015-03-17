@@ -59,11 +59,11 @@ function UserInterface(options) {
     // This method call needs to be delayed to allow model to update first
     setTimeout(this.onTurnStart.bind(this), 10);
   }.bind(this));
-
-  this.socket.on('room_users', function(users) {
-    this.viewModel.users = users;
-  }.bind(this));
 }
+
+UserInterface.prototype.setUsers = function(users) {
+  this.viewModel.users = users;
+};
 
 UserInterface.prototype.setGame = function(game) {
   if (this.game) {

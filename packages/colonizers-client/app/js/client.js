@@ -23,4 +23,8 @@ Client.prototype.setGame = function(game) {
   this.ui.setGame(game);
 };
 
+Client.prototype.setUsers = function(users) {
+  this.ui.setUsers(users);
+};
+
 module.exports = Client;

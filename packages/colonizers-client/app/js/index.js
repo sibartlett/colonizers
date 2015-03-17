@@ -36,6 +36,10 @@ jquery.get('/tilesets/modern.json', function(tileset) {
     socket.emit('room', window.roomId);
   });
 
+  socket.on('room_users', function(users) {
+    client.setUsers(users);
+  });
+
   socket.on('GameData', function(data) {
     game = new GameSerializer(factory).deserialize(data);
     emitterQueue.kill();
