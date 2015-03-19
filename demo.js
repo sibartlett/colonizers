@@ -9,7 +9,9 @@ var Emitter = require('component-emitter'),
     Factory = require('colonizers-client/app/js/game/factory'),
     tileset = require('colonizers-client-tilesets/public/tilesets/modern.json');
 
-window.userId = 'id1';
+var factory = new Factory({
+  tileset: tileset
+});
 
 var state = {};
 var players = [
@@ -29,9 +31,6 @@ var players = [
 
 var emitter = new Emitter();
 var queue = new EmitterQueue(emitter);
-var factory = new Factory({
-  tileset: tileset
-});
 
 var options = {
   factory: factory,
@@ -59,7 +58,9 @@ var client = new Client({
 
 client.setUsers(players);
 
-state.gameContext = GameContext.fromScenario(options, function(g) {
-  client.setGame(g.game);
-  g.start();
-});
+setTimeout(function() {
+  state.gameContext = GameContext.fromScenario(options, function(g) {
+    client.setGame(g.game);
+    g.start();
+  });
+}, 50);
