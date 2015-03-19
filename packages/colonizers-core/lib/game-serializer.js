@@ -61,9 +61,10 @@ GameSerializer.prototype.serializePlayer = function(player) {
   };
 };
 
-GameSerializer.prototype.deserializePlayer = function(data) {
+GameSerializer.prototype.deserializePlayer = function(data, index) {
   var player = this.factory.createPlayer({
-        id: data.id
+        id: data.id,
+        index: index
       }),
       propName;
 
