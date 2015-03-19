@@ -1,0 +1,30 @@
+{
+  "name": "colonizers.github.io",
+  "license": "AGPL-3.0",
+  "author": "Simon Bartlett",
+  "private": true,
+  "version": "0.0.0",
+  "description": "",
+  "dependencies": {
+    "colonizers-client": "git://github.com/colonizers/colonizers-client",
+    "colonizers-client-tilesets": "git://github.com/colonizers/colonizers-client-tilesets",
+    "colonizers-core": "git://github.com/colonizers/colonizers-core",
+    "component-emitter": "^1.2.0",
+    "async": "0.9.0",
+    "bootstrap": "3.3.2",
+    "hammerjs": "2.0.4",
+    "jquery": "2.1.3",
+    "jquery-mousewheel": "3.1.12",
+    "knockout": "3.3.0",
+    "konva": "^0.9.0",
+    "screenfull": "2.0.0",
+    "socket.io-client": "1.3.5",
+    "underscore": "1.8.2"
+  },
+  "devDependencies": {
+    "brfs": "^1.4.0",
+    "colonizers-dev": "git://github.com/colonizers/colonizers-dev",
+    "gulp": "^3.8.11",
+    "gulp-less": "^3.0.1"
+  }
+}

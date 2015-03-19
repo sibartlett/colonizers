@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html class="game">
+<head>
+  <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, minimal-ui" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Colonizers">
+  <meta name="msapplication-tap-highlight" content="no" />
+  <title>Colonizers</title>
+  <link rel="stylesheet" type="text/css" href="./css/game.css">
+  <style type="text/css">
+    .sidebar .tab-content {
+      height: -webkit-calc(100% - 10px);
+      height: calc(100% - 10px);
+    }
+    .sidebar h3 {
+      margin-top: 0;
+    }
+    @media (max-width: 767px) {
+      .sidebar h3 {
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container-fluid top-container">
+    <div class="row">
+      <div class="col-xs-12 col-sm-8 col-md-9 canvas">
+        <div data-bind="component: 'alert'"></div>
+        <stage params="game: game"></stage>
+      </div>
+      <div class="col-xs-12 col-sm-4 col-md-3 sidebar offcanvas-xs">
+        <div class="tab-content">
+          <div class="tab-pane active" id="players">
+
+            <div class="well well-sm">
+              <h3>Colonizers</h3>
+              <p class="hidden-xs">An open source project, based on the popular board game "The Settlers of Catan" by Klaus Teuber.</p>
+              <div class="btn-group btn-group-justified">
+                <a href="./" class="btn btn-primary btn-sm">Homepage</a>
+                <a href="https://github.com/colonizers/colonizers" class="btn btn-default btn-sm">GitHub</a>
+              </div>
+            </div>
+
+            <div data-bind="component: 'players'"></div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-bind="component: 'player'"></div>
+  <div data-bind="component: 'build-modal'"></div>
+  <div data-bind="component: 'trade-modal'"></div>
+
+  <script src="./js/lib.js" charset="utf-8"></script>
+  <script src="./js/demo.js" charset="utf-8"></script>
+</body>
+</html>
