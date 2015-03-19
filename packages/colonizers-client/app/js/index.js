@@ -14,7 +14,9 @@ jquery.get('/tilesets/modern.json', function(tileset) {
 
   var socket = io(),
       emitterQueue = new EmitterQueue(socket),
-      factory = new Factory(tileset),
+      factory = new Factory({
+        tileset: tileset
+      }),
       gameCoordinator = new GameCoordinator(emitterQueue),
       game,
       client;
@@ -22,11 +24,12 @@ jquery.get('/tilesets/modern.json', function(tileset) {
   client = new Client({
     factory: factory,
     tileset: tileset,
-    socket: socket,
-    emitterQueue: emitterQueue
+    emitterQueue: emitterQueue,
+    clientUsers: [window.userId],
+    emitEvent: function(playerId, event, data) {
+      socket.emit(event, data);
+    }
   });
-
-  client.bindUI();
 
   socket.on('room_closed', function() {
     window.location = '/lobby';

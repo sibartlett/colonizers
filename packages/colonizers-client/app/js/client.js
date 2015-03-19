@@ -8,11 +8,13 @@ function Client(options) {
 
   this.notifications = new Notifications(options.emitterQueue);
   this.ui = new UserInterface({
-    socket: options.socket,
+    emitEvent: options.emitEvent,
     emitterQueue: options.emitterQueue,
     factory: options.factory,
     notifications: this.notifications
   });
+  this.ui.setClientUsers(options.clientUsers);
+  this.ui.bind();
 }
 
 Client.prototype.bindUI = function() {
@@ -25,6 +27,10 @@ Client.prototype.setGame = function(game) {
 
 Client.prototype.setUsers = function(users) {
   this.ui.setUsers(users);
+};
+
+Client.prototype.setClientUsers = function(users) {
+  this.ui.setClientUsers(users);
 };
 
 module.exports = Client;

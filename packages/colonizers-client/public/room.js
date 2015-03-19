@@ -15,7 +15,9 @@ jquery.get('/tilesets/modern.json', function(tileset) {
 
   var socket = io(),
       emitterQueue = new EmitterQueue(socket),
-      factory = new Factory(tileset),
+      factory = new Factory({
+        tileset: tileset
+      }),
       gameCoordinator = new GameCoordinator(emitterQueue),
       game,
       client;
@@ -23,11 +25,12 @@ jquery.get('/tilesets/modern.json', function(tileset) {
   client = new Client({
     factory: factory,
     tileset: tileset,
-    socket: socket,
-    emitterQueue: emitterQueue
+    emitterQueue: emitterQueue,
+    clientUsers: [window.userId],
+    emitEvent: function(playerId, event, data) {
+      socket.emit(event, data);
+    }
   });
-
-  client.bindUI();
 
   socket.on('room_closed', function() {
     window.location = '/lobby';
@@ -60,11 +63,13 @@ function Client(options) {
 
   this.notifications = new Notifications(options.emitterQueue);
   this.ui = new UserInterface({
-    socket: options.socket,
+    emitEvent: options.emitEvent,
     emitterQueue: options.emitterQueue,
     factory: options.factory,
     notifications: this.notifications
   });
+  this.ui.setClientUsers(options.clientUsers);
+  this.ui.bind();
 }
 
 Client.prototype.bindUI = function() {
@@ -77,6 +82,10 @@ Client.prototype.setGame = function(game) {
 
 Client.prototype.setUsers = function(users) {
   this.ui.setUsers(users);
+};
+
+Client.prototype.setClientUsers = function(users) {
+  this.ui.setClientUsers(users);
 };
 
 module.exports = Client;
@@ -94,7 +103,9 @@ function AlertModel(roomModel) {
 
   observableProps.defineProperties(this, {
     message: null,
-    showDice: false
+    showDice: false,
+    you: this.isYou,
+    color: this.getColor
   });
 
   this.die1 = new DieModel();
@@ -104,6 +115,20 @@ function AlertModel(roomModel) {
   roomModel.emitterQueue.on('start-turn', this.onNextTurn.bind(this));
   roomModel.emitterQueue.on('DiceRoll', this.onDiceRoll.bind(this));
 }
+
+AlertModel.prototype.isYou = function() {
+  var thisPlayerId = this.roomModel.thisPlayer && this.roomModel.thisPlayer.id,
+      currentPlayerId = this.roomModel.currentPlayer &&
+                        this.roomModel.currentPlayer.id;
+
+  return this.roomModel.clientUsers.length === 1 &&
+         thisPlayerId === currentPlayerId;
+};
+
+AlertModel.prototype.getColor = function() {
+  return this.roomModel.currentPlayer &&
+         this.roomModel.currentPlayer.player.color;
+};
 
 AlertModel.prototype.dismiss = function() {
   this.message = null;
@@ -122,7 +147,7 @@ AlertModel.prototype.onNextTurn = function(data, next) {
   var currentPlayer = this.roomModel.currentPlayer;
 
   this.showDice = false;
-  if (data.playerId === window.userId) {
+  if (this.you) {
     this.message = 'Your turn';
   } else {
     this.message = currentPlayer.user.name + '\'s turn';
@@ -141,7 +166,7 @@ AlertModel.prototype.onDiceRoll = function(data, next) {
 
   this.showDice = true;
 
-  if (currentPlayer.id === window.userId) {
+  if (this.you) {
     this.message = 'You are rolling the dice';
     done = function() {
       this.message = 'You rolled ' + data.total;
@@ -634,11 +659,11 @@ module.exports = {
 
 
 module.exports = {
-  alert: "<div class=\"alert alert-info alert-fixed-top\" style=\"display: none\" data-bind=\"visible: message\">\n  <button type=\"button\" class=\"close\" data-bind=\"click: dismiss\">\n    <span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span>\n  </button>\n  <span data-bind=\"text: message\"></span>\n  <div class=\"dice\" data-bind=\"visible: showDice\">\n    <img border=\"0\" width=\"32\" height=\"32\"\n      data-bind=\"attr: { src: die1.imageSrc }\" />\n    <img border=\"0\" width=\"32\" height=\"32\"\n      data-bind=\"attr: { src: die2.imageSrc }\" />\n  </div>\n</div>\n",
+  alert: "<div class=\"alert alert-info alert-fixed-top\" style=\"display: none\"\n  data-bind=\"visible: message,\n             style: { backgroundColor: color, borderColor: color }\">\n\n  <button type=\"button\" class=\"close\" data-bind=\"click: dismiss\">\n    <span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span>\n  </button>\n  <span data-bind=\"text: message\"></span>\n  <div class=\"dice\" data-bind=\"visible: showDice\">\n    <img border=\"0\" width=\"32\" height=\"32\"\n      data-bind=\"attr: { src: die1.imageSrc }\" />\n    <img border=\"0\" width=\"32\" height=\"32\"\n      data-bind=\"attr: { src: die2.imageSrc }\" />\n  </div>\n</div>\n",
   buildModal: "<div class=\"modal fade\" id=\"buildModal\">\n  <div class=\"modal-dialog\">\n    <div class=\"modal-content\">\n      <div class=\"modal-header\">\n        <button type=\"button\" class=\"close\" data-dismiss=\"modal\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>\n        <h4 class=\"modal-title\">Build/upgrade</h4>\n      </div>\n      <div class=\"modal-body\">\n\n        <div class=\"media\">\n          <a class=\"media-left\" href=\"#\">\n            <img class=\"media-object\" src=\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZWVlIi8+PHRleHQgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMzIiIHk9IjMyIiBzdHlsZT0iZmlsbDojYWFhO2ZvbnQtd2VpZ2h0OmJvbGQ7Zm9udC1zaXplOjEycHg7Zm9udC1mYW1pbHk6QXJpYWwsSGVsdmV0aWNhLHNhbnMtc2VyaWY7ZG9taW5hbnQtYmFzZWxpbmU6Y2VudHJhbCI+NjR4NjQ8L3RleHQ+PC9zdmc+\" alt=\"...\">\n          </a>\n          <div class=\"media-body\">\n            <h4 class=\"media-heading\">\n              Road\n              <span class=\"badge lumber\" title=\"Lumber\">1</span>\n              <span class=\"badge brick\" title=\"Brick\">1</span>\n            </h4>\n          </div>\n          <div class=\"media-right\">\n            <button type=\"button\" class=\"btn btn-default\" data-bind=\"enable: canBuildRoad, click: buildRoad\">Build</button>\n            <br>\n            <em><span data-bind=\"text: allowanceRoads\"></span> available</em>\n          </div>\n        </div>\n\n        <div class=\"media\">\n          <a class=\"media-left\" href=\"#\">\n            <img class=\"media-object\" src=\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZWVlIi8+PHRleHQgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMzIiIHk9IjMyIiBzdHlsZT0iZmlsbDojYWFhO2ZvbnQtd2VpZ2h0OmJvbGQ7Zm9udC1zaXplOjEycHg7Zm9udC1mYW1pbHk6QXJpYWwsSGVsdmV0aWNhLHNhbnMtc2VyaWY7ZG9taW5hbnQtYmFzZWxpbmU6Y2VudHJhbCI+NjR4NjQ8L3RleHQ+PC9zdmc+\" alt=\"...\">\n          </a>\n          <div class=\"media-body\">\n            <h4 class=\"media-heading\">\n              Settlement\n              <span class=\"badge lumber\" title=\"Lumber\">1</span>\n              <span class=\"badge brick\" title=\"Brick\">1</span>\n              <span class=\"badge wool\" title=\"Wool\">1</span>\n              <span class=\"badge grain\" title=\"Grain\">1</span>\n            </h4>\n          </div>\n          <div class=\"media-right\">\n            <button type=\"button\" class=\"btn btn-default\" data-bind=\"enable: canBuildSettlement, click: buildSettlement\">Build</button>\n            <br>\n            <em><span data-bind=\"text: allowanceSettlements\"></span> available</em>\n          </div>\n        </div>\n\n        <div class=\"media\">\n          <a class=\"media-left\" href=\"#\">\n            <img class=\"media-object\" src=\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZWVlIi8+PHRleHQgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMzIiIHk9IjMyIiBzdHlsZT0iZmlsbDojYWFhO2ZvbnQtd2VpZ2h0OmJvbGQ7Zm9udC1zaXplOjEycHg7Zm9udC1mYW1pbHk6QXJpYWwsSGVsdmV0aWNhLHNhbnMtc2VyaWY7ZG9taW5hbnQtYmFzZWxpbmU6Y2VudHJhbCI+NjR4NjQ8L3RleHQ+PC9zdmc+\" alt=\"...\">\n          </a>\n          <div class=\"media-body\">\n            <h4 class=\"media-heading\">\n              City\n              <span class=\"badge grain\" title=\"Grain\">2</span>\n              <span class=\"badge ore\" title=\"Ore\">3</span>\n            </h4>\n          </div>\n          <div class=\"media-right\">\n            <button type=\"button\" class=\"btn btn-default\" data-bind=\"enable: canBuildCity, click: buildCity\">Build</button>\n            <br>\n            <em><span data-bind=\"text: allowanceCities\"></span> available</em>\n          </div>\n        </div>\n\n\n      </div>\n    </div>\n  </div>\n</div>\n",
   menu: "<div>\n  <button type=\"button\"\n          class=\"btn btn-default btn-block\"\n          data-bind=\"\n          click: toggleNotifications,\n          text: notificationsText\n          visible: notifications.isSupported\n          \"\n          >\n  </button>\n\n  <button type=\"button\"\n          class=\"btn btn-default btn-block\"\n          data-bind=\"click: toggleFullscreen, visible: fullScreen\"\n          >\n    Toggle full screen\n  </button>\n\n  <a href=\"/lobby\" class=\"btn btn-default btn-block\">Back to lobby</a>\n</div>\n",
-  player: "<div class=\"container-fluid this-user\" data-bind=\"visible: !isPlayer\">\n  <div class=\"row\">\n    <div class=\"col-xs-9\">\n      <p>You are spectating this game.</p>\n    </div>\n\n    <div class=\"col-xs-3 visible-xs mobile-controls\" style=\"padding-left: 0\">\n      <div class=\"btn-toolbar pull-right\" role=\"toolbar\">\n\n        <div class=\"btn-group\">\n          <button type=\"button\" class=\"btn btn-default sidebar-toggle\" data-toggle=\"offcanvas\" data-target=\".sidebar\">\n            <span class=\"icon-bar\"></span>\n            <span class=\"icon-bar\"></span>\n            <span class=\"icon-bar\"></span>\n          </button>\n        </div>\n\n      </div>\n    </div>\n  </div>\n</div>\n\n<div class=\"container-fluid this-user player\" data-bind=\"visible: isPlayer\">\n  <div class=\"row\">\n    <div class=\"col-sm-3 col-md-2 col-lg-4 hidden-xs\">\n      <div class=\"row\">\n        <div class=\"col-xs-12 name\">\n          <img class=\"avatar\"\n            data-bind=\"attr: { src: user.avatarUrl }, visible: user.avatarUrl\" />\n          <span data-bind=\"text: user.name\"></span>\n          <span class=\"icon-star\"\n            data-bind=\"text: player.victoryPoints.actual\"></span>\n        </div>\n      </div>\n    </div>\n\n    <div class=\"col-xs-9 col-sm-3 col-md-5 col-lg-4\" style=\"padding-right: 0\">\n      <div class=\"row hidden-sm hidden-md hidden-lg\">\n        <div class=\"col-xs-12 name\">\n          <span data-bind=\"text: user.name\"></span>\n          <span class=\"icon-star\"\n            data-bind=\"text: player.victoryPoints.actual\"></span>\n        </div>\n      </div>\n      <div class=\"row badges\">\n        <div class=\"col-xs-12\">\n          <span class=\"icon-gift\" title=\"Resources\"></span>\n          <span class=\"badge lumber\" title=\"Lumber\">\n            <span data-bind=\"text: player.resources.lumber\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Lumber</span>\n          </span>\n          <span class=\"badge brick\" title=\"Brick\">\n            <span data-bind=\"text: player.resources.brick\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Brick</span>\n          </span>\n          <span class=\"badge wool\" title=\"Wool\">\n            <span data-bind=\"text: player.resources.wool\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Wool</span>\n          </span>\n          <span class=\"badge grain\" title=\"Grain\">\n            <span data-bind=\"text: player.resources.grain\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Grain</span>\n          </span>\n          <span class=\"badge ore\" title=\"Ore\">\n            <span data-bind=\"text: player.resources.ore\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Ore</span>\n          </span>\n        </div>\n      </div>\n\n      <div class=\"row badges\">\n        <div class=\"col-xs-12\">\n          <span class=\"icon-hammer\" title=\"Development Cards\"></span>\n          <span class=\"badge\" title=\"Development Cards\">\n            <span data-bind=\"text: player.developmentCards.total\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Dev Cards</span>\n          </span>\n\n          &nbsp;\n\n          <span class=\"icon-shield\" title=\"Largest Army\"></span>\n          <span class=\"badge\" title=\"Largest Army\">\n            <span data-bind=\"text: player.knightsPlayed\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Army</span>\n          </span>\n\n          &nbsp;\n\n          <span class=\"icon-road\" title=\"Longest Road\"></span>\n          <span class=\"badge\" title=\"Longest Road\">\n            <span data-bind=\"text: player.longestRoad\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Longest Road</span>\n          </span>\n        </div>\n      </div>\n    </div>\n\n    <div class=\"col-sm-6 col-md-5 col-lg-4 hidden-xs controls\">\n      <div class=\"pull-right\">\n        <button type=\"button\" class=\"btn btn-default navbar-btn\" data-bind=\"enable: $root.ui.buttons\" data-toggle=\"modal\" data-target=\"#buildModal\">Build</button>\n        <button type=\"button\" class=\"btn btn-default navbar-btn\" data-bind=\"enable: $root.ui.buttons\" data-toggle=\"modal\" data-target=\"#tradeModal\">Trade</button>\n        <button type=\"button\" class=\"btn btn-default navbar-btn\" data-bind=\"enable: $root.ui.buttons\">Dev Cards</button>\n        <button type=\"button\" class=\"btn btn-default navbar-btn\" data-bind=\"enable: $root.ui.buttons, click: actions.endTurn\">End Turn</button>\n      </div>\n    </div>\n\n    <div class=\"col-xs-3 visible-xs mobile-controls\" style=\"padding-left: 0\">\n      <div class=\"btn-toolbar pull-right\" role=\"toolbar\">\n        <div class=\"btn-group-vertical\">\n\n          <div class=\"btn-group dropup\">\n\n            <button type=\"button\" class=\"btn btn-success dropdown-toggle\" data-toggle=\"dropdown\" data-bind=\"enable: $root.ui.buttons\">\n              <span class=\"caret\"></span>\n              <span class=\"sr-only\">Toggle Dropdown</span>\n            </button>\n\n            <ul class=\"dropdown-menu dropdown-menu-right\" role=\"menu\">\n              <li><a href=\"#\" data-toggle=\"modal\" data-target=\"#buildModal\">Build</a></li>\n              <li><a href=\"#\" data-toggle=\"modal\" data-target=\"#tradeModal\">Trade</a></li>\n              <li><a href=\"#\">Dev Cards</a></li>\n              <li class=\"divider\"></li>\n              <li><a data-bind=\"enable: $root.ui.endTurnButton, click: $root.events.onEndTurnClick\">End Turn</a></li>\n            </ul>\n\n          </div>\n\n          <div class=\"btn-group\">\n            <button type=\"button\" class=\"btn btn-default sidebar-toggle\" data-toggle=\"offcanvas\" data-target=\".sidebar\">\n              <span class=\"icon-bar\"></span>\n              <span class=\"icon-bar\"></span>\n              <span class=\"icon-bar\"></span>\n            </button>\n          </div>\n\n        </div>\n\n      </div>\n    </div>\n  </div>\n</div>\n",
-  players: "<div class=\"players\" data-bind=\"foreach: players\">\n\n  <div class=\"player\">\n    <h4>\n      <img class=\"avatar\"\n        data-bind=\"attr: { src: user.avatarUrl }, visible: user.avatarUrl\" />\n      <span data-bind=\"text: user.name\"></span>\n      <span class=\"icon-star\" data-bind=\"text: player.victoryPoints.public\"></span>\n    </h4>\n    <div class=\"well well-sm\">\n      <div class=\"row\">\n        <div class=\"col-xs-3\" title=\"Resource Cards\">\n          <p>\n            <span class=\"icon-gift\"></span>\n            <span class=\"badge\" data-bind=\"text: player.resources.total\"></span>\n          </p>\n        </div>\n        <div class=\"col-xs-3\" title=\"Development Cards\">\n          <p>\n            <span class=\"icon-hammer\"></span>\n            <span class=\"badge\" data-bind=\"text: player.developmentCards.total\"></span>\n          </p>\n        </div>\n        <div class=\"col-xs-3\" title=\"Knights\">\n          <p>\n            <span class=\"icon-shield\"></span>\n            <span class=\"badge\" data-bind=\"text: player.knightsPlayed\"></span>\n          </p>\n        </div>\n        <div class=\"col-xs-3\" title=\"Longest Road\">\n          <p>\n            <span class=\"icon-road\"></span>\n            <span class=\"badge\" data-bind=\"text: player.longestRoad\"></span>\n          </p>\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n",
+  player: "<div class=\"container-fluid this-user\" data-bind=\"visible: !isPlayer\">\n  <div class=\"row\">\n    <div class=\"col-xs-9\">\n      <p>You are spectating this game.</p>\n    </div>\n\n    <div class=\"col-xs-3 visible-xs mobile-controls\" style=\"padding-left: 0\">\n      <div class=\"btn-toolbar pull-right\" role=\"toolbar\">\n\n        <div class=\"btn-group\">\n          <button type=\"button\" class=\"btn btn-default sidebar-toggle\" data-toggle=\"offcanvas\" data-target=\".sidebar\">\n            <span class=\"icon-bar\"></span>\n            <span class=\"icon-bar\"></span>\n            <span class=\"icon-bar\"></span>\n          </button>\n        </div>\n\n      </div>\n    </div>\n  </div>\n</div>\n\n<div class=\"container-fluid this-user player\"\n  data-bind=\"visible: isPlayer, style: { backgroundColor: player.color }\">\n\n  <div class=\"row\">\n    <div class=\"col-sm-3 col-md-2 col-lg-4 hidden-xs\">\n      <div class=\"row\">\n        <div class=\"col-xs-12 name\">\n          <img class=\"avatar\"\n            data-bind=\"attr: { src: user.avatarUrl }, visible: user.avatarUrl\" />\n          <span data-bind=\"text: user.name\"></span>\n          <span class=\"icon-star\"\n            data-bind=\"text: player.victoryPoints.actual\"></span>\n        </div>\n      </div>\n    </div>\n\n    <div class=\"col-xs-9 col-sm-3 col-md-5 col-lg-4\" style=\"padding-right: 0\">\n      <div class=\"row hidden-sm hidden-md hidden-lg\">\n        <div class=\"col-xs-12 name\">\n          <span data-bind=\"text: user.name\"></span>\n          <span class=\"icon-star\"\n            data-bind=\"text: player.victoryPoints.actual\"></span>\n        </div>\n      </div>\n      <div class=\"row badges\">\n        <div class=\"col-xs-12\">\n          <span class=\"icon-gift\" title=\"Resources\"></span>\n          <span class=\"badge lumber\" title=\"Lumber\">\n            <span data-bind=\"text: player.resources.lumber\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Lumber</span>\n          </span>\n          <span class=\"badge brick\" title=\"Brick\">\n            <span data-bind=\"text: player.resources.brick\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Brick</span>\n          </span>\n          <span class=\"badge wool\" title=\"Wool\">\n            <span data-bind=\"text: player.resources.wool\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Wool</span>\n          </span>\n          <span class=\"badge grain\" title=\"Grain\">\n            <span data-bind=\"text: player.resources.grain\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Grain</span>\n          </span>\n          <span class=\"badge ore\" title=\"Ore\">\n            <span data-bind=\"text: player.resources.ore\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Ore</span>\n          </span>\n        </div>\n      </div>\n\n      <div class=\"row badges\">\n        <div class=\"col-xs-12\">\n          <span class=\"icon-hammer\" title=\"Development Cards\"></span>\n          <span class=\"badge\" title=\"Development Cards\">\n            <span data-bind=\"text: player.developmentCards.total\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Dev Cards</span>\n          </span>\n\n          &nbsp;\n\n          <span class=\"icon-shield\" title=\"Largest Army\"></span>\n          <span class=\"badge\" title=\"Largest Army\">\n            <span data-bind=\"text: player.knightsPlayed\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Army</span>\n          </span>\n\n          &nbsp;\n\n          <span class=\"icon-road\" title=\"Longest Road\"></span>\n          <span class=\"badge\" title=\"Longest Road\">\n            <span data-bind=\"text: player.longestRoad\"></span>\n            <span class=\"hidden-xs hidden-sm\">- Longest Road</span>\n          </span>\n        </div>\n      </div>\n    </div>\n\n    <div class=\"col-sm-6 col-md-5 col-lg-4 hidden-xs controls\">\n      <div class=\"pull-right\">\n        <button type=\"button\" class=\"btn btn-default navbar-btn\" data-bind=\"enable: $root.ui.buttons\" data-toggle=\"modal\" data-target=\"#buildModal\">Build</button>\n        <button type=\"button\" class=\"btn btn-default navbar-btn\" data-bind=\"enable: $root.ui.buttons\" data-toggle=\"modal\" data-target=\"#tradeModal\">Trade</button>\n        <button type=\"button\" class=\"btn btn-default navbar-btn\" data-bind=\"enable: $root.ui.buttons\">Dev Cards</button>\n        <button type=\"button\" class=\"btn btn-default navbar-btn\" data-bind=\"enable: $root.ui.buttons, click: actions.endTurn\">End Turn</button>\n      </div>\n    </div>\n\n    <div class=\"col-xs-3 visible-xs mobile-controls\" style=\"padding-left: 0\">\n      <div class=\"btn-toolbar pull-right\" role=\"toolbar\">\n        <div class=\"btn-group-vertical\">\n\n          <div class=\"btn-group dropup\">\n\n            <button type=\"button\" class=\"btn btn-success dropdown-toggle\" data-toggle=\"dropdown\" data-bind=\"enable: $root.ui.buttons\">\n              <span class=\"caret\"></span>\n              <span class=\"sr-only\">Toggle Dropdown</span>\n            </button>\n\n            <ul class=\"dropdown-menu dropdown-menu-right\" role=\"menu\">\n              <li><a href=\"#\" data-toggle=\"modal\" data-target=\"#buildModal\">Build</a></li>\n              <li><a href=\"#\" data-toggle=\"modal\" data-target=\"#tradeModal\">Trade</a></li>\n              <li><a href=\"#\">Dev Cards</a></li>\n              <li class=\"divider\"></li>\n              <li><a data-bind=\"enable: $root.ui.endTurnButton, click: $root.events.onEndTurnClick\">End Turn</a></li>\n            </ul>\n\n          </div>\n\n          <div class=\"btn-group\">\n            <button type=\"button\" class=\"btn btn-default sidebar-toggle\" data-toggle=\"offcanvas\" data-target=\".sidebar\">\n              <span class=\"icon-bar\"></span>\n              <span class=\"icon-bar\"></span>\n              <span class=\"icon-bar\"></span>\n            </button>\n          </div>\n\n        </div>\n\n      </div>\n    </div>\n  </div>\n</div>\n",
+  players: "<div class=\"players\" data-bind=\"foreach: players\">\n\n  <div class=\"player\" data-bind=\"style: { backgroundColor: player.color }\">\n    <h4>\n      <img class=\"avatar\"\n        data-bind=\"attr: { src: user.avatarUrl }, visible: user.avatarUrl\" />\n      <span data-bind=\"text: user.name\"></span>\n      <span class=\"icon-star\" data-bind=\"text: player.victoryPoints.public\"></span>\n    </h4>\n    <div class=\"well well-sm\">\n      <div class=\"row\">\n        <div class=\"col-xs-3\" title=\"Resource Cards\">\n          <p>\n            <span class=\"icon-gift\"></span>\n            <span class=\"badge\" data-bind=\"text: player.resources.total\"></span>\n          </p>\n        </div>\n        <div class=\"col-xs-3\" title=\"Development Cards\">\n          <p>\n            <span class=\"icon-hammer\"></span>\n            <span class=\"badge\" data-bind=\"text: player.developmentCards.total\"></span>\n          </p>\n        </div>\n        <div class=\"col-xs-3\" title=\"Knights\">\n          <p>\n            <span class=\"icon-shield\"></span>\n            <span class=\"badge\" data-bind=\"text: player.knightsPlayed\"></span>\n          </p>\n        </div>\n        <div class=\"col-xs-3\" title=\"Longest Road\">\n          <p>\n            <span class=\"icon-road\"></span>\n            <span class=\"badge\" data-bind=\"text: player.longestRoad\"></span>\n          </p>\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n",
   tradeModal: "<div class=\"modal fade\" id=\"tradeModal\">\n  <div class=\"modal-dialog\">\n    <div class=\"modal-content\">\n      <div class=\"modal-header\">\n        <button type=\"button\" class=\"close\" data-dismiss=\"modal\"><span aria-hidden=\"true\">&times;</span><span class=\"sr-only\">Close</span></button>\n        <h4 class=\"modal-title\">Trade</h4>\n      </div>\n      <div class=\"modal-body\">\n\n        <p>Offering a trade to other players.</p>\n\n        <div class=\"row\">\n          <div class=\"col-xs-3\">\n            Want\n          </div>\n          <div class=\"col-xs-6\">\n          </div>\n          <div class=\"col-xs-3\">\n            Give\n          </div>\n        </div>\n\n        <div data-bind=\"foreach: resources\">\n\n          <div class=\"row\" data-bind=\"css: key\">\n            <div class=\"col-xs-3\" data-bind=\"text: want\">\n            </div>\n            <div class=\"col-xs-6\">\n\n              <div class=\"input-group\">\n                <span class=\"input-group-btn\">\n                  <button class=\"btn btn-default\" type=\"button\" data-bind=\"click: wantUp\">&#10094;</button>\n                </span>\n                <input type=\"text\" class=\"form-control\" data-bind=\"value: inventory\">\n                <span class=\"input-group-btn\">\n                  <button class=\"btn btn-default\" type=\"button\" data-bind=\"click: giveUp\">&#10095;</button>\n                </span>\n              </div>\n\n            </div>\n            <div class=\"col-xs-3\" data-bind=\"text: give\">\n            </div>\n          </div>\n\n        </div>\n\n      </div>\n      <div class=\"modal-footer\">\n        <button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button>\n        <button type=\"button\" class=\"btn btn-primary\"\n          data-bind=\"click: offerTrade\">Offer trade</button>\n      </div>\n    </div>\n  </div>\n</div>\n"
 };
 
@@ -839,13 +864,13 @@ var Game = require('./game'),
     Player = require('./player'),
     observableProps = require('./observable-properties');
 
-function Factory(tileset) {
-  this.tileset = tileset;
+function Factory(options) {
+  this.tileset = options.tileset;
 
   // Process tileset, converting image data uris to image elements
   Object.keys(this.tileset.tiles).forEach(function(key) {
     if (this.tileset.tiles[key].bgimage) {
-      var img = new Image();
+      var img = new window.Image();
       img.src = this.tileset.tiles[key].bgimage;
       this.tileset.tiles[key].bgimage = img;
     }
@@ -901,37 +926,6 @@ UiGame.prototype.offerTrade = function(options) {
 
 UiGame.prototype.draw = function() {
   this.emit('draw');
-};
-
-UiGame.prototype.getPlayerColors = function() {
-  if (!this._playerColors) {
-
-    var colors = ['#d9534f', '#5cb85c', '#428bca', '#d9534f'],
-        players1 = [],
-        players2 = [],
-        result = {};
-
-    this.players.forEach(function(player) {
-      if (player.id === window.userId) {
-        players1.push(player.id);
-      } else {
-        if (players1.length > 0) {
-          players1.push(player.id);
-        } else {
-          players2.push(player.id);
-        }
-      }
-    });
-
-    players1
-      .concat(players2)
-      .forEach(function(playerId, index) {
-        result[playerId] = colors[index];
-      });
-
-    this._playerColors = result;
-  }
-  return this._playerColors;
 };
 
 UiGame.prototype.showBuildableSettlements = function() {
@@ -1060,12 +1054,10 @@ UiHexCorner.prototype.buildSettlement = function(player) {
     this.drawing.destroy();
   }
 
-  var colors = this.board.game.getPlayerColors();
-
   this.drawing = new Konva.Shape({
     stroke: 'white',
     strokeWidth: 1,
-    fill: colors[player.id],
+    fill: player.color,
     opacity: 1,
     x: 0,
     y: 0,
@@ -1097,12 +1089,10 @@ UiHexCorner.prototype.buildCity = function(player) {
     this.drawing.destroy();
   }
 
-  var colors = this.board.game.getPlayerColors();
-
   this.drawing = new Konva.Shape({
     stroke: 'white',
     strokeWidth: 1,
-    fill: colors[player.id],
+    fill: player.color,
     opacity: 1,
     x: 0,
     y: 0,
@@ -1128,10 +1118,8 @@ UiHexCorner.prototype.buildCity = function(player) {
 };
 
 UiHexCorner.prototype.show = function(player) {
-  var colors;
   if (this.isBuildable) {
-    colors = this.board.game.getPlayerColors();
-    this.drawing.fill(colors[player.id]);
+    this.drawing.fill(player.color);
     this.drawing.opacity(0.4);
     this.group.show();
     this.group.draw();
@@ -1221,11 +1209,9 @@ UiHexEdge.prototype.hookupEvents = function() {
 };
 
 UiHexEdge.prototype.build = function(player) {
-  var colors = this.board.game.getPlayerColors();
-
   HexEdge.prototype.build.call(this, player);
 
-  this.rect.fill(colors[player.id]);
+  this.rect.fill(player.color);
   this.rect.height(6);
   this.rect.y(-6 / 2);
   this.rect.opacity(1);
@@ -1235,8 +1221,7 @@ UiHexEdge.prototype.build = function(player) {
 
 UiHexEdge.prototype.show = function(player) {
   if (this.isBuildable) {
-    var colors = this.board.game.getPlayerColors();
-    this.rect.fill(colors[player.id]);
+    this.rect.fill(player.color);
     this.rect.opacity(0.4);
     this.rect.show();
     this.rect.draw();
@@ -1680,9 +1665,11 @@ var emitter = require('component-emitter'),
     util = require('colonizers-core/lib/util'),
     Player = require('colonizers-core/lib/game-objects/player');
 
-function UiPlayer() {
+function UiPlayer(factory, options) {
   Player.apply(this, arguments);
   emitter(this);
+
+  this.color = ['#d9534f', '#5cb85c', '#428bca', '#d9534f'][options.index];
 }
 
 util.inherits(UiPlayer, Player);
@@ -1720,6 +1707,7 @@ function RoomModel(options) {
   observableProps.defineProperties(this, {
     game: null,
     users: [],
+    clientUsers: [],
 
     turn: this.getTurn,
     myTurn: this.isMyTurn,
@@ -1738,9 +1726,10 @@ RoomModel.prototype.getTurn = function() {
 
 RoomModel.prototype.isMyTurn = function() {
   var game = this.game || {},
-      currentPlayer = game.currentPlayer || {};
+      currentPlayer = game.currentPlayer || {},
+      thisPlayerId = this.thisPlayer && this.thisPlayer.id;
 
-  return currentPlayer.id === window.userId || false;
+  return currentPlayer.id === thisPlayerId;
 };
 
 RoomModel.prototype.getPlayers = function() {
@@ -1748,6 +1737,7 @@ RoomModel.prototype.getPlayers = function() {
       game = this.game;
 
   if (game) {
+
     return game.players.map(function(player) {
       var user = _.find(users, function(user) {
         return user.id === player.id;
@@ -1788,8 +1778,40 @@ RoomModel.prototype.getCurrentPlayer = function() {
 };
 
 RoomModel.prototype.getThisPlayer = function() {
+  var game,
+      currentPlayer,
+      currentPlayerId,
+      userId;
+
+  if (!this.clientUsers.length) {
+    return;
+  }
+
+  if (this.clientUsers.length === 1) {
+    userId = this.clientUsers[0];
+    return _.find(this.players, function(player) {
+      return player.id === userId;
+    });
+  }
+
+  game = this.game || {};
+  currentPlayer = game.currentPlayer || {};
+  currentPlayerId = currentPlayer.id || null;
+
+  if (!currentPlayerId) {
+    return;
+  }
+
+  userId = _.find(this.clientUsers, function(id) {
+    return id === currentPlayerId;
+  });
+
+  if (!userId) {
+    return;
+  }
+
   return _.find(this.players, function(player) {
-    return player.id === window.userId;
+    return player.id === userId;
   });
 };
 
@@ -1815,18 +1837,21 @@ RoomModel.prototype.getThisPlayerOrEmpty = function() {
 };
 
 RoomModel.prototype.getOtherPlayers = function() {
+  var thisPlayerId = this.thisPlayer && this.thisPlayer.id;
+
   return this.players.filter(function(player) {
-    return player.id !== window.userId;
+    return player.id !== thisPlayerId;
   });
 };
 
 RoomModel.prototype.getOtherPlayersOrdered = function() {
-  var thisPlayer = false,
+  var thisPlayerId = this.thisPlayer && this.thisPlayer.id,
+      thisPlayer = false,
       players1 = [],
       players2 = [];
 
   this.players.forEach(function(player) {
-    if (player.id === window.userId) {
+    if (player.id === thisPlayerId) {
       thisPlayer = true;
     } else {
       if (thisPlayer) {
@@ -2288,6 +2313,7 @@ ko.bindingHandlers.component.preprocess = function(val) {
 };
 
 function UserInterface(options) {
+  this.emit = this.emit.bind(this);
   this.onBoardClick = this.onBoardClick.bind(this);
   this.onBuildSettlement = this.onBuildSettlement.bind(this);
   this.onBuildCity = this.onBuildCity.bind(this);
@@ -2296,11 +2322,11 @@ function UserInterface(options) {
   this.onTurnStart = this.onTurnStart.bind(this);
 
   this.game = null;
-  this.socket = options.socket;
+  this.emitEvent = options.emitEvent;
   this.emitterQueue = options.emitterQueue;
 
   this.viewModel = new RootViewModel({
-    actions: new ViewActions(options.socket),
+    actions: new ViewActions(this.emit),
     emitterQueue: options.emitterQueue,
     notifications: options.notifications,
     factory: options.factory
@@ -2324,8 +2350,17 @@ function UserInterface(options) {
   }.bind(this));
 }
 
+UserInterface.prototype.emit = function(event, data) {
+  var thisPlayerId = this.viewModel.thisPlayer && this.viewModel.thisPlayer.id;
+  this.emitEvent(thisPlayerId, event, data);
+};
+
 UserInterface.prototype.setUsers = function(users) {
   this.viewModel.users = users;
+};
+
+UserInterface.prototype.setClientUsers = function(userIds) {
+  this.viewModel.clientUsers = userIds;
 };
 
 UserInterface.prototype.setGame = function(game) {
@@ -2396,9 +2431,10 @@ UserInterface.prototype.onBoardClick = function(data) {
   if (!this.viewModel.myTurn) {
     return;
   }
+
   if (this.game.phase === 'setup') {
     this.game.hideBuildableEntities();
-    this.socket.emit('build-' + data.type, {
+    this.emit('build-' + data.type, {
       buildId: data.id
     });
     if (data.type === 'settlement') {
@@ -2406,7 +2442,7 @@ UserInterface.prototype.onBoardClick = function(data) {
     }
   } else {
     this.game.hideBuildableEntities();
-    this.socket.emit('build-' + data.type, {
+    this.emit('build-' + data.type, {
       buildId: data.id
     });
   }
@@ -2417,19 +2453,19 @@ module.exports = UserInterface;
 },{"./components/alert":3,"./components/build-modal":4,"./components/menu":7,"./components/player":8,"./components/players":9,"./components/stage":10,"./components/trade-modal":12,"./model/index":23,"./view-actions":29,"knockout":undefined}],29:[function(require,module,exports){
 'use strict';
 
-function ViewActions(socket) {
-  this.socket = socket;
+function ViewActions(emit) {
+  this.emit = emit;
 
   this.endTurn = this.endTurn.bind(this);
   this.offerTrade = this.offerTrade.bind(this);
 }
 
 ViewActions.prototype.endTurn = function() {
-  this.socket.emit('end-turn');
+  this.emit('end-turn');
 };
 
 ViewActions.prototype.offerTrade = function(resources) {
-  this.socket.emit('trade-offer', {
+  this.emit('trade-offer', {
     resources: resources
   });
 };
@@ -3380,9 +3416,10 @@ GameSerializer.prototype.serializePlayer = function(player) {
   };
 };
 
-GameSerializer.prototype.deserializePlayer = function(data) {
+GameSerializer.prototype.deserializePlayer = function(data, index) {
   var player = this.factory.createPlayer({
-        id: data.id
+        id: data.id,
+        index: index
       }),
       propName;
 

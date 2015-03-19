@@ -4,9 +4,11 @@ var emitter = require('component-emitter'),
     util = require('colonizers-core/lib/util'),
     Player = require('colonizers-core/lib/game-objects/player');
 
-function UiPlayer() {
+function UiPlayer(factory, options) {
   Player.apply(this, arguments);
   emitter(this);
+
+  this.color = ['#d9534f', '#5cb85c', '#428bca', '#d9534f'][options.index];
 }
 
 util.inherits(UiPlayer, Player);

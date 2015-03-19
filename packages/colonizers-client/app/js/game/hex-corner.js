@@ -70,12 +70,10 @@ UiHexCorner.prototype.buildSettlement = function(player) {
     this.drawing.destroy();
   }
 
-  var colors = this.board.game.getPlayerColors();
-
   this.drawing = new Konva.Shape({
     stroke: 'white',
     strokeWidth: 1,
-    fill: colors[player.id],
+    fill: player.color,
     opacity: 1,
     x: 0,
     y: 0,
@@ -107,12 +105,10 @@ UiHexCorner.prototype.buildCity = function(player) {
     this.drawing.destroy();
   }
 
-  var colors = this.board.game.getPlayerColors();
-
   this.drawing = new Konva.Shape({
     stroke: 'white',
     strokeWidth: 1,
-    fill: colors[player.id],
+    fill: player.color,
     opacity: 1,
     x: 0,
     y: 0,
@@ -138,10 +134,8 @@ UiHexCorner.prototype.buildCity = function(player) {
 };
 
 UiHexCorner.prototype.show = function(player) {
-  var colors;
   if (this.isBuildable) {
-    colors = this.board.game.getPlayerColors();
-    this.drawing.fill(colors[player.id]);
+    this.drawing.fill(player.color);
     this.drawing.opacity(0.4);
     this.group.show();
     this.group.draw();

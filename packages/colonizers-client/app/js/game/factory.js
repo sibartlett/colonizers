@@ -8,13 +8,13 @@ var Game = require('./game'),
     Player = require('./player'),
     observableProps = require('./observable-properties');
 
-function Factory(tileset) {
-  this.tileset = tileset;
+function Factory(options) {
+  this.tileset = options.tileset;
 
   // Process tileset, converting image data uris to image elements
   Object.keys(this.tileset.tiles).forEach(function(key) {
     if (this.tileset.tiles[key].bgimage) {
-      var img = new Image();
+      var img = new window.Image();
       img.src = this.tileset.tiles[key].bgimage;
       this.tileset.tiles[key].bgimage = img;
     }

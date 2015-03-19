@@ -20,7 +20,9 @@
   </div>
 </div>
 
-<div class="container-fluid this-user player" data-bind="visible: isPlayer">
+<div class="container-fluid this-user player"
+  data-bind="visible: isPlayer, style: { backgroundColor: player.color }">
+
   <div class="row">
     <div class="col-sm-3 col-md-2 col-lg-4 hidden-xs">
       <div class="row">

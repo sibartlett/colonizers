@@ -20,37 +20,6 @@ UiGame.prototype.draw = function() {
   this.emit('draw');
 };
 
-UiGame.prototype.getPlayerColors = function() {
-  if (!this._playerColors) {
-
-    var colors = ['#d9534f', '#5cb85c', '#428bca', '#d9534f'],
-        players1 = [],
-        players2 = [],
-        result = {};
-
-    this.players.forEach(function(player) {
-      if (player.id === window.userId) {
-        players1.push(player.id);
-      } else {
-        if (players1.length > 0) {
-          players1.push(player.id);
-        } else {
-          players2.push(player.id);
-        }
-      }
-    });
-
-    players1
-      .concat(players2)
-      .forEach(function(playerId, index) {
-        result[playerId] = colors[index];
-      });
-
-    this._playerColors = result;
-  }
-  return this._playerColors;
-};
-
 UiGame.prototype.showBuildableSettlements = function() {
   var currentPlayer = this.currentPlayer,
       corners = this.getBuildableCornersForCurrentPlayer();

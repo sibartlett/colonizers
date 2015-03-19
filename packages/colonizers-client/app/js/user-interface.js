@@ -25,6 +25,7 @@ ko.bindingHandlers.component.preprocess = function(val) {
 };
 
 function UserInterface(options) {
+  this.emit = this.emit.bind(this);
   this.onBoardClick = this.onBoardClick.bind(this);
   this.onBuildSettlement = this.onBuildSettlement.bind(this);
   this.onBuildCity = this.onBuildCity.bind(this);
@@ -33,11 +34,11 @@ function UserInterface(options) {
   this.onTurnStart = this.onTurnStart.bind(this);
 
   this.game = null;
-  this.socket = options.socket;
+  this.emitEvent = options.emitEvent;
   this.emitterQueue = options.emitterQueue;
 
   this.viewModel = new RootViewModel({
-    actions: new ViewActions(options.socket),
+    actions: new ViewActions(this.emit),
     emitterQueue: options.emitterQueue,
     notifications: options.notifications,
     factory: options.factory
@@ -61,8 +62,17 @@ function UserInterface(options) {
   }.bind(this));
 }
 
+UserInterface.prototype.emit = function(event, data) {
+  var thisPlayerId = this.viewModel.thisPlayer && this.viewModel.thisPlayer.id;
+  this.emitEvent(thisPlayerId, event, data);
+};
+
 UserInterface.prototype.setUsers = function(users) {
   this.viewModel.users = users;
+};
+
+UserInterface.prototype.setClientUsers = function(userIds) {
+  this.viewModel.clientUsers = userIds;
 };
 
 UserInterface.prototype.setGame = function(game) {
@@ -133,9 +143,10 @@ UserInterface.prototype.onBoardClick = function(data) {
   if (!this.viewModel.myTurn) {
     return;
   }
+
   if (this.game.phase === 'setup') {
     this.game.hideBuildableEntities();
-    this.socket.emit('build-' + data.type, {
+    this.emit('build-' + data.type, {
       buildId: data.id
     });
     if (data.type === 'settlement') {
@@ -143,7 +154,7 @@ UserInterface.prototype.onBoardClick = function(data) {
     }
   } else {
     this.game.hideBuildableEntities();
-    this.socket.emit('build-' + data.type, {
+    this.emit('build-' + data.type, {
       buildId: data.id
     });
   }

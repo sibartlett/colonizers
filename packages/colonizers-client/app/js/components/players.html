@@ -1,6 +1,6 @@
 <div class="players" data-bind="foreach: players">
 
-  <div class="player">
+  <div class="player" data-bind="style: { backgroundColor: player.color }">
     <h4>
       <img class="avatar"
         data-bind="attr: { src: user.avatarUrl }, visible: user.avatarUrl" />

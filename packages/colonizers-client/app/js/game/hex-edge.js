@@ -63,11 +63,9 @@ UiHexEdge.prototype.hookupEvents = function() {
 };
 
 UiHexEdge.prototype.build = function(player) {
-  var colors = this.board.game.getPlayerColors();
-
   HexEdge.prototype.build.call(this, player);
 
-  this.rect.fill(colors[player.id]);
+  this.rect.fill(player.color);
   this.rect.height(6);
   this.rect.y(-6 / 2);
   this.rect.opacity(1);
@@ -77,8 +75,7 @@ UiHexEdge.prototype.build = function(player) {
 
 UiHexEdge.prototype.show = function(player) {
   if (this.isBuildable) {
-    var colors = this.board.game.getPlayerColors();
-    this.rect.fill(colors[player.id]);
+    this.rect.fill(player.color);
     this.rect.opacity(0.4);
     this.rect.show();
     this.rect.draw();

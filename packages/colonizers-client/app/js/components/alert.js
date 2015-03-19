@@ -10,7 +10,9 @@ function AlertModel(roomModel) {
 
   observableProps.defineProperties(this, {
     message: null,
-    showDice: false
+    showDice: false,
+    you: this.isYou,
+    color: this.getColor
   });
 
   this.die1 = new DieModel();
@@ -20,6 +22,20 @@ function AlertModel(roomModel) {
   roomModel.emitterQueue.on('start-turn', this.onNextTurn.bind(this));
   roomModel.emitterQueue.on('DiceRoll', this.onDiceRoll.bind(this));
 }
+
+AlertModel.prototype.isYou = function() {
+  var thisPlayerId = this.roomModel.thisPlayer && this.roomModel.thisPlayer.id,
+      currentPlayerId = this.roomModel.currentPlayer &&
+                        this.roomModel.currentPlayer.id;
+
+  return this.roomModel.clientUsers.length === 1 &&
+         thisPlayerId === currentPlayerId;
+};
+
+AlertModel.prototype.getColor = function() {
+  return this.roomModel.currentPlayer &&
+         this.roomModel.currentPlayer.player.color;
+};
 
 AlertModel.prototype.dismiss = function() {
   this.message = null;
@@ -38,7 +54,7 @@ AlertModel.prototype.onNextTurn = function(data, next) {
   var currentPlayer = this.roomModel.currentPlayer;
 
   this.showDice = false;
-  if (data.playerId === window.userId) {
+  if (this.you) {
     this.message = 'Your turn';
   } else {
     this.message = currentPlayer.user.name + '\'s turn';
@@ -57,7 +73,7 @@ AlertModel.prototype.onDiceRoll = function(data, next) {
 
   this.showDice = true;
 
-  if (currentPlayer.id === window.userId) {
+  if (this.you) {
     this.message = 'You are rolling the dice';
     done = function() {
       this.message = 'You rolled ' + data.total;
