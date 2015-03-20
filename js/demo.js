@@ -1328,7 +1328,6 @@ UiHexTile.prototype.getHexOptions = function(tileStyle, tileSpacing, hexInfo) {
 
   if (tileStyle.bgimage) {
     patternScale = hexInfo.circumradius * 2 / tileStyle.bgimage.width;
-    console.log(patternScale)
     options = _.extend(options, {
       fillPriority: 'pattern',
       fillPatternImage: tileStyle.bgimage,
