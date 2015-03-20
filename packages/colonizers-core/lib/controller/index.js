@@ -282,10 +282,13 @@ module.exports = BaseController.extend({
   },
 
   endTurn: function(req, next) {
-    req.addEvent('end-turn', this.game.getDataForTurn(this.game.turn));
-    req.addEvent('start-turn', this.game.getDataForTurn(this.game.turn + 1));
+    var thisTurn = this.game.getDataForTurn(this.game.turn),
+        nextTurn = this.game.getDataForTurn(this.game.turn + 1);
 
-    if (req.game.phase !== 'playing') {
+    req.addEvent('end-turn', thisTurn);
+    req.addEvent('start-turn', nextTurn);
+
+    if (nextTurn.phase !== 'playing') {
       return next();
     }
 
