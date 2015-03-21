@@ -1,7 +1,10 @@
 'use strict';
 
-var Notifications = require('./notifications'),
+var Factory = require('./game/factory'),
+    Notifications = require('./notifications'),
     UserInterface = require('./user-interface');
+
+require('./../../vendor/jquery-plugins');
 
 function Client(options) {
   this.options = options;
@@ -33,4 +36,5 @@ Client.prototype.setClientUsers = function(users) {
   this.ui.setClientUsers(users);
 };
 
+Client.Factory = Factory;
 module.exports = Client;
