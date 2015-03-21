@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Colonizers</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Colonizers">
+  <link rel="stylesheet" type="text/css" href="/css/site.css" />
+</head>
+<body>
+
+  <div class="container">
+  <nav class="navbar navbar-default" role="navigation">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/">Colonizers</a>
+      </div>
+      <div class="collapse navbar-collapse" id="navbar-collapse">
+        <ul class="nav navbar-nav">
+          <li><a href="/lobby">Games</a></li>
+        </ul>
+        {{#authenticated}}
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="/account">Account</a></li>
+            <li><a href="/logout">Logout</a></li>
+          </ul>
+        {{/authenticated}}
+      </div>
+    </div>
+  </nav>
+</div>
+{{{ yield }}}
+<script src="/site.js" charset="utf-8"></script>
+</body>
+</html>
