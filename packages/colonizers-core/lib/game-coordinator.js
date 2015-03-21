@@ -9,9 +9,11 @@ function GameCoordinator(emitterQueue, game) {
   this.onBuildSettlement = this.onBuildSettlement.bind(this);
   this.onBuildCity = this.onBuildCity.bind(this);
   this.onNextTurn = this.onNextTurn.bind(this);
+  this.onDiceRoll = this.onDiceRoll.bind(this);
   this.onOfferTrade = this.onOfferTrade.bind(this);
 
   this.emitterQueue.on('start-turn', this.onNextTurn);
+  this.emitterQueue.on('DiceRoll', this.onDiceRoll);
   this.emitterQueue.on('build-road', this.onBuildRoad);
   this.emitterQueue.on('build-settlement', this.onBuildSettlement);
   this.emitterQueue.on('build-city', this.onBuildCity);
@@ -26,6 +28,12 @@ GameCoordinator.prototype.setGame = function(game) {
 GameCoordinator.prototype.onNextTurn = function(data, next) {
   var turn = this.game.turn + 1;
   this.game.setTurn(turn);
+  next();
+};
+
+GameCoordinator.prototype.onDiceRoll = function(data, next) {
+  this.game.rolls++;
+  this.game.rolls++;
   next();
 };
 

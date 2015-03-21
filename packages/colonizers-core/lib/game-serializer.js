@@ -16,6 +16,8 @@ GameSerializer.prototype.serialize = function(game) {
 
   result.allowance = game.allowance;
   result.turn = game.turn;
+  result.seed = game.seed;
+  result.rolls = game.rolls;
 
   if (game.currentTrade) {
     result.currentTrade = game.currentTrade;
@@ -28,6 +30,8 @@ GameSerializer.prototype.deserialize = function(data) {
   var game = this.factory.createGame({
     board: this.deserializeBoard(data.board),
     players: data.players.map(this.deserializePlayer, this),
+    seed: data.seed || Date.now(),
+    rolls: data.rolls || 0,
     turn: data.turn || 0,
     allowance: data.allowance,
     currentTrade: data.currentTrade

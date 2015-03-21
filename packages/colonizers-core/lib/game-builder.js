@@ -1,15 +1,14 @@
 'use strict';
 
-var Chance = require('chance'),
+var _ = require('underscore'),
     ScenarioBuilder = require('./scenario-builder'),
     scenarioFile = require('../scenarios/default');
 
 function GameBuilder() {
-  this.chance = new Chance();
 }
 
 GameBuilder.prototype.getGame = function(players, gameOptions) {
-  var plys = this.chance.shuffle(players),
+  var plys = _.shuffle(players),
       scenarioBuilder = new ScenarioBuilder({
         scenario: scenarioFile,
         numPlayers: players.length,
@@ -18,6 +17,7 @@ GameBuilder.prototype.getGame = function(players, gameOptions) {
       scenario = scenarioBuilder.getScenario();
 
   return {
+    seed: Date.now(),
     allowance: scenario.allowance,
     board: scenario.board,
     players: plys.map(function(player) {

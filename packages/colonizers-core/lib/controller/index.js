@@ -296,8 +296,8 @@ module.exports = BaseController.extend({
   },
 
   rollDice: function(req, next) {
-    var die1 = this.chance.d6(),
-        die2 = this.chance.d6(),
+    var die1 = this.d6(),
+        die2 = this.d6(),
         total = die1 + die2,
         data = {
           die1: die1,

@@ -2,7 +2,7 @@
 
 var _ = require('underscore'),
     async = require('async'),
-    Chance = require('chance'),
+    MersenneTwister = require('mersenne-twister'),
     Emitter = require('component-emitter'),
     EmitterQueue = require('../emitter-queue'),
     util = require('../util'),
@@ -72,9 +72,19 @@ function BaseController(game, emitter) {
 
   this.game = game;
   this.emitter = emitter;
-  this.chance = new Chance();
+
+  // This requires that the game is in it's fully loaded state
+  this.generator = new MersenneTwister(game.seed);
+  for (var i = 0; i < game.rolls; i++) {
+    this.generator.random();
+  }
+
   this.init();
 }
+
+BaseController.prototype.d6 = function() {
+  return Math.floor(this.generator.random() * 6 + 1);
+};
 
 BaseController.prototype.getEventNames = function() {
   return Object.keys(this.events);

@@ -1,7 +1,6 @@
 'use strict';
 
 var _ = require('underscore'),
-    Chance = require('chance'),
     MathHelper = require('./math-helper'),
     hexInfo = require('./hex-info');
 
@@ -145,8 +144,7 @@ ScenarioBuilder.prototype.processEdges = function(board, edges) {
 };
 
 ScenarioBuilder.prototype.getScenario = function() {
-  var chance = new Chance(),
-      circumradius = hexInfo.circumradius,
+  var circumradius = hexInfo.circumradius,
       apothem = hexInfo.apothem,
       layout = this.getLayout(),
       numberTokens = layout.numberTokens,
@@ -161,11 +159,11 @@ ScenarioBuilder.prototype.getScenario = function() {
       board;
 
   if (this.options.shuffleNumberTokens) {
-    numberTokens = chance.shuffle(numberTokens);
+    numberTokens = _.shuffle(numberTokens);
   }
 
   if (this.options.shuffleTerrainTiles) {
-    terrainTiles = chance.shuffle(terrainTiles);
+    terrainTiles = _.shuffle(terrainTiles);
   }
 
   tileLayout.tiles.forEach(function(tiles, i) {

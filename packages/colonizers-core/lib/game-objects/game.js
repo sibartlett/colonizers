@@ -4,6 +4,8 @@ var _ = require('underscore');
 
 function Game(factory, options) {
   factory.defineProperties(this, {
+    seed: options.seed,
+    rolls: options.rolls,
     board: options.board,
     players: options.players,
     allowance: options.allowance,
