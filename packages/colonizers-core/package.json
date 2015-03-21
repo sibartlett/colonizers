@@ -2,9 +2,8 @@
   "name": "colonizers-core",
   "license": "AGPL-3.0",
   "author": "Simon Bartlett",
-  "private": true,
-  "version": "0.0.0",
-  "description": "Core library used by Colonizers client and server",
+  "version": "0.0.1",
+  "description": "Core library used by Colonizers",
   "main": "lib/index.js",
   "dependencies": {
     "async": "0.9.0",
