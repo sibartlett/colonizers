@@ -1,3 +1,2 @@
-*.map.json
 node_modules
-temp
+public/tilesets

@@ -5,9 +5,48 @@ var path = require('path'),
     concat = require('gulp-concat'),
     insert = require('gulp-insert'),
     replace = require('gulp-replace'),
+    File = require('gulp-util').File,
+    through = require('through'),
+    dataurl = require('dataurl'),
+    imagemin = require('gulp-imagemin'),
+    group = require('gulp-group-files'),
     jshint = require('gulp-jshint'),
     jscs = require('gulp-jscs'),
-    less = require('gulp-less');
+    less = require('gulp-less'),
+    tilesets = {
+      modern: [],
+      watercolor: []
+    };
+
+function combineFiles(tileset) {
+  var cwd = __dirname,
+      base = path.join(cwd, 'tilesets', tileset),
+      dest = path.join(base, tileset + '.json'),
+      data = require(path.join(base, '_.js'));
+
+  function bufferContents(file) {
+    var name = path.basename(file.path).split('.');
+
+    data.tiles[name[0]].bgimage = dataurl.convert({
+      data: file.contents,
+      mimetype: 'image/' + name[1]
+    });
+  }
+
+  function endStream() {
+    var file = new File({
+      cwd: cwd,
+      base: base,
+      path: dest,
+      contents: new Buffer(JSON.stringify(data))
+    });
+
+    this.emit('data', file);
+    this.emit('end');
+  }
+
+  return through(bufferContents, endStream);
+}
 
 gulp.task('styles', function() {
   return gulp.src(['./app/less/game.less'])
@@ -38,6 +77,13 @@ gulp.task('jquery-plugins', function() {
     .pipe(insert.wrap(head, foot));
 });
 
+gulp.task('tilesets', group(tilesets, function(tileset) {
+  return gulp.src('./tilesets/' + tileset + '/*.@(gif|png)')
+             .pipe(imagemin())
+             .pipe(combineFiles(tileset))
+             .pipe(gulp.dest('./public/tilesets'));
+}));
+
 // Code quality
 
 gulp.task('hint', function() {
@@ -59,4 +105,4 @@ gulp.task('jscs', function() {
   .pipe(jscs());
 });
 
-gulp.task('default', ['jquery-plugins', 'styles']);
+gulp.task('default', ['jquery-plugins', 'styles', 'tilesets']);
