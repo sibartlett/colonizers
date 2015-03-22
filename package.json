@@ -37,7 +37,6 @@
     "passport": "^0.2.1",
     "passport-local": "^1.0.0",
     "passport.socketio": "^3.4.1",
-    "promise": "^6.1.0",
     "socket.io": "1.3.5",
     "socket.io-client": "^1.3.5",
     "underscore": "1.8.2"

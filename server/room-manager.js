@@ -1,7 +1,6 @@
 'use strict';
 
-var PPromise = require('promise'),
-    Room = require('./room');
+var Room = require('./room');
 
 function RoomManager(options) {
   this.db = options.db;
@@ -63,8 +62,7 @@ RoomManager.prototype.getRoom = function(roomId, cb) {
         .exec(findCb.bind(this));
     };
 
-    this.roomPromises[roomId] = new PPromise(promise.bind(this));
-
+    this.roomPromises[roomId] = new Promise(promise.bind(this));
   }
 
   if (this.rooms[roomId]) {
