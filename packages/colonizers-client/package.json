@@ -2,7 +2,7 @@
   "name": "colonizers-client",
   "license": "AGPL-3.0",
   "author": "Simon Bartlett",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Colonizers client",
   "main": "app/js/client.js",
   "dependencies": {
