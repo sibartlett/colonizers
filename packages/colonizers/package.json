@@ -1,10 +1,12 @@
 {
   "name": "colonizers",
   "license": "AGPL-3.0",
-  "author": "Simon Bartlett",
+  "author": "Simon Bartlett <simon@sibartlett.com>",
   "private": true,
   "version": "0.0.0",
   "description": "",
+  "homepage": "http://colonizers.github.io",
+  "repository": "git://github.com/colonizers/colonizers",
   "main": "index.js",
   "scripts": {
     "start": "node index.js | bunyan -o short"
