@@ -265,15 +265,9 @@ App.prototype.configureRoutes = function() {
     });
   });
 
-  var statics = [
-    __dirname + '/../node_modules/colonizers-client/public',
-    __dirname + '/../node_modules/colonizers-client-tilesets/public'
-  ];
-
-  console.log(statics)
-  statics.forEach(function(path) {
-    this.app.use(express['static'](path));
-  }, this);
+  this.app.use(express.static(
+    __dirname + '/../node_modules/colonizers-client/public'
+  ));
 };
 
 App.prototype.configureIo = function() {
