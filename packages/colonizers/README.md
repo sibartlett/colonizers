@@ -26,7 +26,7 @@ Contributions (both issues and pull requests) are very welcome!
 
 ## Running locally
 
-Make sure you have [Node.js](https://github.com/joyent/node/wiki/Installation) and [MongoDB](http://www.mongodb.org/display/DOCS/Quickstart) installed.
+Make sure you have [Node.js 0.12+](https://github.com/joyent/node/wiki/Installation) (or [io.js](https://iojs.org)) and [MongoDB](http://www.mongodb.org/display/DOCS/Quickstart) installed.
 
 ```sh
 git clone https://github.com/sibartlett/colonizers.git
