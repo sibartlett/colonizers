@@ -164,7 +164,7 @@ App.prototype.configureRoutes = function() {
   });
 
   this.app.use(function(req, res, next) {
-    res.locals.user = req.user ? req.user.toSafeObject() : null;
+    res.locals.user = req.user;
     res.locals.authenticated = req.user && !req.user.anonymous;
     next();
   });

@@ -16,11 +16,15 @@ UserSchema = new Schema({
   name: String,
   email: String,
 
-  // authToken provides a means to invalidate exisiting session tokens
+  // authToken provides a means to invalidate existing session tokens
   // If a user changes their password, all other sessions are revoked
   authToken: String,
 
   auths: []
+});
+
+UserSchema.virtual('id').get(function() {
+  return this._id.toString();
 });
 
 UserSchema.virtual('avatarUrl').get(function() {
@@ -36,24 +40,13 @@ UserSchema.virtual('avatarUrl').get(function() {
 
 UserSchema.plugin(localAuth);
 
-UserSchema.methods.toSafeObject = function() {
-  var json = this.toJSON();
-
-  json.id = json._id.toString();
-  json.avatarUrl = this.avatarUrl;
-
-  // Mongoose
-  delete json._id;
-  delete json.__v;
-
-  // Security
-  delete json.authToken;
-  delete json.auths;
-
-  // Privacy
-  delete json.email;
-
-  return json;
+UserSchema.methods.toJSON = function() {
+  return {
+    id: this.id,
+    username: this.username,
+    name: this.name,
+    avatarUrl: this.avatarUrl
+  };
 };
 
 UserSchema.methods.generateAuthToken = function() {

@@ -11,7 +11,7 @@ function RoomUserManager(options) {
   this.locked = options.locked || false;
 
   this.players = (options.users || []).map(function(user) {
-    return user.toSafeObject();
+    return user.toJSON();
   });
 
   this.sockets = {};
@@ -105,7 +105,7 @@ RoomUserManager.prototype.addUser = function(socket, callback) {
 
   if (!user) {
 
-    user = socketUser.toSafeObject();
+    user = socketUser.toJSON();
     this.users.push(user);
   }
 
@@ -122,7 +122,7 @@ RoomUserManager.prototype.addUser = function(socket, callback) {
   }
 
   if (!player && !this.locked) {
-    player = socketUser.toSafeObject();
+    player = socketUser.toJSON();
     this.players.push(player);
     this.emit('playersChanged');
   }
