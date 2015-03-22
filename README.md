@@ -8,6 +8,7 @@ Works across multiple devices (desktops, tablets, and mobile phones).
 
 [![Dependency Status](https://david-dm.org/colonizers/colonizers.svg)](https://david-dm.org/colonizers/colonizers)
 [![devDependency Status](https://david-dm.org/colonizers/colonizers/dev-status.svg)](https://david-dm.org/colonizers/colonizers#info=devDependencies)
+[![Code Climate](https://codeclimate.com/github/colonizers/colonizers/badges/gpa.svg)](https://codeclimate.com/github/colonizers/colonizers)
 
 
 ## A work in progress!
