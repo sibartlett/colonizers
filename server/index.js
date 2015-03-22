@@ -138,10 +138,12 @@ App.prototype.configureRoutes = function() {
         } else {
           return res.redirect('/login');
         }
-      };
+      },
+      shared = ['component-emitter', 'jquery', 'socket.io-client'];
 
-  this.app.get('/room.js', browserify('./app/js/room.js'));
-  this.app.get('/site.js', browserify('./app/js/site.js'));
+  this.app.get('/common.js', browserify(shared));
+  this.app.get('/room.js', browserify('./app/js/room.js', {external: shared}));
+  this.app.get('/site.js', browserify('./app/js/site.js', {external: shared}));
 
   this.app.use(express['static'](__dirname + '/../public/'));
 
