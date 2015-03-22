@@ -139,7 +139,10 @@ App.prototype.configureRoutes = function() {
           return res.redirect('/login');
         }
       },
-      shared = ['component-emitter', 'jquery', 'socket.io-client'];
+      shared = [
+        'jquery', 'component-emitter'
+        // 'socket.io-client' - causes a stack overflow on the client
+        ];
 
   this.app.get('/common.js', browserify(shared));
   this.app.get('/room.js', browserify('./app/js/room.js', {external: shared}));
