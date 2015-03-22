@@ -6,6 +6,9 @@ Works across multiple devices (desktops, tablets, and mobile phones).
 
 ![Screenshot](http://i.imgur.com/j91XT2y.png)
 
+[![Dependency Status](https://david-dm.org/colonizers/colonizers.svg)](https://david-dm.org/colonizers/colonizers)
+[![devDependency Status](https://david-dm.org/colonizers/colonizers/dev-status.svg)](https://david-dm.org/colonizers/colonizers#info=devDependencies)
+
 
 ## A work in progress!
 
