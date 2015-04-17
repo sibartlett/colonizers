@@ -13,7 +13,7 @@
   },
   "engines": {
     "node": "0.12.x",
-    "npm": "2.6.x"
+    "npm": "2.x.x"
   },
   "dependencies": {
     "bcryptjs": "^2.1.0",
@@ -28,7 +28,7 @@
     "hapi": "^8.4.0",
     "hapi-auth-basic": "^2.0.0",
     "hapi-auth-cookie": "^2.0.0",
-    "hapi-browserify": "^0.0.2",
+    "hapi-browserify": "^0.0.3",
     "hapi-context-credentials": "^1.0.0",
     "hapi-hogan": "^1.0.1",
     "hapi-io": "^0.0.5",
