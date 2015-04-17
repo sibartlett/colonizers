@@ -1,8 +1,8 @@
 'use strict';
 
-var ko = require('knockout'),
-    screenfull = require('screenfull'),
-    template = require('./templates').menu;
+var ko = require('knockout');
+var screenfull = require('screenfull');
+var template = require('./templates').menu;
 
 function MenuModel(params) {
   var notificationsEnabled = ko.observable(params.notifications.isEnabled);

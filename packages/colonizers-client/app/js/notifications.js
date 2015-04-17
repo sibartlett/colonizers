@@ -1,9 +1,9 @@
 'use strict';
 
-var PERMISSION_DEFAULT = 'default',
-    PERMISSION_GRANTED = 'granted',
-    PERMISSION_DENIED = 'denied',
-    PERMISSION = [PERMISSION_GRANTED, PERMISSION_DEFAULT, PERMISSION_DENIED];
+var PERMISSION_DEFAULT = 'default';
+var PERMISSION_GRANTED = 'granted';
+var PERMISSION_DENIED = 'denied';
+var PERMISSION = [PERMISSION_GRANTED, PERMISSION_DEFAULT, PERMISSION_DENIED];
 
 function Notifications(emitterQueue) {
   this.emitterQueue = emitterQueue;
@@ -17,8 +17,8 @@ function Notifications(emitterQueue) {
 }
 
 Notifications.prototype.checkIfPreviouslyEnabled = function() {
-  var setting = window.localStorage.getItem('settings.notifications'),
-      permitted = this.getPermission() === PERMISSION_GRANTED;
+  var setting = window.localStorage.getItem('settings.notifications');
+  var permitted = this.getPermission() === PERMISSION_GRANTED;
 
   this.isEnabled = setting && permitted ? true : false;
 };
@@ -102,6 +102,7 @@ Notifications.prototype.closeNotification = function() {
     } else if (this.notification.cancel != null) {
       this.notification.cancel();
     }
+
     this.notification = null;
   }
 };
@@ -115,6 +116,7 @@ Notifications.prototype.onNextTurn = function(data, next) {
   if (data.playerId === window.userId) {
     this.createNotification('Colonizers', 'Your turn');
   }
+
   next();
 };
 

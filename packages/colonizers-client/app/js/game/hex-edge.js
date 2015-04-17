@@ -1,11 +1,11 @@
 'use strict';
 
-var $ = require('jquery'),
-    emitter = require('component-emitter'),
-    Konva = require('konva'),
-    util = require('colonizers-core/lib/util'),
-    MathHelper = require('colonizers-core/lib/math-helper'),
-    HexEdge = require('colonizers-core/lib/game-objects/hex-edge');
+var $ = require('jquery');
+var emitter = require('component-emitter');
+var Konva = require('konva');
+var util = require('colonizers-core/lib/util');
+var MathHelper = require('colonizers-core/lib/math-helper');
+var HexEdge = require('colonizers-core/lib/game-objects/hex-edge');
 
 function UiHexEdge(factory, options) {
   HexEdge.apply(this, arguments);
@@ -17,9 +17,9 @@ function UiHexEdge(factory, options) {
 util.inherits(UiHexEdge, HexEdge);
 
 UiHexEdge.prototype.render = function(options) {
-  var rotation = MathHelper.getAngle(options.ends[0], options.ends[1]),
-      height = 10,
-      width = options.hexInfo.circumradius - 36;
+  var rotation = MathHelper.getAngle(options.ends[0], options.ends[1]);
+  var height = 10;
+  var width = options.hexInfo.circumradius - 36;
 
   this.group = new Konva.Group({
     x: options.center.x,

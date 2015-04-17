@@ -1,8 +1,8 @@
 'use strict';
 
-var ko = require('knockout'),
-    ViewActions = require('./view-actions'),
-    RootViewModel = require('./model/index');
+var ko = require('knockout');
+var ViewActions = require('./view-actions');
+var RootViewModel = require('./model/index');
 
 ko.components.register('alert', require('./components/alert'));
 ko.components.register('player', require('./components/player'));
@@ -21,6 +21,7 @@ ko.bindingHandlers.component.preprocess = function(val) {
       val = val.replace('}', 'params:$root}');
     }
   }
+
   return val;
 };
 
@@ -98,18 +99,15 @@ UserInterface.prototype.bind = function() {
 };
 
 UserInterface.prototype.onTurnStart = function() {
-  var ownedCorners,
-      ownedEdges;
-
   if (!this.viewModel.myTurn) {
     return;
   }
 
   if (this.game.phase === 'setup') {
-    ownedCorners = this.game.board.corners.query({
+    var ownedCorners = this.game.board.corners.query({
       owner: this.game.currentPlayer
     });
-    ownedEdges = this.game.board.edges.query({
+    var ownedEdges = this.game.board.edges.query({
       owner: this.game.currentPlayer
     });
 

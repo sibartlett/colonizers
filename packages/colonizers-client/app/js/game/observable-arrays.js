@@ -43,6 +43,7 @@ function wrapStandardArrayMutators(array, subscribable, signal) {
       if (signal.pause !== true) {
         subscribable.notifySubscribers(this);
       }
+
       return result;
     };
   });
@@ -57,8 +58,7 @@ function addKnockoutArrayMutators(ko, array, subscribable, signal) {
     Object.defineProperty(array, fnName, {
       enumerable: false,
       value: function() {
-        var result,
-            fn;
+        var result;
 
         // These additional array mutators are built using the underlying
         // push/pop/etc. mutators, which are wrapped to trigger notifications.
@@ -68,12 +68,13 @@ function addKnockoutArrayMutators(ko, array, subscribable, signal) {
         signal.pause = true;
         try {
           // Creates a temporary observableArray that can perform the operation.
-          fn = ko.observableArray.fn[fnName];
+          var fn = ko.observableArray.fn[fnName];
           result = fn.apply(ko.observableArray(array), arguments);
         }
         finally {
           signal.pause = false;
         }
+
         subscribable.notifySubscribers(array);
         return result;
       }
@@ -83,8 +84,8 @@ function addKnockoutArrayMutators(ko, array, subscribable, signal) {
 
 // Gets or creates a subscribable that fires after each array mutation
 function getSubscribableForArray(ko, array) {
-  var subscribable = array._subscribable,
-      signal = {};
+  var subscribable = array._subscribable;
+  var signal = {};
 
   if (!subscribable) {
     subscribable = array._subscribable = new ko.subscribable();
@@ -111,7 +112,7 @@ function startWatchingarray(ko, observable, array) {
 function notifyWhenPresentOrFutureArrayValuesMutate(ko, observable) {
   var watchingArraySubscription = null;
   ko.computed(function() {
-      // Unsubscribe to any earlier array instance
+    // Unsubscribe to any earlier array instance
     if (watchingArraySubscription) {
       watchingArraySubscription.dispose();
       watchingArraySubscription = null;

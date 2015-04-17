@@ -1,9 +1,9 @@
 'use strict';
 
-var emitter = require('component-emitter'),
-    Konva = require('konva'),
-    util = require('colonizers-core/lib/util'),
-    Board = require('colonizers-core/lib/game-objects/board');
+var emitter = require('component-emitter');
+var Konva = require('konva');
+var util = require('colonizers-core/lib/util');
+var Board = require('colonizers-core/lib/game-objects/board');
 
 function UiBoard() {
   this.onStageTransformEnd = this.onStageTransformEnd.bind(this);
@@ -59,6 +59,7 @@ UiBoard.prototype.onStageTransform = function(transform) {
   if (this.transforming) {
     return;
   }
+
   this.transforming = true;
   if (transform.center && !this.transformOffset) {
     this.transformOffset = true;
@@ -67,13 +68,16 @@ UiBoard.prototype.onStageTransform = function(transform) {
     this.layer.position(transform.center);
     this.layer.offset(offset);
   }
+
   if (transform.center) {
     this.layer.position(transform.center);
   }
+
   this.layer.scale({
     x: transform.scale,
     y: transform.scale
   });
+
   this.layer.rotation(transform.rotation);
   this.emit('board:rotate', transform.rotation);
   this.redraw();

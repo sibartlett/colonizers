@@ -1,10 +1,10 @@
 'use strict';
 
-var $ = require('jquery'),
-    emitter = require('component-emitter'),
-    Konva = require('konva'),
-    util = require('colonizers-core/lib/util'),
-    HexCorner = require('colonizers-core/lib/game-objects/hex-corner');
+var $ = require('jquery');
+var emitter = require('component-emitter');
+var Konva = require('konva');
+var util = require('colonizers-core/lib/util');
+var HexCorner = require('colonizers-core/lib/game-objects/hex-corner');
 
 function UiHexCorner(factory, options) {
   HexCorner.apply(this, arguments);
@@ -40,27 +40,14 @@ UiHexCorner.prototype.hookupEvents = function() {
     $(this.drawing.getStage().container()).removeClass('clickable');
   }.bind(this));
 
-  this.drawing.on('click', function() {
-    if (!this.isSettlement)
-    {
-      this.emit('click', { type: 'settlement', id: this.id});
-    }
-    else
-    {
-      this.emit('click', { type: 'city', id: this.id});
-    }
-  }.bind(this));
+  var build = function() {
+    var data = { id: this.id };
+    data.type = !this.isSettlement ? 'settlement' : 'city';
+    this.emit('click', data);
+  }.bind(this);
 
-  this.drawing.on('tap', function() {
-    if (!this.isSettlement)
-    {
-      this.emit('click', { type: 'settlement', id: this.id});
-    }
-    else
-    {
-      this.emit('click', { type: 'city', id: this.id});
-    }
-  }.bind(this));
+  this.drawing.on('click', build);
+  this.drawing.on('tap', build);
 };
 
 UiHexCorner.prototype.buildSettlement = function(player) {

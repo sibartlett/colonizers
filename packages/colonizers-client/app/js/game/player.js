@@ -1,8 +1,8 @@
 'use strict';
 
-var emitter = require('component-emitter'),
-    util = require('colonizers-core/lib/util'),
-    Player = require('colonizers-core/lib/game-objects/player');
+var emitter = require('component-emitter');
+var util = require('colonizers-core/lib/util');
+var Player = require('colonizers-core/lib/game-objects/player');
 
 function UiPlayer(factory, options) {
   Player.apply(this, arguments);

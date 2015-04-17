@@ -1,13 +1,13 @@
 'use strict';
 
-var $ = require('jquery'),
-    ko = require('knockout'),
-    Stage = require('./../stage');
+var $ = require('jquery');
+var ko = require('knockout');
+var Stage = require('./../stage');
 
 ko.bindingHandlers.stageInternal = {
   init: function(element, valueAccessor) {
-    var stage = new Stage(element),
-        game = valueAccessor()();
+    var stage = new Stage(element);
+    var game = valueAccessor()();
 
     $(element).data('stage', stage);
 
@@ -15,9 +15,10 @@ ko.bindingHandlers.stageInternal = {
       stage.addGame(game);
     }
   },
+
   update: function(element, valueAccessor) {
-    var stage = $(element).data('stage'),
-        game = valueAccessor()();
+    var stage = $(element).data('stage');
+    var game = valueAccessor()();
 
     if (stage) {
       stage.removeGame();

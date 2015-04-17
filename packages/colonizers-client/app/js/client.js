@@ -1,8 +1,8 @@
 'use strict';
 
-var Factory = require('./game/factory'),
-    Notifications = require('./notifications'),
-    UserInterface = require('./user-interface');
+var Factory = require('./game/factory');
+var Notifications = require('./notifications');
+var UserInterface = require('./user-interface');
 
 require('./../../vendor/jquery-plugins');
 

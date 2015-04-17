@@ -1,9 +1,9 @@
 'use strict';
 
-var async = require('async'),
-    template = require('./templates').alert,
-    observableProps = require('./../game/observable-properties'),
-    DieModel = require('./d6');
+var async = require('async');
+var template = require('./templates').alert;
+var observableProps = require('./../game/observable-properties');
+var DieModel = require('./d6');
 
 function AlertModel(roomModel) {
   this.roomModel = roomModel;
@@ -24,8 +24,8 @@ function AlertModel(roomModel) {
 }
 
 AlertModel.prototype.isYou = function() {
-  var thisPlayerId = this.roomModel.thisPlayer && this.roomModel.thisPlayer.id,
-      currentPlayerId = this.roomModel.currentPlayer &&
+  var thisPlayerId = this.roomModel.thisPlayer && this.roomModel.thisPlayer.id;
+  var currentPlayerId = this.roomModel.currentPlayer &&
                         this.roomModel.currentPlayer.id;
 
   return this.roomModel.clientUsers.length === 1 &&
@@ -59,17 +59,16 @@ AlertModel.prototype.onNextTurn = function(data, next) {
   } else {
     this.message = currentPlayer.user.name + '\'s turn';
   }
+
   if (next) {
     next();
   }
 };
 
 AlertModel.prototype.onDiceRoll = function(data, next) {
-  var currentPlayer = this.roomModel.currentPlayer,
-      name = currentPlayer.user.name,
-      done,
-      die1,
-      die2;
+  var currentPlayer = this.roomModel.currentPlayer;
+  var name = currentPlayer.user.name;
+  var done;
 
   this.showDice = true;
 
@@ -87,11 +86,11 @@ AlertModel.prototype.onDiceRoll = function(data, next) {
     }.bind(this);
   }
 
-  die1 = function(callback) {
+  var die1 = function(callback) {
     this.die1.start(data.die1, callback);
   }.bind(this);
 
-  die2 = function(callback) {
+  var die2 = function(callback) {
     this.die2.start(data.die2, callback);
   }.bind(this);
 

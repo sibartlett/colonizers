@@ -1,10 +1,10 @@
 'use strict';
 
-var _ = require('underscore'),
-    Konva = require('konva'),
-    util = require('colonizers-core/lib/util'),
-    HexTile = require('colonizers-core/lib/game-objects/hex-tile'),
-    NumberToken = require('./number-token');
+var _ = require('underscore');
+var Konva = require('konva');
+var util = require('colonizers-core/lib/util');
+var HexTile = require('colonizers-core/lib/game-objects/hex-tile');
+var NumberToken = require('./number-token');
 
 function UiHexTile(factory, options, tileset) {
   HexTile.apply(this, arguments);
@@ -15,9 +15,9 @@ function UiHexTile(factory, options, tileset) {
 util.inherits(UiHexTile, HexTile);
 
 UiHexTile.prototype.render = function(options, tileset) {
-  var tileStyle = tileset.tiles[options.type],
-      tileSpacing = tileset.board.tilespacing || 8,
-      hexagonOpts = this.getHexOptions(tileStyle, tileSpacing, options.hexInfo);
+  var tileStyle = tileset.tiles[options.type];
+  var tileSpacing = tileset.board.tilespacing || 8;
+  var hexagonOpts = this.getHexOptions(tileStyle, tileSpacing, options.hexInfo);
 
   this.numberToken = null;
 
@@ -52,6 +52,7 @@ UiHexTile.prototype.render = function(options, tileset) {
       fill: tileset.board.bgcolor
     });
   }
+
   this.group.add(this.hexagon2);
 
   if (options.value > 0) {
@@ -61,18 +62,17 @@ UiHexTile.prototype.render = function(options, tileset) {
 
 UiHexTile.prototype.getHexOptions = function(tileStyle, tileSpacing, hexInfo) {
   var options = {
-        x: 0,
-        y: 0,
-        sides: 6,
-        radius: hexInfo.circumradius - tileSpacing,
-        rotation: 270,
-        fill: tileStyle.bgcolor,
-        opacity: tileStyle.opacity || 1
-      },
-      patternScale;
+    x: 0,
+    y: 0,
+    sides: 6,
+    radius: hexInfo.circumradius - tileSpacing,
+    rotation: 270,
+    fill: tileStyle.bgcolor,
+    opacity: tileStyle.opacity || 1
+  };
 
   if (tileStyle.bgimage) {
-    patternScale = hexInfo.circumradius * 2 / tileStyle.bgimage.width;
+    var patternScale = hexInfo.circumradius * 2 / tileStyle.bgimage.width;
     options = _.extend(options, {
       fillPriority: 'pattern',
       fillPatternImage: tileStyle.bgimage,
@@ -83,6 +83,7 @@ UiHexTile.prototype.getHexOptions = function(tileStyle, tileSpacing, hexInfo) {
       fillPatternX: -hexInfo.apothem
     });
   }
+
   return options;
 };
 

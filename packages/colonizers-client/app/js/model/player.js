@@ -1,7 +1,7 @@
 'use strict';
 
-var emitter = require('component-emitter'),
-    props = require('./../game/observable-properties');
+var emitter = require('component-emitter');
+var props = require('./../game/observable-properties');
 
 function PlayerModel(user, player) {
   emitter(this);

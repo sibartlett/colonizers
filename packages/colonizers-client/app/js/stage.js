@@ -1,8 +1,8 @@
 'use strict';
 
-var StageNavigator = require('./stage-navigator'),
-    $ = require('jquery'),
-    Konva = require('konva');
+var StageNavigator = require('./stage-navigator');
+var $ = require('jquery');
+var Konva = require('konva');
 
 function Stage(container) {
   this.onResize = this.onResize.bind(this);
@@ -27,17 +27,18 @@ function Stage(container) {
 
 Stage.prototype.getWaitingLayer = function() {
   var layer = new Konva.Layer({
-        x: this.width / 2,
-        y: this.height / 2
-      }),
-      text = new Konva.Text({
-        width: this.width - 40,
-        align: 'center',
-        text: 'Waiting for more players...',
-        fill: '#666',
-        opacity: 0.8,
-        fontSize: 48
-      });
+    x: this.width / 2,
+    y: this.height / 2
+  });
+
+  var text = new Konva.Text({
+    width: this.width - 40,
+    align: 'center',
+    text: 'Waiting for more players...',
+    fill: '#666',
+    opacity: 0.8,
+    fontSize: 48
+  });
 
   text.position({
     x: text.getWidth() / -2,

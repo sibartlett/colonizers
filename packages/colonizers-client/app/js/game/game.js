@@ -1,8 +1,8 @@
 'use strict';
 
-var emitter = require('component-emitter'),
-    util = require('colonizers-core/lib/util'),
-    Game = require('colonizers-core/lib/game-objects/game');
+var emitter = require('component-emitter');
+var util = require('colonizers-core/lib/util');
+var Game = require('colonizers-core/lib/game-objects/game');
 
 function UiGame() {
   Game.apply(this, arguments);
@@ -21,8 +21,8 @@ UiGame.prototype.draw = function() {
 };
 
 UiGame.prototype.showBuildableSettlements = function() {
-  var currentPlayer = this.currentPlayer,
-      corners = this.getBuildableCornersForCurrentPlayer();
+  var currentPlayer = this.currentPlayer;
+  var corners = this.getBuildableCornersForCurrentPlayer();
 
   corners.forEach(function(corner) {
     corner.show(currentPlayer);
@@ -32,8 +32,8 @@ UiGame.prototype.showBuildableSettlements = function() {
 };
 
 UiGame.prototype.showBuildableCities = function() {
-  var currentPlayer = this.currentPlayer,
-      settlements = this.getSettlementsForPlayer(currentPlayer);
+  var currentPlayer = this.currentPlayer;
+  var settlements = this.getSettlementsForPlayer(currentPlayer);
 
   settlements.forEach(function(settlement) {
     settlement.show(currentPlayer);
@@ -43,8 +43,8 @@ UiGame.prototype.showBuildableCities = function() {
 };
 
 UiGame.prototype.showBuildableEdges = function(cornerId) {
-  var currentPlayer = this.currentPlayer,
-      edges = this.getBuildableEdgesForCurrentPlayer(cornerId);
+  var currentPlayer = this.currentPlayer;
+  var edges = this.getBuildableEdgesForCurrentPlayer(cornerId);
 
   edges.forEach(function(edge) {
     edge.show(currentPlayer);

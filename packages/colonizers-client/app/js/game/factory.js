@@ -1,12 +1,12 @@
   'use strict';
 
-var Game = require('./game'),
-    Board = require('./board'),
-    HexTile = require('./hex-tile'),
-    HexCorner = require('./hex-corner'),
-    HexEdge = require('./hex-edge'),
-    Player = require('./player'),
-    observableProps = require('./observable-properties');
+var Game = require('./game');
+var Board = require('./board');
+var HexTile = require('./hex-tile');
+var HexCorner = require('./hex-corner');
+var HexEdge = require('./hex-edge');
+var Player = require('./player');
+var observableProps = require('./observable-properties');
 
 function Factory(options) {
   this.tileset = options.tileset;

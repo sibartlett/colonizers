@@ -1,28 +1,28 @@
 'use strict';
 
-var path = require('path'),
-    gulp = require('gulp'),
-    concat = require('gulp-concat'),
-    insert = require('gulp-insert'),
-    replace = require('gulp-replace'),
-    File = require('gulp-util').File,
-    through = require('through'),
-    dataurl = require('dataurl'),
-    imagemin = require('gulp-imagemin'),
-    group = require('gulp-group-files'),
-    jshint = require('gulp-jshint'),
-    jscs = require('gulp-jscs'),
-    less = require('gulp-less'),
-    tilesets = {
-      modern: [],
-      watercolor: []
-    };
+var path = require('path');
+var gulp = require('gulp');
+var concat = require('gulp-concat');
+var insert = require('gulp-insert');
+var replace = require('gulp-replace');
+var File = require('gulp-util').File;
+var through = require('through');
+var dataurl = require('dataurl');
+var imagemin = require('gulp-imagemin');
+var group = require('gulp-group-files');
+var jshint = require('gulp-jshint');
+var jscs = require('gulp-jscs');
+var less = require('gulp-less');
+var tilesets = {
+  modern: [],
+  watercolor: []
+};
 
 function combineFiles(tileset) {
-  var cwd = __dirname,
-      base = path.join(cwd, 'tilesets', tileset),
-      dest = path.join(base, tileset + '.json'),
-      data = require(path.join(base, '_.js'));
+  var cwd = __dirname;
+  var base = path.join(cwd, 'tilesets', tileset);
+  var dest = path.join(base, tileset + '.json');
+  var data = require(path.join(base, '_.js'));
 
   function bufferContents(file) {
     var name = path.basename(file.path).split('.');
@@ -55,9 +55,7 @@ gulp.task('styles', function() {
 });
 
 gulp.task('jquery-plugins', function() {
-  var paths, head, foot;
-
-  paths = [
+  var paths = [
     'node_modules/bootstrap/js/modal.js',
     'node_modules/bootstrap/js/tab.js',
     'node_modules/bootstrap/js/transition.js',
@@ -65,8 +63,8 @@ gulp.task('jquery-plugins', function() {
     'node_modules/jasny-bootstrap/js/transition.js'
   ];
 
-  head = 'var jQuery = require(\'jquery\'),\n    $ = jQuery;\n\n';
-  foot = '\n\nmodule.exports = jQuery;\n';
+  var head = 'var jQuery = require(\'jquery\'),\n    $ = jQuery;\n\n';
+  var foot = '\n\nmodule.exports = jQuery;\n';
 
   paths = paths.map(function(p) { return path.join(__dirname, p); });
 

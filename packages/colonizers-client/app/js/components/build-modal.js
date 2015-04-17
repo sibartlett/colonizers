@@ -1,8 +1,8 @@
 'use strict';
 
-var $ = require('jquery'),
-    template = require('./templates').buildModal,
-    observableProps = require('./../game/observable-properties');
+var $ = require('jquery');
+var template = require('./templates').buildModal;
+var observableProps = require('./../game/observable-properties');
 
 function BuildModalModel(roomModel) {
 
@@ -36,22 +36,20 @@ function BuildModalModel(roomModel) {
 }
 
 BuildModalModel.prototype.resetAllowances = function() {
-  var thisPlayer = this.roomModel.thisPlayer,
-      player = thisPlayer ? thisPlayer.player : null,
-      game = this.roomModel.game,
-      edges,
-      corners;
+  var thisPlayer = this.roomModel.thisPlayer;
+  var player = thisPlayer ? thisPlayer.player : null;
+  var game = this.roomModel.game;
 
   this.allowanceRoads = 0;
   this.allowanceSettlements = 0;
   this.allowanceCities = 0;
 
   if (player && game && game.allowance) {
-    edges = game.board.edges.query({
+    var edges = game.board.edges.query({
       owner: player
     });
 
-    corners = game.board.corners.query({
+    var corners = game.board.corners.query({
       owner: player
     });
 
@@ -64,15 +62,9 @@ BuildModalModel.prototype.resetAllowances = function() {
 };
 
 BuildModalModel.prototype.resetCanBuildProps = function() {
-  var thisPlayer = this.roomModel.thisPlayer,
-      player = thisPlayer ? thisPlayer.player : null,
-      game = this.roomModel.game,
-      edges,
-      corners,
-      cornerSettlements,
-      roads,
-      settlements,
-      cities;
+  var thisPlayer = this.roomModel.thisPlayer;
+  var player = thisPlayer ? thisPlayer.player : null;
+  var game = this.roomModel.game;
 
   this.canBuildRoad = false;
   this.canBuildSettlement = false;
@@ -80,11 +72,11 @@ BuildModalModel.prototype.resetCanBuildProps = function() {
 
   if (game && player && player.hasResources) {
 
-    edges = game.getBuildableEdgesForPlayer(player);
-    corners = game.getBuildableCornersForPlayer(player);
-    cornerSettlements = game.getSettlementsForPlayer(player);
+    var edges = game.getBuildableEdgesForPlayer(player);
+    var corners = game.getBuildableCornersForPlayer(player);
+    var cornerSettlements = game.getSettlementsForPlayer(player);
 
-    roads = this.allowanceRoads > 0 &&
+    var roads = this.allowanceRoads > 0 &&
             edges.length > 0 &&
             player.hasResources({
               lumber: 1,
@@ -93,7 +85,7 @@ BuildModalModel.prototype.resetCanBuildProps = function() {
 
     this.canBuildRoad = roads;
 
-    settlements = this.allowanceSettlements > 0 &&
+    var settlements = this.allowanceSettlements > 0 &&
                   corners.length > 0 &&
                   player.hasResources({
                     lumber: 1,
@@ -104,7 +96,7 @@ BuildModalModel.prototype.resetCanBuildProps = function() {
 
     this.canBuildSettlement = settlements;
 
-    cities = this.allowanceCities > 0 &&
+    var cities = this.allowanceCities > 0 &&
              cornerSettlements.length > 0 &&
              player.hasResources({
                ore: 3,

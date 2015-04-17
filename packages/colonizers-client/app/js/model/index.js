@@ -1,8 +1,8 @@
 'use strict';
 
-var _ = require('underscore'),
-    PlayerModel = require('./player.js'),
-    observableProps = require('./../game/observable-properties');
+var _ = require('underscore');
+var PlayerModel = require('./player.js');
+var observableProps = require('./../game/observable-properties');
 
 function RoomModel(options) {
   this.factory = options.factory;
@@ -31,16 +31,16 @@ RoomModel.prototype.getTurn = function() {
 };
 
 RoomModel.prototype.isMyTurn = function() {
-  var game = this.game || {},
-      currentPlayer = game.currentPlayer || {},
-      thisPlayerId = this.thisPlayer && this.thisPlayer.id;
+  var game = this.game || {};
+  var currentPlayer = game.currentPlayer || {};
+  var thisPlayerId = this.thisPlayer && this.thisPlayer.id;
 
   return currentPlayer.id === thisPlayerId;
 };
 
 RoomModel.prototype.getPlayers = function() {
-  var users = this.users,
-      game = this.game;
+  var users = this.users;
+  var game = this.game;
 
   if (game) {
 
@@ -70,9 +70,9 @@ RoomModel.prototype.getPlayers = function() {
 };
 
 RoomModel.prototype.getCurrentPlayer = function() {
-  var game = this.game || {},
-      currentPlayer = game.currentPlayer || {},
-      currentPlayerId = currentPlayer.id || null;
+  var game = this.game || {};
+  var currentPlayer = game.currentPlayer || {};
+  var currentPlayerId = currentPlayer.id || null;
 
   if (currentPlayerId) {
     return _.find(this.players, function(player) {
@@ -84,14 +84,11 @@ RoomModel.prototype.getCurrentPlayer = function() {
 };
 
 RoomModel.prototype.getThisPlayer = function() {
-  var game,
-      currentPlayer,
-      currentPlayerId,
-      userId;
-
   if (!this.clientUsers.length) {
     return;
   }
+
+  var userId;
 
   if (this.clientUsers.length === 1) {
     userId = this.clientUsers[0];
@@ -100,9 +97,9 @@ RoomModel.prototype.getThisPlayer = function() {
     });
   }
 
-  game = this.game || {};
-  currentPlayer = game.currentPlayer || {};
-  currentPlayerId = currentPlayer.id || null;
+  var game = this.game || {};
+  var currentPlayer = game.currentPlayer || {};
+  var currentPlayerId = currentPlayer.id || null;
 
   if (!currentPlayerId) {
     return;
@@ -122,18 +119,16 @@ RoomModel.prototype.getThisPlayer = function() {
 };
 
 RoomModel.prototype.getThisPlayerOrEmpty = function() {
-  var player = this.getThisPlayer(),
-      user,
-      ply;
+  var player = this.getThisPlayer();
 
   if (!player) {
-    user = {
+    var user = {
       id: '',
       username: '',
       name: '',
       avatarUrl: ''
     };
-    ply = this.factory.createPlayer({
+    var ply = this.factory.createPlayer({
       id: user.id
     });
     player = new PlayerModel(user, ply);
@@ -151,10 +146,10 @@ RoomModel.prototype.getOtherPlayers = function() {
 };
 
 RoomModel.prototype.getOtherPlayersOrdered = function() {
-  var thisPlayerId = this.thisPlayer && this.thisPlayer.id,
-      thisPlayer = false,
-      players1 = [],
-      players2 = [];
+  var thisPlayerId = this.thisPlayer && this.thisPlayer.id;
+  var thisPlayer = false;
+  var players1 = [];
+  var players2 = [];
 
   this.players.forEach(function(player) {
     if (player.id === thisPlayerId) {

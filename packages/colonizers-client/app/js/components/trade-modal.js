@@ -1,7 +1,7 @@
 'use strict';
 
-var template = require('./templates').tradeModal,
-    observableProps = require('./../game/observable-properties');
+var template = require('./templates').tradeModal;
+var observableProps = require('./../game/observable-properties');
 
 function ResourceModel(key, player) {
   this.wantUp = this.wantUp.bind(this);
@@ -61,8 +61,8 @@ function TradeModalModel(roomModel) {
 }
 
 TradeModalModel.prototype.getResources = function() {
-  var resourceKeys = ['lumber', 'brick', 'wool', 'grain', 'ore'],
-      thisPlayer = this.roomModel.thisPlayer;
+  var resourceKeys = ['lumber', 'brick', 'wool', 'grain', 'ore'];
+  var thisPlayer = this.roomModel.thisPlayer;
 
   if (thisPlayer && thisPlayer.resources) {
     return resourceKeys.map(function(key) {

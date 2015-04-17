@@ -8,16 +8,14 @@ function NumberToken(value) {
 }
 
 NumberToken.prototype.getDotInfo = function(value) {
-  var count = value - 1,
-      color,
-      offset;
+  var count = value - 1;
 
   if (count > 6) {
     count = count * -1 + 12;
   }
 
-  color = count === 5 ? '#a23129' : '#000';
-  offset = -2 * (count + 1);
+  var color = count === 5 ? '#a23129' : '#000';
+  var offset = -2 * (count + 1);
 
   return {
     count: count,

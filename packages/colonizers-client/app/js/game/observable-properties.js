@@ -6,13 +6,13 @@
 
 'use strict';
 
-var ko = require('knockout'),
-    notifyWhenPresentOrFutureArrayValuesMutate = require('./observable-arrays');
+var ko = require('knockout');
+var notifyWhenPresentOrFutureArrayValuesMutate = require('./observable-arrays');
 
 function defineObservableProperty(obj, propertyName, value) {
-  var isComputed = typeof value === 'function',
-      isArray = Array.isArray(value),
-      observable;
+  var isComputed = typeof value === 'function';
+  var isArray = Array.isArray(value);
+  var observable;
 
   if (isComputed) {
     observable = ko.computed(value, obj);
@@ -39,8 +39,6 @@ function defineObservableProperty(obj, propertyName, value) {
 }
 
 function defineObservableProperties(obj, properties) {
-  var props, simple, computed;
-
   obj._observables = obj._observables || {};
 
   if (!obj.getObservable) {
@@ -58,7 +56,7 @@ function defineObservableProperties(obj, properties) {
     }.bind(obj);
   }
 
-  props = Object.getOwnPropertyNames(properties)
+  var props = Object.getOwnPropertyNames(properties)
     .map(function(name) {
       return {
         name: name,
@@ -66,11 +64,11 @@ function defineObservableProperties(obj, properties) {
       };
     });
 
-  simple = props.filter(function(prop) {
+  var simple = props.filter(function(prop) {
     return typeof prop.value !== 'function';
   });
 
-  computed = props.filter(function(prop) {
+  var computed = props.filter(function(prop) {
     return typeof prop.value === 'function';
   });
 
@@ -80,8 +78,8 @@ function defineObservableProperties(obj, properties) {
 }
 
 function copyObservables() {
-  var obj = arguments[0],
-      others = Array.prototype.slice.call(arguments, 1);
+  var obj = arguments[0];
+  var others = Array.prototype.slice.call(arguments, 1);
 
   others
   .filter(function(item) {
