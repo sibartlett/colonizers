@@ -49,7 +49,7 @@ function combineFiles(tileset) {
 }
 
 gulp.task('styles', function() {
-  return gulp.src(['./app/less/game.less'])
+  return gulp.src(['./less/game.less'])
     .pipe(less())
     .pipe(gulp.dest('./public/css'));
 });

@@ -1,24 +1,40 @@
 'use strict';
 
+var Factory = require('./game/factory');
+var Notifications = require('./notifications');
+var UserInterface = require('./user-interface');
+
+require('./../vendor/jquery-plugins');
+
 function Client(options) {
   this.options = options;
 
-  this.staticPaths = [__dirname + '/../public/'];
-  this.viewPath = __dirname + '/view.html';
-
-  if (this.options.tilesets) {
-    this.staticPaths.push(this.options.tilesets.staticPath);
-  }
-
-  this.handleRequest = this.handleRequest.bind(this);
+  this.notifications = new Notifications(options.emitterQueue);
+  this.ui = new UserInterface({
+    emitEvent: options.emitEvent,
+    emitterQueue: options.emitterQueue,
+    factory: options.factory,
+    notifications: this.notifications
+  });
+  this.ui.setClientUsers(options.clientUsers);
+  this.ui.bind();
 }
 
-Client.prototype.handleRequest = function(req, res) {
-  res.render(this.viewPath, {
-    layout: null,
-    roomId: req.param('id'),
-    userId: req.user._id
-  });
+Client.prototype.bindUI = function() {
+  this.ui.bind();
 };
 
+Client.prototype.setGame = function(game) {
+  this.ui.setGame(game);
+};
+
+Client.prototype.setUsers = function(users) {
+  this.ui.setUsers(users);
+};
+
+Client.prototype.setClientUsers = function(users) {
+  this.ui.setClientUsers(users);
+};
+
+Client.Factory = Factory;
 module.exports = Client;

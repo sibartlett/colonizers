@@ -6,7 +6,7 @@
   "description": "Colonizers client",
   "homepage": "http://colonizers.github.io",
   "repository": "git://github.com/colonizers/colonizers-client",
-  "main": "app/js/client.js",
+  "main": "lib/index.js",
   "dependencies": {
     "async": "0.9.0",
     "bootstrap": "3.3.4",
