@@ -2,7 +2,7 @@
   "name": "colonizers-client",
   "license": "AGPL-3.0",
   "author": "Simon Bartlett <simon@sibartlett.com>",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Colonizers client",
   "homepage": "http://colonizers.github.io",
   "repository": "git://github.com/colonizers/colonizers-client",
@@ -10,7 +10,7 @@
   "dependencies": {
     "async": "0.9.0",
     "bootstrap": "3.3.4",
-    "colonizers-core": "^0.0.1",
+    "colonizers-core": "^0.0.2",
     "component-emitter": "1.2.0",
     "hammerjs": "2.0.4",
     "jquery": "2.1.3",
