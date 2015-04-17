@@ -1,9 +1,4 @@
 {
-    "excludeFiles": [
-      "node_modules/**",
-      "public/**",
-      "temp/**"
-    ],
     "disallowSpacesInNamedFunctionExpression": {
         "beforeOpeningRoundBrace": true
     },
@@ -32,10 +27,10 @@
     "disallowYodaConditions": true,
     "disallowKeywords": [ "with" ],
     "disallowMultipleLineBreaks": true,
+    "disallowMultipleVarDecl": true,
     "requireSpaceBeforeBlockStatements": true,
     "requireParenthesesAroundIIFE": true,
     "requireSpacesInConditionalExpression": true,
-    "requireMultipleVarDecl": "onevar",
     "requireBlocksOnNewline": 1,
     "requireCommaBeforeLineBreak": true,
     "requireSpaceBeforeBinaryOperators": true,
@@ -44,6 +39,8 @@
     "requireLineFeedAtFileEnd": true,
     "requireCapitalizedConstructors": true,
     "requireDotNotation": true,
+    "requireSpacesInForStatement": true,
+    "requireSpaceBetweenArguments": true,
     "requireCurlyBraces": [
         "do"
     ],
@@ -60,6 +57,10 @@
         "catch",
         "typeof"
     ],
+    "requirePaddingNewLinesBeforeLineComments": {
+        "allExcept": "firstAfterCurly"
+    },
+    "requirePaddingNewLinesAfterBlocks": true,
     "safeContextKeyword": "_this",
     "validateLineBreaks": "LF",
     "validateQuoteMarks": "'",

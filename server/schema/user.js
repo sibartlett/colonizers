@@ -1,26 +1,19 @@
 'use strict';
 
-var mongoose = require('mongoose'),
-    Schema = mongoose.Schema,
-    crypto = require('crypto'),
-    localAuth = require('./../auth/local'),
-    uuid = require('node-uuid'),
-    url = require('url'),
-    md5 = function(word) {
-      return crypto.createHash('md5').update(word).digest('hex');
-    },
-    UserSchema;
+var bcrypt = require('bcryptjs');
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
+var crypto = require('crypto');
+var url = require('url');
+var md5 = function(word) {
+  return crypto.createHash('md5').update(word).digest('hex');
+};
 
-UserSchema = new Schema({
+var UserSchema = new Schema({
   username: String,
   name: String,
   email: String,
-
-  // authToken provides a means to invalidate existing session tokens
-  // If a user changes their password, all other sessions are revoked
-  authToken: String,
-
-  auths: []
+  password: String
 });
 
 UserSchema.virtual('id').get(function() {
@@ -38,7 +31,20 @@ UserSchema.virtual('avatarUrl').get(function() {
   });
 });
 
-UserSchema.plugin(localAuth);
+UserSchema.pre('save', function(next) {
+  if (!this.isModified('password')) {
+    return next();
+  }
+
+  bcrypt.hash(this.password, 10, function(err, hash) {
+    if (err) {
+      return next(err);
+    }
+
+    this.password = hash;
+    next();
+  }.bind(this));
+});
 
 UserSchema.methods.toJSON = function() {
   return {
@@ -49,46 +55,35 @@ UserSchema.methods.toJSON = function() {
   };
 };
 
-UserSchema.methods.generateAuthToken = function() {
-  this.authToken = uuid();
+UserSchema.methods.authenticate = function(password, cb) {
+  bcrypt.compare(password, this.password, function(err, res) {
+    // res == true
+    if (res) {
+      return cb(null, this);
+    } else {
+      return cb(null, null, { message: 'Invalid login' });
+    }
+  }.bind(this));
 };
 
-UserSchema.methods.getAuth = function(key) {
-  var auths = this.auths.filter(function(auth) {
-    return auth.key === key;
+UserSchema.statics.authenticate = function(username, password, cb) {
+  // Users should be able to login using username or email
+  var conditions = [
+    { username: username },
+    { email: username }
+  ];
+
+  this.findOne().or(conditions).exec(function(err, user) {
+    if (err) {
+      return cb(err);
+    }
+
+    if (user) {
+      return user.authenticate(password, cb);
+    } else {
+      return cb();
+    }
   });
-
-  return auths.length ? auths[0] : null;
-};
-
-UserSchema.methods.setAuth = function(key, auth, resetAuthToken) {
-  var auths = this.auths.filter(function(auth) {
-    return auth.key !== key;
-  });
-
-  auth.key = key;
-  auths.push(auth);
-
-  this.set('auths', auths);
-
-  if (resetAuthToken) {
-    this.generateAuthToken();
-  }
-};
-
-UserSchema.statics.passportSerialize = function() {
-  return function(user, cb) {
-    cb(null, user._id.toString() + '|' + user.authToken);
-  };
-};
-
-UserSchema.statics.passportDeserialize = function() {
-  var _this = this;
-  return function(cookie, cb) {
-    var parts = cookie.split('|');
-
-    _this.findOne({ _id: parts[0], authToken: parts[1] }, cb);
-  };
 };
 
 module.exports = UserSchema;

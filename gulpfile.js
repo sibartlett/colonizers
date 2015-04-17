@@ -1,32 +1,30 @@
 'use strict';
 
-var path = require('path'),
-    gulp = require('gulp'),
-    concat = require('gulp-concat'),
-    insert = require('gulp-insert'),
-    replace = require('gulp-replace'),
-    jshint = require('gulp-jshint'),
-    jscs = require('gulp-jscs'),
-    less = require('gulp-less');
+var path = require('path');
+var gulp = require('gulp');
+var concat = require('gulp-concat');
+var insert = require('gulp-insert');
+var replace = require('gulp-replace');
+var jshint = require('gulp-jshint');
+var jscs = require('gulp-jscs');
+var less = require('gulp-less');
 
 // Site
 
 gulp.task('styles', function() {
-  return gulp.src(['./app/less/site.less'])
+  return gulp.src(['./server/assets/less/site.less'])
     .pipe(less())
-    .pipe(gulp.dest('./public/css'));
+    .pipe(gulp.dest('./server/assets/css'));
 });
 
 gulp.task('jquery-plugins', function() {
-  var paths, head, foot;
-
-  paths = [
+  var paths = [
     'node_modules/bootstrap/js/tab.js',
     'node_modules/jasny-bootstrap/js/transition.js'
   ];
 
-  head = 'var jQuery = require(\'jquery\'),\n    $ = jQuery;\n\n';
-  foot = '\n\nmodule.exports = jQuery;\n';
+  var head = 'var jQuery = require(\'jquery\'),\n    $ = jQuery;\n\n';
+  var foot = '\n\nmodule.exports = jQuery;\n';
 
   paths = paths.map(function(p) { return path.join(__dirname, p); });
 
@@ -34,7 +32,8 @@ gulp.task('jquery-plugins', function() {
     .pipe(replace('window.jQuery', 'jQuery'))
     .pipe(replace('window.$', '$'))
     .pipe(concat('jquery-plugins.js'))
-    .pipe(insert.wrap(head, foot));
+    .pipe(insert.wrap(head, foot))
+    .pipe(gulp.dest('server/assets/js'));
 });
 
 // Code quality
@@ -42,8 +41,11 @@ gulp.task('jquery-plugins', function() {
 gulp.task('hint', function() {
   return gulp.src([
     '**/*.js',
+    '!client/**/*.js',
+    '!core/**/*.js',
+    '!desktop/**/*.js',
     '!node_modules/**/*.js',
-    '!public/**.js'
+    '!server/assets/js/jquery-plugins.js'
   ])
   .pipe(jshint())
   .pipe(jshint.reporter('jshint-stylish'));
@@ -52,8 +54,11 @@ gulp.task('hint', function() {
 gulp.task('jscs', function() {
   return gulp.src([
     '**/*.js',
+    '!client/**/*.js',
+    '!core/**/*.js',
+    '!desktop/**/*.js',
     '!node_modules/**/*.js',
-    '!public/**.js'
+    '!server/assets/js/jquery-plugins.js'
   ])
   .pipe(jscs());
 });

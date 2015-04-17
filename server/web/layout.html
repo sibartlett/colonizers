@@ -7,6 +7,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Colonizers">
   <link rel="stylesheet" type="text/css" href="/css/site.css" />
+  {{#context}}<script>window.context = {{{ context }}}</script>{{/context}}
+  <script src="/site.js" charset="utf-8"></script>
+  {{#script}}
+  <script src="/script/{{{script}}}.js" charset="utf-8"></script>
+  {{/script}}
 </head>
 <body>
 
@@ -26,18 +31,16 @@
         <ul class="nav navbar-nav">
           <li><a href="/lobby">Games</a></li>
         </ul>
-        {{#authenticated}}
+        {{#credentials}}
           <ul class="nav navbar-nav navbar-right">
             <li><a href="/account">Account</a></li>
             <li><a href="/logout">Logout</a></li>
           </ul>
-        {{/authenticated}}
+        {{/credentials}}
       </div>
     </div>
   </nav>
 </div>
-{{{ yield }}}
-<script src="/common.js" charset="utf-8"></script>
-<script src="/site.js" charset="utf-8"></script>
+{{{content}}}
 </body>
 </html>
