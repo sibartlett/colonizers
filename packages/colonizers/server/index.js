@@ -7,7 +7,7 @@ var isProd = process.env.NODE_ENV === 'production';
 var server = new Hapi.Server();
 
 server.connection({
-  host: 'localhost',
+  host: process.env.HOST || 'localhost',
   port: process.env.PORT || 3000,
   routes: {
     validate: {

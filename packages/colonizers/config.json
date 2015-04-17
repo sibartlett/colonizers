@@ -1,9 +1,0 @@
-{
-  "session": {
-    "key": "sid",
-    "secret": "our little secret"
-  },
-  "database": {
-    "mongo": "mongodb://localhost/colonizers"
-  }
-}
