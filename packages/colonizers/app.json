@@ -10,7 +10,7 @@
       "description": "Configures Express for production",
       "value": "production"
     },
-    "session:secret": {
+    "COOKIE_SECRET": {
       "description": "Session cookies are signed with this secret to prevent tampering",
       "generator": "secret"
     }

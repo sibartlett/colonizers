@@ -55,9 +55,7 @@
   <div data-bind="component: 'build-modal'"></div>
   <div data-bind="component: 'trade-modal'"></div>
 
-  <script>window.roomId = '{{{ roomId }}}'</script>
-  <script>window.userId = '{{{ userId }}}'</script>
-  <script src="/common.js" charset="utf-8"></script>
+  {{#context}}<script>window.context = {{{context}}}</script>{{/context}}
   <script src="/room.js" charset="utf-8"></script>
 </body>
 </html>
