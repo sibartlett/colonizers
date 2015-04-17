@@ -8,7 +8,6 @@ function PlayerRequest(options, callback) {
   this.player = options.player;
   this.playerId = options.playerId;
 
-  this.logger = options.logger;
   this.emitter = options.emitter;
   this.callback = callback;
 
@@ -30,9 +29,6 @@ PlayerRequest.prototype.addEvent = function(event, data) {
 
 PlayerRequest.prototype._emitEvents = function() {
   this.events.forEach(function(event) {
-    if (this.logger) {
-      this.logger.info('Controller emitting event.', event);
-    }
     this.emitter.emit(event.event, event.data);
   }, this);
 };

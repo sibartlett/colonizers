@@ -1,7 +1,7 @@
 'use strict';
 
-var core = require('./game-objects'),
-    props = require('./props');
+var core = require('./game-objects');
+var props = require('./props');
 
 function Factory() {}
 

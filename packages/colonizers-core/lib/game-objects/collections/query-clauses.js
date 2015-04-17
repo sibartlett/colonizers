@@ -8,9 +8,10 @@ module.exports = {
     valid: function(options) {
       return options.owner || options.player;
     },
+
     filter: function(options, items) {
-      var player = options.owner || options.player,
-          playerId = typeof player === 'string' ? player : player.id;
+      var player = options.owner || options.player;
+      var playerId = typeof player === 'string' ? player : player.id;
 
       return items.filter(function(item) {
         return item.owner === playerId;
@@ -22,6 +23,7 @@ module.exports = {
     valid: function(options) {
       return options.exclude;
     },
+
     filter: function(options, items) {
       var excludes = Array.isArray(options.exclude) ?
             options.exclude : [options.exclude];
@@ -36,9 +38,10 @@ module.exports = {
     valid: function(options) {
       return options.within;
     },
+
     filter: function(options, items) {
-      var radius = options.within.radius,
-          origin = options.within.of;
+      var radius = options.within.radius;
+      var origin = options.within.of;
 
       return items.filter(function(item) {
         var distance = MathHelper.getDistance(origin, item.center);
@@ -51,6 +54,7 @@ module.exports = {
     valid: function(options) {
       return options.buildable === true || options.buildable === false;
     },
+
     filter: function(options, items) {
       return items.filter(function(item) {
         return item.isBuildable === options.buildable;
@@ -62,6 +66,7 @@ module.exports = {
     valid: function(options) {
       return options.settlement === true || options.settlement === false;
     },
+
     filter: function(options, items) {
       return items.filter(function(item) {
         return item.isSettlement === options.settlement;
@@ -73,6 +78,7 @@ module.exports = {
     valid: function(options) {
       return options.city === true || options.city === false;
     },
+
     filter: function(options, items) {
       return items.filter(function(item) {
         return item.isCity === options.city;
@@ -84,6 +90,7 @@ module.exports = {
     valid: function(options) {
       return options.value;
     },
+
     filter: function(options, items) {
       return items.filter(function(item) {
         return item.value === options.value;

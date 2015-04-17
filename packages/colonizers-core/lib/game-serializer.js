@@ -7,9 +7,9 @@ function GameSerializer(factory) {
 }
 
 GameSerializer.prototype.serialize = function(game) {
-  var board = this.serializeBoard(game.board),
-      players = game.players.map(this.serializePlayer, this),
-      result = {};
+  var board = this.serializeBoard(game.board);
+  var players = game.players.map(this.serializePlayer, this);
+  var result = {};
 
   result.board = board;
   result.players = players;
@@ -67,41 +67,42 @@ GameSerializer.prototype.serializePlayer = function(player) {
 
 GameSerializer.prototype.deserializePlayer = function(data, index) {
   var player = this.factory.createPlayer({
-        id: data.id,
-        index: index
-      }),
-      propName;
+    id: data.id,
+    index: index
+  });
+  var propName;
 
   if (data.resources != null) {
     for (propName in data.resources) {
       player.resources[propName] = data.resources[propName];
     }
   }
+
   if (data.developmentCards != null) {
     for (propName in data.developmentCards) {
       player.developmentCards[propName] = data.developmentCards[propName];
     }
   }
+
   if (data.victoryPoints != null) {
     for (propName in data.victoryPoints) {
       player.victoryPoints[propName] = data.victoryPoints[propName];
     }
   }
+
   if (data.knightsPlayed != null) {
     player.knightsPlayed = data.knightsPlayed;
   }
+
   if (data.longestRoad != null) {
     player.longestRoad = data.longestRoad;
   }
+
   return player;
 };
 
 GameSerializer.prototype.serializeBoard = function(board) {
-  var tiles,
-      corners,
-      edges;
-
-  tiles = board.tiles.map(function(tile) {
+  var tiles = board.tiles.map(function(tile) {
     return {
       id: tile.id,
       center: tile.center,
@@ -110,28 +111,32 @@ GameSerializer.prototype.serializeBoard = function(board) {
     };
   });
 
-  corners = board.corners.map(function(corner) {
+  var corners = board.corners.map(function(corner) {
     var result = {
       id: corner.id,
       center: corner.center,
       isSettlement: corner.isSettlement,
       isCity: corner.isCity
     };
+
     if (corner.owner) {
       result.owner = corner.owner;
     }
+
     return result;
   });
 
-  edges = board.edges.map(function(edge) {
+  var edges = board.edges.map(function(edge) {
     var result = {
       id: edge.id,
       center: edge.center,
       ends: edge.ends
     };
+
     if (edge.owner) {
       result.owner = edge.owner;
     }
+
     return result;
   });
 
@@ -146,18 +151,13 @@ GameSerializer.prototype.serializeBoard = function(board) {
 };
 
 GameSerializer.prototype.deserializeBoard = function(data) {
-  var board,
-      tiles,
-      corners,
-      edges;
-
-  board = this.factory.createBoard({
+  var board = this.factory.createBoard({
     height: data.height,
     width: data.width,
     hexInfo: data.hex
   });
 
-  tiles = data.tiles.map(function(tile) {
+  var tiles = data.tiles.map(function(tile) {
     return this.factory.createHexTile({
       id: tile.id,
       center: tile.center,
@@ -167,7 +167,7 @@ GameSerializer.prototype.deserializeBoard = function(data) {
     });
   }, this);
 
-  corners = data.corners.map(function(corner) {
+  var corners = data.corners.map(function(corner) {
     return this.factory.createHexCorner({
       id: corner.id,
       center: corner.center,
@@ -175,7 +175,7 @@ GameSerializer.prototype.deserializeBoard = function(data) {
     });
   }, this);
 
-  edges = data.edges.map(function(edge) {
+  var edges = data.edges.map(function(edge) {
     return this.factory.createHexEdge({
       id: edge.id,
       center: edge.center,
@@ -193,33 +193,35 @@ GameSerializer.prototype.deserializeBoard = function(data) {
 
 GameSerializer.prototype.deserializeBuildings = function(board, data, players) {
   data.corners.forEach(function(corner) {
-    var player,
-        hexCorner;
+    if (!corner.owner) {
+      return;
+    }
 
-    if (corner.owner) {
-      player = _.find(players, function(player) {
-        return player.id === corner.owner;
-      });
-      hexCorner = board.corners.getById(corner.id);
+    var player = _.find(players, function(player) {
+      return player.id === corner.owner;
+    });
 
-      if (corner.isSettlement)
-        hexCorner.buildSettlement(player);
-      else if (corner.isCity)
-        hexCorner.buildCity(player);
+    var hexCorner = board.corners.getById(corner.id);
+
+    if (corner.isSettlement) {
+      hexCorner.buildSettlement(player);
+    }
+    else if (corner.isCity) {
+      hexCorner.buildCity(player);
     }
   });
 
   data.edges.forEach(function(edge) {
-    var player,
-        hexEdge;
-
-    if (edge.owner) {
-      player = _.find(players, function(player) {
-        return player.id === edge.owner;
-      });
-      hexEdge = board.edges.getById(edge.id);
-      hexEdge.build(player);
+    if (!edge.owner) {
+      return;
     }
+
+    var player = _.find(players, function(player) {
+      return player.id === edge.owner;
+    });
+
+    var hexEdge = board.edges.getById(edge.id);
+    hexEdge.build(player);
   });
 };
 

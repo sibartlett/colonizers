@@ -38,10 +38,11 @@ GameCoordinator.prototype.onDiceRoll = function(data, next) {
 };
 
 GameCoordinator.prototype.onBuildRoad = function(data, next) {
-  var player = this.game.getPlayerById(data.playerId),
-      edge = this.game.board.edges.getById(data.buildId);
+  var player = this.game.getPlayerById(data.playerId);
+  var edge = this.game.board.edges.getById(data.buildId);
 
   edge.build(player);
+
   if (this.game.phase !== 'setup') {
     player.spend({
       lumber: 1,
@@ -53,11 +54,12 @@ GameCoordinator.prototype.onBuildRoad = function(data, next) {
 };
 
 GameCoordinator.prototype.onBuildSettlement = function(data, next) {
-  var player = this.game.getPlayerById(data.playerId),
-      corner = this.game.board.corners.getById(data.buildId);
+  var player = this.game.getPlayerById(data.playerId);
+  var corner = this.game.board.corners.getById(data.buildId);
 
   corner.buildSettlement(player);
   player.addVictoryPoint();
+
   if (this.game.phase !== 'setup') {
     player.spend({
       lumber: 1,
@@ -71,8 +73,8 @@ GameCoordinator.prototype.onBuildSettlement = function(data, next) {
 };
 
 GameCoordinator.prototype.onBuildCity = function(data, next) {
-  var player = this.game.getPlayerById(data.playerId),
-      corner = this.game.board.corners.getById(data.buildId);
+  var player = this.game.getPlayerById(data.playerId);
+  var corner = this.game.board.corners.getById(data.buildId);
 
   corner.buildCity(player);
   player.addVictoryPoint();
@@ -86,12 +88,16 @@ GameCoordinator.prototype.onBuildCity = function(data, next) {
 };
 
 GameCoordinator.prototype.onDistributeResources = function(data, next) {
-  var player, playerId, resources;
+  var player;
+  var playerId;
+  var resources;
+
   for (playerId in data) {
     resources = data[playerId];
     player = this.game.getPlayerById(playerId);
     player.distribute(resources);
   }
+
   next();
 };
 

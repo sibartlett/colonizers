@@ -1,7 +1,7 @@
 'use strict';
 
-var _ = require('underscore'),
-    BaseController = require('./base');
+var _ = require('underscore');
+var BaseController = require('./base');
 
 module.exports = BaseController.extend({
 
@@ -78,17 +78,16 @@ module.exports = BaseController.extend({
   },
 
   initSettlement: function(req, next) {
-    var board = this.game.board,
-        ownedCorners = board.corners.query({
-          owner: req.playerId
-        }),
-        corner;
+    var board = this.game.board;
+    var ownedCorners = board.corners.query({
+      owner: req.playerId
+    });
 
     if (ownedCorners.length >= 2) {
       return next('Not valid move');
     }
 
-    corner = board.corners.getById(req.data.buildId);
+    var corner = board.corners.getById(req.data.buildId);
 
     if (!corner.isBuildable) {
       return next('Not valid building spot');
@@ -102,33 +101,30 @@ module.exports = BaseController.extend({
   },
 
   initRoad: function(req, next) {
-    var board = this.game.board,
-        ownedEdges = board.edges.query({ owner: req.player }),
-        distributeResources = ownedEdges.length === 1,
-        resources = {
-          brick: 0,
-          grain: 0,
-          lumber: 0,
-          ore: 0,
-          wool: 0
-        },
-        data = {},
-        edge,
-        adjCorners,
-        corner;
+    var board = this.game.board;
+    var ownedEdges = board.edges.query({ owner: req.player });
+    var distributeResources = ownedEdges.length === 1;
+    var data = {};
+    var resources = {
+      brick: 0,
+      grain: 0,
+      lumber: 0,
+      ore: 0,
+      wool: 0
+    };
 
     if (ownedEdges.length >= 2) {
       return next('Not a valid move');
     }
 
-    edge = board.edges.getById(req.data.buildId);
+    var edge = board.edges.getById(req.data.buildId);
 
     if (!edge.isBuildable) {
       return next('Not a valid building spot');
     }
 
-    adjCorners = edge.getAdjacentCorners();
-    corner = _.find(adjCorners, function(corner) {
+    var adjCorners = edge.getAdjacentCorners();
+    var corner = _.find(adjCorners, function(corner) {
       if (corner.owner === null || corner.owner !== req.playerId) {
         return false;
       } else {
@@ -178,8 +174,8 @@ module.exports = BaseController.extend({
 
   hasAllowance: function(object) {
     return function(req, next) {
-      var objects = [],
-          yes = false;
+      var objects = [];
+      var yes = false;
 
       if (object === 'road') {
         objects = this.game.board.edges.query({
@@ -216,12 +212,9 @@ module.exports = BaseController.extend({
   },
 
   buildRoad: function(req, next) {
-    var buildableSpots,
-        validSpot;
+    var buildableSpots = this.game.getBuildableEdgesForPlayer(req.player);
 
-    buildableSpots = this.game.getBuildableEdgesForPlayer(req.player);
-
-    validSpot = buildableSpots.some(function(edge) {
+    var validSpot = buildableSpots.some(function(edge) {
       return edge.id === req.data.buildId;
     });
 
@@ -237,12 +230,9 @@ module.exports = BaseController.extend({
   },
 
   buildSettlement: function(req, next) {
-    var buildableSpots,
-        validSpot;
+    var buildableSpots = this.game.getBuildableCornersForPlayer(req.player);
 
-    buildableSpots = this.game.getBuildableCornersForPlayer(req.player);
-
-    validSpot = buildableSpots.some(function(corner) {
+    var validSpot = buildableSpots.some(function(corner) {
       return corner.id === req.data.buildId;
     });
 
@@ -258,15 +248,12 @@ module.exports = BaseController.extend({
   },
 
   buildCity: function(req, next) {
-    var buildableSpots,
-        validSpot;
-
-    buildableSpots = this.game.board.corners.query({
+    var buildableSpots = this.game.board.corners.query({
       owner: req.player,
       settlement: true
     });
 
-    validSpot = buildableSpots.some(function(corner) {
+    var validSpot = buildableSpots.some(function(corner) {
       return corner.id === req.data.buildId;
     });
 
@@ -282,8 +269,8 @@ module.exports = BaseController.extend({
   },
 
   endTurn: function(req, next) {
-    var thisTurn = this.game.getDataForTurn(this.game.turn),
-        nextTurn = this.game.getDataForTurn(this.game.turn + 1);
+    var thisTurn = this.game.getDataForTurn(this.game.turn);
+    var nextTurn = this.game.getDataForTurn(this.game.turn + 1);
 
     req.addEvent('end-turn', thisTurn);
     req.addEvent('start-turn', nextTurn);
@@ -296,14 +283,14 @@ module.exports = BaseController.extend({
   },
 
   rollDice: function(req, next) {
-    var die1 = this.d6(),
-        die2 = this.d6(),
-        total = die1 + die2,
-        data = {
-          die1: die1,
-          die2: die2,
-          total: total
-        };
+    var die1 = this.d6();
+    var die2 = this.d6();
+    var total = die1 + die2;
+    var data = {
+      die1: die1,
+      die2: die2,
+      total: total
+    };
 
     req.addEvent('DiceRoll', data);
 
@@ -315,8 +302,8 @@ module.exports = BaseController.extend({
   },
 
   distributeResources: function(req, diceTotal, next) {
-    var data = {},
-        tiles = this.game.board.tiles.query({ value: diceTotal });
+    var data = {};
+    var tiles = this.game.board.tiles.query({ value: diceTotal });
 
     this.game.players.forEach(function(player) {
       data[player.id] = {

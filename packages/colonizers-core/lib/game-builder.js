@@ -1,20 +1,20 @@
 'use strict';
 
-var _ = require('underscore'),
-    ScenarioBuilder = require('./scenario-builder'),
-    scenarioFile = require('../scenarios/default');
+var _ = require('underscore');
+var ScenarioBuilder = require('./scenario-builder');
+var scenarioFile = require('../scenarios/default');
 
 function GameBuilder() {
 }
 
 GameBuilder.prototype.getGame = function(players, gameOptions) {
-  var plys = _.shuffle(players),
-      scenarioBuilder = new ScenarioBuilder({
-        scenario: scenarioFile,
-        numPlayers: players.length,
-        gameOptions: gameOptions
-      }),
-      scenario = scenarioBuilder.getScenario();
+  var plys = _.shuffle(players);
+  var scenarioBuilder = new ScenarioBuilder({
+    scenario: scenarioFile,
+    numPlayers: players.length,
+    gameOptions: gameOptions
+  });
+  var scenario = scenarioBuilder.getScenario();
 
   return {
     seed: Date.now(),

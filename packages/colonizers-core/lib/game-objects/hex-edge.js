@@ -1,8 +1,8 @@
 'use strict';
 
-var BoardEntity = require('./board-entity'),
-    spatialQuery = BoardEntity.spatialQuery,
-    util = require('./../util');
+var BoardEntity = require('./board-entity');
+var spatialQuery = BoardEntity.spatialQuery;
+var util = require('./../util');
 
 function HexEdge(factory, options) {
   BoardEntity.apply(this, arguments);

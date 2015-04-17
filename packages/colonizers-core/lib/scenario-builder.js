@@ -1,15 +1,15 @@
 'use strict';
 
-var _ = require('underscore'),
-    MathHelper = require('./math-helper'),
-    hexInfo = require('./hex-info');
+var _ = require('underscore');
+var MathHelper = require('./math-helper');
+var hexInfo = require('./hex-info');
 
 function ScenarioBuilder(options) {
   var defaults = {
-        shuffleTerrainTiles: true,
-        shuffleNumberTokens: false
-      },
-      gameOptions = _.extend(defaults, options.gameOptions || {});
+    shuffleTerrainTiles: true,
+    shuffleNumberTokens: false
+  };
+  var gameOptions = _.extend(defaults, options.gameOptions || {});
 
   this.scenario = options.scenario;
   this.players = options.numPlayers;
@@ -26,47 +26,37 @@ ScenarioBuilder.prototype.getLayout = function() {
 };
 
 ScenarioBuilder.prototype.getTileLayout = function(layout) {
-  var circumradius = hexInfo.circumradius,
-      apothem = hexInfo.apothem,
-      tiles,
-      counts,
-      max,
-      maxIndex,
-      boardHeight,
-      boardWidth,
-      maxOffsetX,
-      minOffsetX,
-      offsetX,
-      offsetY;
+  var circumradius = hexInfo.circumradius;
+  var apothem = hexInfo.apothem;
 
-  tiles = layout.tiles.map(function(row) {
+  var tiles = layout.tiles.map(function(row) {
     return row.split(',');
   });
-  counts = tiles.map(function(row) {
+
+  var counts = tiles.map(function(row) {
     return row.length;
   });
 
-  max = _.max(counts);
-  maxIndex = (counts.indexOf(max)) % 2;
+  var max = _.max(counts);
+  var maxIndex = (counts.indexOf(max)) % 2;
 
   tiles.forEach(function(row, index) {
-    var length = index % 2 === maxIndex ? max : max - 1,
-        add = length - row.length,
-        i;
-    for (i = 0; i < add; i++) {
+    var length = index % 2 === maxIndex ? max : max - 1;
+    var add = length - row.length;
+    for (var i = 0; i < add; i++) {
       row.push('-');
     }
   });
 
-  boardHeight = apothem * (tiles.length + 1);
-  boardWidth = ((max * 2) + (max - 1)) * hexInfo.circumradius;
-  maxOffsetX = -(boardWidth / 2 - circumradius);
-  minOffsetX = circumradius * 1.5 + maxOffsetX;
-  offsetX = [
+  var boardHeight = apothem * (tiles.length + 1);
+  var boardWidth = ((max * 2) + (max - 1)) * hexInfo.circumradius;
+  var maxOffsetX = -(boardWidth / 2 - circumradius);
+  var minOffsetX = circumradius * 1.5 + maxOffsetX;
+  var offsetX = [
     maxIndex === 0 ? maxOffsetX : minOffsetX,
     maxIndex === 1 ? maxOffsetX : minOffsetX
   ];
-  offsetY = -(boardHeight / 2 - apothem);
+  var offsetY = -(boardHeight / 2 - apothem);
 
   return {
     firstRowIsMax: maxIndex === 0,
@@ -144,19 +134,18 @@ ScenarioBuilder.prototype.processEdges = function(board, edges) {
 };
 
 ScenarioBuilder.prototype.getScenario = function() {
-  var circumradius = hexInfo.circumradius,
-      apothem = hexInfo.apothem,
-      layout = this.getLayout(),
-      numberTokens = layout.numberTokens,
-      terrainTiles = layout.terrainTiles.split(','),
-      tileLayout = this.getTileLayout(layout),
-      seaTiles = [],
-      resourceTiles = [],
-      tileId = 0,
-      desert = 0,
-      corners = [],
-      edges = [],
-      board;
+  var circumradius = hexInfo.circumradius;
+  var apothem = hexInfo.apothem;
+  var layout = this.getLayout();
+  var numberTokens = layout.numberTokens;
+  var terrainTiles = layout.terrainTiles.split(',');
+  var tileLayout = this.getTileLayout(layout);
+  var seaTiles = [];
+  var resourceTiles = [];
+  var tileId = 0;
+  var desert = 0;
+  var corners = [];
+  var edges = [];
 
   if (this.options.shuffleNumberTokens) {
     numberTokens = _.shuffle(numberTokens);
@@ -168,37 +157,34 @@ ScenarioBuilder.prototype.getScenario = function() {
 
   tileLayout.tiles.forEach(function(tiles, i) {
     tiles.forEach(function(tile, j) {
-      var x,
-          y,
-          center,
-          tileNo;
+      if (tile === '' || tile === '-') {
+        return;
+      }
 
-      if (tile !== '' && tile !== '-') {
-        tileId++;
-        x = tileLayout.offsetX[i % 2] + (circumradius * 3) * j;
-        y = apothem * i + tileLayout.offsetY;
-        center = {
-          x: MathHelper.round(x, 3),
-          y: MathHelper.round(y, 3)
+      tileId++;
+      var x = tileLayout.offsetX[i % 2] + (circumradius * 3) * j;
+      var y = apothem * i + tileLayout.offsetY;
+      var center = {
+        x: MathHelper.round(x, 3),
+        y: MathHelper.round(y, 3)
+      };
+
+      if (tile[0] === 't') {
+        var tileNo = -1 + parseInt(tile.substring(1), 10);
+        resourceTiles[tileNo] = {
+          id: 'T' + tileId,
+          center: center
         };
-
-        if (tile[0] === 't') {
-          tileNo = -1 + parseInt(tile.substring(1), 10);
-          resourceTiles[tileNo] = {
-            id: 'T' + tileId,
-            center: center
-          };
-        } else {
-          seaTiles.push({
-            id: 'T' + tileId,
-            center: center
-          });
-        }
+      } else {
+        seaTiles.push({
+          id: 'T' + tileId,
+          center: center
+        });
       }
     });
   });
 
-  board = {
+  var board = {
     hex: hexInfo,
     height: tileLayout.boardHeight,
     width: tileLayout.boardWidth,
@@ -236,17 +222,20 @@ ScenarioBuilder.prototype.getScenario = function() {
       case 'w':
         tile.tileType = 'wool';
     }
-    var value = 0,
-        angle;
+
+    var value = 0;
+    var angle;
 
     if (tile.tileType === 'desert') {
       desert += 1;
     } else {
       value = numberTokens[index - desert];
     }
+
     for (angle = 30; angle <= 330; angle += 60) {
       corners.push(MathHelper.getEndpoint(tile.center, angle, circumradius));
     }
+
     for (angle = 0; angle <= 300; angle += 60) {
       edges.push({
         center: MathHelper.getEndpoint(tile.center, angle, apothem),
@@ -256,6 +245,7 @@ ScenarioBuilder.prototype.getScenario = function() {
         ]
       });
     }
+
     board.tiles.push({
       id: tile.id,
       center: tile.center,
@@ -266,6 +256,7 @@ ScenarioBuilder.prototype.getScenario = function() {
 
   this.processCorners(board, corners);
   this.processEdges(board, edges);
+
   return {
     allowance: this.scenario.allowance,
     board: board

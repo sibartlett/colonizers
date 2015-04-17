@@ -1,8 +1,8 @@
 'use strict';
 
-var QueryableCollection = require('./queryable-collection'),
-    clauses = require('./query-clauses'),
-    util = require('./../../util');
+var QueryableCollection = require('./queryable-collection');
+var clauses = require('./query-clauses');
+var util = require('./../../util');
 
 function HexCornerCollection() {
   QueryableCollection.call(this, [

@@ -1,12 +1,12 @@
 'use strict';
 
-var _ = require('underscore'),
-    async = require('async'),
-    MersenneTwister = require('mersenne-twister'),
-    Emitter = require('component-emitter'),
-    EmitterQueue = require('../emitter-queue'),
-    util = require('../util'),
-    PlayerRequest = require('./request');
+var _ = require('underscore');
+var async = require('async');
+var MersenneTwister = require('mersenne-twister');
+var Emitter = require('component-emitter');
+var EmitterQueue = require('../emitter-queue');
+var util = require('../util');
+var PlayerRequest = require('./request');
 
 function SubHandler(condition) {
   this.condition = condition;
@@ -18,14 +18,13 @@ SubHandler.prototype.then = function() {
 };
 
 SubHandler.prototype.handle = function(req, cb) {
-  var yep = !this.condition || this.condition(req),
-      thens;
+  var yep = !this.condition || this.condition(req);
 
   if (!yep) {
     return false;
   }
 
-  thens = this.thens.map(function(func) {
+  var thens = this.thens.map(function(func) {
     return function(next) {
       func(req, next);
     };
@@ -40,6 +39,7 @@ SubHandler.prototype.handle = function(req, cb) {
     req.done();
     cb();
   });
+
   return true;
 };
 
@@ -131,6 +131,7 @@ BaseController.extend = function(options) {
     if (typeof value === 'function') {
       controller.prototype.methods.push(key);
     }
+
     controller.prototype[key] = value;
   });
 

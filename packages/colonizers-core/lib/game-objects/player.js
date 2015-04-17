@@ -36,10 +36,9 @@ function Player(factory, options) {
 }
 
 Player.prototype.hasResources = function(resources) {
-  var value,
-      resource;
+  var value;
 
-  for (resource in resources) {
+  for (var resource in resources) {
     value = resources[resource];
     if (this.resources[resource] < value) {
       return false;
@@ -50,11 +49,10 @@ Player.prototype.hasResources = function(resources) {
 };
 
 Player.prototype.distribute = function(resources) {
-  var total = 0,
-      value,
-      resource;
+  var total = 0;
+  var value;
 
-  for (resource in resources) {
+  for (var resource in resources) {
     value = resources[resource];
     total += value;
     this.resources[resource] += value;
@@ -65,11 +63,10 @@ Player.prototype.distribute = function(resources) {
 };
 
 Player.prototype.spend = function(resources) {
-  var total = 0,
-      value,
-      resource;
+  var total = 0;
+  var value;
 
-  for (resource in resources) {
+  for (var resource in resources) {
     value = resources[resource];
     total -= value;
     this.resources[resource] -= value;
@@ -82,6 +79,7 @@ Player.prototype.addVictoryPoint = function(devCard) {
   if (devCard) {
     this.victoryPoints.public++;
   }
+
   this.victoryPoints.actual++;
 };
 

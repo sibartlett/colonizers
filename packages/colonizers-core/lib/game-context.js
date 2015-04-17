@@ -1,13 +1,13 @@
 'use strict';
 
-var async = require('async'),
-    Emitter = require('component-emitter'),
-    EmitterQueue = require('./emitter-queue'),
-    Factory = require('./factory'),
-    GameCoordinator = require('./game-coordinator'),
-    GameSerializer = require('./game-serializer'),
-    GameBuilder = require('./game-builder'),
-    GameController = require('./controller');
+var async = require('async');
+var Emitter = require('component-emitter');
+var EmitterQueue = require('./emitter-queue');
+var Factory = require('./factory');
+var GameCoordinator = require('./game-coordinator');
+var GameSerializer = require('./game-serializer');
+var GameBuilder = require('./game-builder');
+var GameController = require('./controller');
 
 function ContextEmitter(saveEvent, emitters) {
   this.saveEvent = saveEvent;
@@ -20,6 +20,7 @@ ContextEmitter.prototype.processTask = function(task, next) {
     this.emitters.forEach(function(emitter) {
       emitter.emit(task.event, task.data);
     });
+
     next();
   }.bind(this);
 
@@ -38,25 +39,20 @@ ContextEmitter.prototype.emit = function(event, data) {
 };
 
 function GameContext(options, done) {
-  var events = options.events || [],
-      factory = options.factory || new Factory(),
-      emitter,
-      emitterQueue,
-      doneReplaying,
-      contextEmitter;
+  var factory = options.factory || new Factory();
 
   this.gameSerializer = new GameSerializer(factory);
   this.game = this.gameSerializer.deserialize(options.game);
 
-  emitter = new Emitter();
-  emitterQueue = new EmitterQueue(emitter);
+  var emitter = new Emitter();
+  var emitterQueue = new EmitterQueue(emitter);
 
-  contextEmitter = new ContextEmitter(options.saveEvent, [
+  var contextEmitter = new ContextEmitter(options.saveEvent, [
     emitter,
     options.emitEventsTo
   ]);
 
-  doneReplaying = function() {
+  var doneReplaying = function() {
     this.controller = new GameController(this.game, contextEmitter);
     if (done) {
       done(this);
@@ -64,6 +60,8 @@ function GameContext(options, done) {
   }.bind(this);
 
   this.coordinator = new GameCoordinator(emitterQueue, this.game);
+
+  var events = options.events || [];
 
   if (events.length) {
     emitterQueue.onceDrain(doneReplaying);
@@ -90,8 +88,8 @@ GameContext.prototype.pushEvent = function(options, callback) {
 };
 
 GameContext.fromScenario = function(options, done) {
-  var gameBuilder = new GameBuilder(),
-      game = gameBuilder.getGame(options.players, options.gameOptions);
+  var gameBuilder = new GameBuilder();
+  var game = gameBuilder.getGame(options.players, options.gameOptions);
 
   return new GameContext({
     game: game,

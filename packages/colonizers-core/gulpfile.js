@@ -1,8 +1,8 @@
 'use strict';
 
-var gulp = require('gulp'),
-    jshint = require('gulp-jshint'),
-    jscs = require('gulp-jscs');
+var gulp = require('gulp');
+var jshint = require('gulp-jshint');
+var jscs = require('gulp-jscs');
 
 gulp.task('hint', function() {
   return gulp.src([

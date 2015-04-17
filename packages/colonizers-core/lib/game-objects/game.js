@@ -40,9 +40,9 @@ Game.prototype.getPlayerById = function(id) {
 };
 
 Game.prototype.getDataForTurn = function(turn) {
-  var phase = 'waiting',
-      playerIndex = null,
-      prevTurn;
+  var phase = 'waiting';
+  var playerIndex = null;
+  var prevTurn;
 
   if (turn > 0) {
     prevTurn = turn - 1;
@@ -77,15 +77,13 @@ Game.prototype.getBuildableCornersForCurrentPlayer = function() {
 };
 
 Game.prototype.getBuildableEdgesForPlayer = function(player, cornerId) {
-  var corner,
-      ownedCorners,
-      edges;
-
   if (this.phase === 'setup') {
+    var corner;
+
     if (cornerId != null) {
       corner = this.board.corners.getById(cornerId);
     } else {
-      ownedCorners = this.board.corners.query({
+      var ownedCorners = this.board.corners.query({
         owner: this.currentPlayer
       });
 
@@ -96,9 +94,11 @@ Game.prototype.getBuildableEdgesForPlayer = function(player, cornerId) {
         });
       });
     }
+
     return corner ? corner.getAdjacentEdges() : [];
+
   } else {
-    edges = this.board.edges.query({
+    var edges = this.board.edges.query({
       owner: this.currentPlayer
     });
 
