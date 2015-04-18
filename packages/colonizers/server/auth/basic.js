@@ -6,11 +6,9 @@ exports.register = function(server, options, next) {
   server.auth.strategy('basic', 'basic', {
     validateFunc: function(username, password, callback) {
       var Session = mongoose.model('Session');
+      var criteria = {_id: username, token: password};
 
-      Session.findOne({_id: username, token: password})
-        .populate('user')
-        .exec(function(err, session) {
-
+      Session.authenticate(criteria, function(err, session) {
           if (err) {
             return callback(err);
           }

@@ -13,23 +13,20 @@ exports.register = function(server, options, next) {
       var id = data.session._id;
       var token = data.session.token;
 
-      Session.findOne({_id: id, token: token})
-        .populate('user')
-        .exec(function(err, session) {
+      Session.authenticate({_id: id, token: token}, function(err, session) {
+        if (err) {
+          return callback(err);
+        }
 
-          if (err) {
-            return callback(err);
-          }
+        if (!session || !session.user) {
+          return callback(null, false);
+        }
 
-          if (!session || !session.user) {
-            return callback(null, false);
-          }
-
-          callback(null, true, {
-            sessionId: session._id,
-            userId: session.user._id
-          });
+        callback(null, true, {
+          sessionId: session._id,
+          userId: session.user._id
         });
+      });
     }
   });
 
