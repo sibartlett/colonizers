@@ -35,7 +35,7 @@ npm install
 npm start
 ```
 
-The app should now be running at [http://localhost:8080](http://localhost:8080)
+The app should now be running at [http://localhost:3000](http://localhost:3000)
 
 
 ## Setting up a development environment
