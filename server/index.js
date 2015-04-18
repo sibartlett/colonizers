@@ -80,6 +80,12 @@ var plugins = [
     }
   },
   {
+    register: require('./api/sessions'),
+    options: {
+      basePath: '/api'
+    }
+  },
+  {
     register: require('./api/rooms'),
     options: {
       basePath: '/api'
