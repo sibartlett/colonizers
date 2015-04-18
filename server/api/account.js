@@ -12,6 +12,7 @@ exports.register = function(server, options, next) {
     method: 'GET',
     path: options.basePath + '/account',
     config: {
+      description: 'Returns the account information for the current user.',
       plugins: {
         'hapi-io': 'account'
       },
@@ -36,15 +37,16 @@ exports.register = function(server, options, next) {
     method: 'PUT',
     path: options.basePath + '/account',
     config: {
+      description: 'Updates the account information for the current user.',
       auth: {
         strategy: 'cookie'
       },
       validate: {
         payload: {
-          username: Joi.string().required(),
-          name: Joi.string().required(),
-          email: Joi.string().email().required(),
-          password: Joi.string().optional().allow(''),
+          username: Joi.string().required().description('Username'),
+          name: Joi.string().required().description('Name'),
+          email: Joi.string().email().required().description('Email'),
+          password: Joi.string().optional().allow('').description('Password'),
           password2: Joi.string().optional().allow('')
         }
       }

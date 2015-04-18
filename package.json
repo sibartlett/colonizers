@@ -20,7 +20,6 @@
     "boom": "^2.7.1",
     "bootstrap": "3.3.4",
     "brfs": "^1.4.0",
-    "browserify": "^9.0.8",
     "colonizers-client": "^0.0.3",
     "colonizers-core": "^0.0.2",
     "component-emitter": "^1.2.0",

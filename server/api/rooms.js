@@ -48,6 +48,7 @@ exports.register = function(server, options, next) {
     method: 'GET',
     path: options.basePath + '/rooms',
     config: {
+      description: 'Returns a list of rooms.',
       plugins: {
         'hapi-io': 'rooms'
       },
@@ -76,9 +77,10 @@ exports.register = function(server, options, next) {
     method: 'GET',
     path: options.basePath + '/rooms/{roomId}',
     config: {
+      description: 'Returns a single room, specified by the roomId parameter.',
       validate: {
         params: {
-          roomId: Joi.string().lowercase().required().length(24)
+          roomId: server.plugins.validations.roomId.required()
         }
       },
       auth: {
@@ -106,6 +108,7 @@ exports.register = function(server, options, next) {
     method: 'POST',
     path: options.basePath + '/rooms',
     config: {
+      description: 'Creates a room.',
       plugins: {
         'hapi-io': 'create-room'
       },
@@ -114,8 +117,10 @@ exports.register = function(server, options, next) {
       },
       validate: {
         payload: {
-          scenario: Joi.string().required(),
-          numPlayers: Joi.number().required().min(3).max(4)
+          scenario: Joi.string().required()
+                       .description('Colonizers scenario ID'),
+          numPlayers: Joi.number().integer().required().min(3).max(4)
+                         .description('Number of players')
         }
       }
     },
@@ -145,6 +150,7 @@ exports.register = function(server, options, next) {
     method: 'POST',
     path: options.basePath + '/rooms/{roomId}/join',
     config: {
+      description: 'Joins a single room, specified by the roomId parameter.',
       plugins: {
         'hapi-io': {
           event: 'join-room',
@@ -180,7 +186,7 @@ exports.register = function(server, options, next) {
       },
       validate: {
         params: {
-          roomId: Joi.string().lowercase().required().length(24)
+          roomId: server.plugins.validations.roomId.required()
         }
       }
     },
@@ -201,6 +207,7 @@ exports.register = function(server, options, next) {
     method: 'POST',
     path: options.basePath + '/rooms/{roomId}/leave',
     config: {
+      description: 'Leaves a single room, specified by the roomId parameter.',
       plugins: {
         'hapi-io': {
           event: 'leave-room',
@@ -216,7 +223,7 @@ exports.register = function(server, options, next) {
       },
       validate: {
         params: {
-          roomId: Joi.string().lowercase().required().length(24)
+          roomId: server.plugins.validations.roomId.required()
         }
       }
     },
