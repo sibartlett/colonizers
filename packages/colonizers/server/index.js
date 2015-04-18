@@ -46,6 +46,9 @@ var plugins = [
     }
   },
   {
+    register: require('./validations')
+  },
+  {
     register: require('hapi-io'),
     options: {
       auth: {

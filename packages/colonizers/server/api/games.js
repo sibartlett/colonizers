@@ -15,9 +15,10 @@ exports.register = function(server, options, next) {
     method: 'GET',
     path: options.basePath + '/rooms/{roomId}/game',
     config: {
+      description: 'Returns the current state of a specific game.',
       validate: {
         params: {
-          roomId: Joi.string().lowercase().required().length(24)
+          roomId: server.plugins.validations.roomId.required()
         }
       },
       auth: {
@@ -39,9 +40,10 @@ exports.register = function(server, options, next) {
     method: 'GET',
     path: options.basePath + '/rooms/{roomId}/game/stream',
     config: {
+      description: 'Returns a list of events for a specific game.',
       validate: {
         params: {
-          roomId: Joi.string().lowercase().required().length(24)
+          roomId: server.plugins.validations.roomId.required()
         }
       },
       auth: {
@@ -69,16 +71,17 @@ exports.register = function(server, options, next) {
     method: 'POST',
     path: options.basePath + '/rooms/{roomId}/game/stream',
     config: {
+      description: 'Triggers an event for a specific game.',
       plugins: {
         'hapi-io': 'game-event'
       },
       validate: {
         params: {
-          roomId: Joi.string().lowercase().required().length(24)
+          roomId: server.plugins.validations.roomId.required()
         },
         payload: {
-          event: Joi.string().lowercase().required(),
-          data: Joi.object().optional()
+          event: Joi.string().lowercase().required().description('Event name'),
+          data: Joi.object().optional().description('Event data')
         }
       },
       auth: {
