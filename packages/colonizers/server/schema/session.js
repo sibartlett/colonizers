@@ -24,6 +24,7 @@ SessionSchema.methods.toJSON = function() {
   return {
     id: this.id,
     user: this.user,
+    token: this.token,
     created: this.created,
     lastActive: this.lastActive
   };
