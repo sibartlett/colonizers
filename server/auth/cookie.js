@@ -10,8 +10,8 @@ exports.register = function(server, options, next) {
     redirectTo: '/login',
     validateFunc: function(data, callback) {
       var Session = mongoose.model('Session');
-      var id = data.session._id;
-      var token = data.session.token;
+      var id = data.id;
+      var token = data.token;
 
       Session.authenticate({_id: id, token: token}, function(err, session) {
         if (err) {

@@ -148,22 +148,8 @@ exports.register = function(server, options, next) {
       }]
     },
     handler: function(request, reply) {
-      var credentials = request.pre.session._id.toString() + ':' +
-                        request.pre.session.token;
-      var authHeader = 'Basic ' + new Buffer(credentials).toString('base64');
-
-      var result = {
-        user: {
-          _id: request.pre.user._id,
-          username: request.pre.user.username,
-          email: request.pre.user.email
-        },
-        session: request.pre.session,
-        authHeader: authHeader
-      };
-
-      request.auth.session.set(result);
-      reply(result);
+      request.auth.session.set(request.pre.session);
+      reply(request.pre.session);
     }
   });
 
@@ -263,22 +249,8 @@ exports.register = function(server, options, next) {
       }]
     },
     handler: function(request, reply) {
-      var user = request.pre.user;
-      var session = request.pre.session;
-      var credentials = user.username + ':' + session.token;
-      var authHeader = 'Basic ' + new Buffer(credentials).toString('base64');
-      var result = {
-        user: {
-          _id: user._id,
-          username: user.username,
-          email: user.email
-        },
-        session: session,
-        authHeader: authHeader
-      };
-
-      request.auth.session.set(result);
-      reply(result);
+      request.auth.session.set(request.pre.session);
+      reply(request.pre.session);
     }
   });
 
