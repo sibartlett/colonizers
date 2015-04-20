@@ -67,6 +67,10 @@ exports.register = function(server, options, next) {
     });
   });
 
+  server.auth.default({
+    strategies: ['basic', 'cookie']
+  });
+
   next();
 };
 

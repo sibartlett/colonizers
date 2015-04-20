@@ -1,6 +1,7 @@
 'use strict';
 
 var Hapi = require('hapi');
+var views = require('./views');
 
 var isProd = process.env.NODE_ENV === 'production';
 
@@ -122,31 +123,14 @@ var plugins = [
   }
 ];
 
+views(server);
+
 server.register(plugins, function(err) {
   if (err) {
-    console.error('Failed to load a plugin:', err);
+    return console.error('Failed to load a plugin:', err);
   }
-});
 
-server.auth.default({
-  strategies: ['basic', 'cookie']
-});
-
-server.views({
-  relativeTo: __dirname,
-  path:'./web',
-  layout: true,
-  layoutPath: './web',
-
-  engines: {
-    html:{
-      module: require('hapi-hogan'),
-      compileMode: 'sync',
-      isCached: isProd
-    }
-  }
-});
-
-server.start(function() {
-  console.log('Server running at:', server.info.uri);
+  server.start(function() {
+    console.log('Server running at:', server.info.uri);
+  });
 });

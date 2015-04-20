@@ -55,7 +55,7 @@
   <div data-bind="component: 'build-modal'"></div>
   <div data-bind="component: 'trade-modal'"></div>
 
-  {{#context}}<script>window.context = {{{context}}}</script>{{/context}}
+  {{#if context}}<script>window.context = {{json context}}</script>{{/if}}
   <script src="/room.js" charset="utf-8"></script>
 </body>
 </html>
