@@ -11,41 +11,36 @@ var UserId = {
 
 var SessionSchema = new Schema({
   user: UserId,
+  type: { type: String, enum: ['web'], default: 'web' },
   token: { type: String, default: uuid },
   created: { type: Date, default: Date.now },
-  lastActive: { type: Date }
+  scope: [String],
+
+  lastActive: { type: Date },
+  ipAddress: String,
+  userAgent: String
 });
 
 SessionSchema.virtual('id').get(function() {
   return this._id.toString();
 });
 
+SessionSchema.methods.toSession = function() {
+  return {
+    id: this.id,
+    token: this.token
+  };
+};
+
 SessionSchema.methods.toJSON = function() {
   return {
     id: this.id,
     user: this.user,
-    token: this.token,
     created: this.created,
-    lastActive: this.lastActive
+    lastActive: this.lastActive,
+    ipAddress: this.ipAddress,
+    userAgent: this.userAgent
   };
-};
-
-SessionSchema.statics.authenticate = function(options, cb) {
-  this.findOne(options).populate('user').exec(function(err, session) {
-    if (err) {
-      return cb(err);
-    }
-
-    if (!session) {
-      return cb(err, session);
-    }
-
-    session.lastActive = Date.now();
-
-    session.save(function(err) {
-      cb(err, session);
-    });
-  });
 };
 
 module.exports = SessionSchema;
