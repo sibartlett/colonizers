@@ -148,8 +148,9 @@ exports.register = function(server, options, next) {
       }]
     },
     handler: function(request, reply) {
-      request.auth.session.set(request.pre.session);
-      reply(request.pre.session);
+      var result = request.pre.session.toSession();
+      request.auth.session.set(result);
+      reply(result);
     }
   });
 
@@ -249,8 +250,9 @@ exports.register = function(server, options, next) {
       }]
     },
     handler: function(request, reply) {
-      request.auth.session.set(request.pre.session);
-      reply(request.pre.session);
+      var result = request.pre.session.toSession();
+      request.auth.session.set(result);
+      reply(result);
     }
   });
 

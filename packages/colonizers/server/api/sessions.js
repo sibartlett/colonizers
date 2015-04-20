@@ -21,7 +21,7 @@ exports.register = function(server, options, next) {
       var Session = mongoose.model('Session');
 
       var criteria = { user: request.auth.credentials.userId };
-      Session.find(criteria, function(err, user) {
+      Session.find(criteria).sort('-lastActive').exec(function(err, user) {
         if (err) {
           return reply(err);
         }

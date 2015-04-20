@@ -37,12 +37,9 @@ var plugins = [
     register: require('hapi-auth-cookie')
   },
   {
-    register: require('./auth/basic')
-  },
-  {
-    register: require('./auth/cookie'),
+    register: require('./auth'),
     options: {
-      password: process.env.COOKIE_SECRET || 'our little secret'
+      cookieSecret: process.env.COOKIE_SECRET || 'our little secret'
     }
   },
   {
