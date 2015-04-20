@@ -20,18 +20,18 @@ exports.register = function(server, options, next) {
       RoomStore.get(request.params.room, function(room) {
         if (room.doc.status === 'open') {
           reply.view('room/room',  {
-            context: JSON.stringify({
+            context: {
               roomId: request.params.room,
               userId: request.auth.credentials.userId
-            }),
+            },
             script: 'room/room'
           });
         } else {
           reply.view('room/game',  {
-            context: JSON.stringify({
+            context: {
               roomId: request.params.room,
               userId: request.auth.credentials.userId
-            }),
+            },
             script: 'room/game'
           }, {
             layout: false

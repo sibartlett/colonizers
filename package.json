@@ -29,7 +29,6 @@
     "hapi-auth-cookie": "^2.0.0",
     "hapi-browserify": "^0.0.3",
     "hapi-context-credentials": "^1.0.0",
-    "hapi-hogan": "^1.0.1",
     "hapi-io": "^0.0.5",
     "hapi-mongoose-db-connector": "^2.0.1",
     "hoek": "^2.12.0",
