@@ -1,0 +1,21 @@
+{
+  "name": "colonizers-desktop",
+  "productName": "Colonizers",
+  "license": "AGPL-3.0",
+  "author": "Simon Bartlett",
+  "private": true,
+  "version": "0.0.0",
+  "description": "A Colonizers desktop app (with local play only)",
+  "main": "lib/index.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "colonizers-client": "^0.0.3",
+    "colonizers-core": "^0.0.2",
+    "component-emitter": "^1.2.0"
+  },
+  "devDependencies": {
+    "electron-prebuilt": "^0.24.0"
+  }
+}
