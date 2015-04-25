@@ -9,9 +9,9 @@
   <link rel="stylesheet" type="text/css" href="/css/site.css" />
   {{#if context}}<script>window.context = {{json context}}</script>{{/if}}
   <script src="/site.js" charset="utf-8"></script>
-  {{#script}}
-  <script src="/script/{{{script}}}.js" charset="utf-8"></script>
-  {{/script}}
+  {{#if script}}
+  <script src="/script/{{script}}.js" charset="utf-8"></script>
+  {{/if}}
 </head>
 <body>
 
