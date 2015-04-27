@@ -21,7 +21,7 @@
     "bootstrap": "3.3.4",
     "brfs": "^1.4.0",
     "colonizers-client": "^0.0.3",
-    "colonizers-core": "^0.0.2",
+    "colonizers-core": "^0.0.3",
     "component-emitter": "^1.2.0",
     "handlebars": "^3.0.1",
     "hapi": "^8.4.0",
