@@ -12,8 +12,7 @@
   },
   "dependencies": {
     "colonizers-client": "^0.0.3",
-    "colonizers-core": "^0.0.2",
-    "component-emitter": "^1.2.0"
+    "colonizers-core": "^0.0.3"
   },
   "devDependencies": {
     "electron-prebuilt": "^0.24.0"

@@ -1,6 +1,5 @@
 'use strict';
 
-var Emitter = require('component-emitter');
 var EmitterQueue = require('colonizers-core/lib/emitter-queue');
 var GameContext = require('colonizers-core/lib/game-context');
 var Client = require('colonizers-client');
@@ -23,8 +22,7 @@ var players = [
   }
 ];
 
-var emitter = new Emitter();
-var queue = new EmitterQueue(emitter);
+var queue = new EmitterQueue();
 var factory = new Factory({
   tileset: tileset
 });
@@ -36,7 +34,10 @@ var options = {
     numPlayers: 3,
     scenario: 'default'
   },
-  emitEventsTo: emitter
+  postEvent: function(event, data, next) {
+    queue.emit(event, data);
+    next();
+  }
 };
 
 var client = new Client({
