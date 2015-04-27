@@ -3,7 +3,6 @@
 var _ = require('underscore');
 var async = require('async');
 var MersenneTwister = require('mersenne-twister');
-var Emitter = require('component-emitter');
 var EmitterQueue = require('../emitter-queue');
 var util = require('../util');
 var PlayerRequest = require('./request');
@@ -67,8 +66,7 @@ Handler.prototype.handle = function(req, next) {
 
 function BaseController(game, emitter) {
   this.events = {};
-  this._emitter = new Emitter();
-  this.queue = new EmitterQueue(this._emitter);
+  this.queue = new EmitterQueue();
 
   this.game = game;
   this.emitter = emitter;
@@ -111,7 +109,7 @@ BaseController.prototype.pushEvent = function(options, callback) {
     data: options.data
   }, callback);
 
-  this._emitter.emit(options.event, req);
+  this.queue.emit(options.event, req);
 };
 
 BaseController.extend = function(options) {

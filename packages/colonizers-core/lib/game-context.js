@@ -1,7 +1,5 @@
 'use strict';
 
-var async = require('async');
-var Emitter = require('component-emitter');
 var EmitterQueue = require('./emitter-queue');
 var Factory = require('./factory');
 var GameCoordinator = require('./game-coordinator');
@@ -9,51 +7,25 @@ var GameSerializer = require('./game-serializer');
 var GameBuilder = require('./game-builder');
 var GameController = require('./controller');
 
-function ContextEmitter(saveEvent, emitters) {
-  this.saveEvent = saveEvent;
-  this.emitters = emitters;
-  this.queue = async.queue(this.processTask.bind(this), 1);
-}
-
-ContextEmitter.prototype.processTask = function(task, next) {
-  var cb = function() {
-    this.emitters.forEach(function(emitter) {
-      emitter.emit(task.event, task.data);
-    });
-
-    next();
-  }.bind(this);
-
-  if (this.saveEvent) {
-    this.saveEvent(task.event, task.data, cb);
-  } else {
-    cb();
-  }
-};
-
-ContextEmitter.prototype.emit = function(event, data) {
-  this.queue.push({
-    event: event,
-    data: data || {}
-  });
-};
-
 function GameContext(options, done) {
   var factory = options.factory || new Factory();
 
   this.gameSerializer = new GameSerializer(factory);
   this.game = this.gameSerializer.deserialize(options.game);
 
-  var emitter = new Emitter();
-  var emitterQueue = new EmitterQueue(emitter);
-
-  var contextEmitter = new ContextEmitter(options.saveEvent, [
-    emitter,
-    options.emitEventsTo
-  ]);
+  var emitterQueue = new EmitterQueue();
 
   var doneReplaying = function() {
-    this.controller = new GameController(this.game, contextEmitter);
+    this.controller = new GameController(this.game, emitterQueue);
+
+    if (options.preEvent) {
+      emitterQueue.pre(options.preEvent);
+    }
+
+    if (options.postEvent) {
+      emitterQueue.post(options.postEvent);
+    }
+
     if (done) {
       done(this);
     }
@@ -66,7 +38,7 @@ function GameContext(options, done) {
   if (events.length) {
     emitterQueue.onceDrain(doneReplaying);
     events.forEach(function(event) {
-      emitter.emit(event.name, event.data);
+      emitterQueue.emit(event.name, event.data);
     });
   } else {
     doneReplaying();
@@ -94,8 +66,8 @@ GameContext.fromScenario = function(options, done) {
   return new GameContext({
     game: game,
     factory: options.factory,
-    emitEventsTo: options.emitEventsTo,
-    saveEvent: options.saveEvent
+    postEvent: options.postEvent,
+    preEvent: options.preEvent
   }, done);
 };
 
