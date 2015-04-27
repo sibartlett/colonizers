@@ -130,14 +130,19 @@ RoomSchema.methods.leave = function(userId, cb) {
   });
 };
 
-RoomSchema.methods.saveEvent = function(event, data, cb) {
+RoomSchema.methods.preEvent = function(event, data, next) {
   var GameEvent = mongoose.model('GameEvent');
 
   GameEvent.create({
     room: this._id,
     event: event,
     data: data
-  }, cb);
+  }, next);
+};
+
+RoomSchema.methods.postEvent = function(event, data, next) {
+  this.io.to('game/' + this._id.toString()).emit(event, data);
+  next();
 };
 
 RoomSchema.methods.sendGameData = function(emitter) {
@@ -170,12 +175,12 @@ RoomSchema.methods.start = function() {
 
   var options = {
     gameOptions: this.gameOptions,
-    saveEvent: this.saveEvent.bind(this),
-    emitEventsTo: this.io.to('game/' + this._id.toString()),
+    preEvent: this.preEvent.bind(this),
+    postEvent: this.postEvent.bind(this),
     players: this.users.map(function(member) {
       return {
         id: member.user.toString()
-      }
+      };
     })
   };
 
@@ -198,8 +203,8 @@ RoomSchema.methods.postLoad = function() {
     this.gameContext = GameContext.fromSave({
 
       game: this.game,
-      saveEvent: this.saveEvent.bind(this),
-      emitEventsTo: this.io.to('game/' + this._id.toString()),
+      preEvent: this.preEvent.bind(this),
+      postEvent: this.postEvent.bind(this),
       events: events.map(function(e) {
         return {
           name: e.event,
