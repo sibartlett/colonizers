@@ -2,7 +2,7 @@
   "name": "colonizers-core",
   "license": "AGPL-3.0",
   "author": "Simon Bartlett <simon@sibartlett.com>",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Core library used by Colonizers",
   "homepage": "http://colonizers.github.io",
   "repository": "git://github.com/colonizers/colonizers-core",
