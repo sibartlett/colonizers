@@ -96,11 +96,17 @@ EmitterQueue.prototype.on = function(event, fn) {
 };
 
 EmitterQueue.prototype.pre = function(fn) {
-  this._pre.push(fn);
+  fn = Array.isArray(fn) ? fn : [fn];
+  fn.forEach(function(f) {
+    this._pre.push(f);
+  }, this);
 };
 
 EmitterQueue.prototype.post = function(fn) {
-  this._post.push(fn);
+  fn = Array.isArray(fn) ? fn : [fn];
+  fn.forEach(function(f) {
+    this._post.push(f);
+  }, this);
 };
 
 EmitterQueue.prototype.onceDrain = function(fn) {
