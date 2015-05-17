@@ -29,7 +29,7 @@ Contributions (both issues and pull requests) are very welcome!
 Make sure you have the following installed:
 * [Node.js 0.12+](https://github.com/joyent/node/wiki/Installation) (or [io.js](https://iojs.org))
 * [MongoDB](http://www.mongodb.org/display/DOCS/Quickstart)
-* [RabbitMQ](https://www.rabbitmq.com/download.html) installed.
+* [RabbitMQ](https://www.rabbitmq.com/download.html)
 
 ```sh
 git clone https://github.com/colonizers/colonizers.git
