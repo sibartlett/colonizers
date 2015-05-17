@@ -21,7 +21,7 @@
     "bootstrap": "3.3.4",
     "brfs": "^1.4.0",
     "colonizers-client": "^0.0.3",
-    "colonizers-core": "^0.0.3",
+    "colonizers-core": "^0.0.4",
     "component-emitter": "^1.2.0",
     "good": "^6.1.2",
     "good-console": "^5.0.0",

@@ -1,27 +1,32 @@
 'use strict';
 
 var Joi = require('joi');
+var mongoose = require('mongoose');
 
 exports.register = function(server, options, next) {
 
-  var RoomStore = server.plugins['room-store'].store;
-
   server.route({
     method: 'GET',
-    path: '/room/{room}',
+    path: '/room/{roomId}',
     config: {
       validate: {
         params: {
-          room: Joi.string().required()
+          roomId: Joi.string().required()
         }
       }
     },
     handler: function(request, reply) {
-      RoomStore.get(request.params.room, function(room) {
-        if (room.doc.status === 'open') {
+      var Room = mongoose.model('Room');
+
+      Room.findById(request.params.roomId, function(err, room) {
+        if (err) {
+          return reply(err);
+        }
+
+        if (room.status === 'open') {
           reply.view('room/room',  {
             context: {
-              roomId: request.params.room,
+              roomId: request.params.roomId,
               userId: request.auth.credentials.userId
             },
             script: 'room/room'
@@ -29,7 +34,7 @@ exports.register = function(server, options, next) {
         } else {
           reply.view('room/game',  {
             context: {
-              roomId: request.params.room,
+              roomId: request.params.roomId,
               userId: request.auth.credentials.userId
             },
             script: 'room/game'

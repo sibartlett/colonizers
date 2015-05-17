@@ -73,12 +73,6 @@ var plugins = [
     }
   },
   {
-    register: require('./game/room-store')
-  },
-  {
-    register: require('./game/game')
-  },
-  {
     register: require('hapi-context-credentials')
   },
   {

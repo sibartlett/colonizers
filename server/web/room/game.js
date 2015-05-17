@@ -35,18 +35,20 @@ $.get('/tilesets/modern.json', function(tileset) {
     window.location = '/lobby';
   });
 
-  socket.on('room_users', function(users) {
-    client.setUsers(users);
-  });
-
-  socket.on('GameData', function(data) {
-    var game = new GameSerializer(factory).deserialize(data);
-    emitterQueue.kill();
-    gameCoordinator.setGame(game);
-    client.setGame(game);
-  });
-
   socket.on('connect', function() {
-    socket.emit('join-game', window.context.roomId);
+    var roomId = window.context.roomId;
+
+    socket.emit('join-game', roomId);
+
+    socket.emit('room-users', { roomId: roomId }, function(users) {
+      client.setUsers(users);
+
+      socket.emit('get-game', { roomId: roomId }, function(data) {
+        var game = new GameSerializer(factory).deserialize(data);
+        emitterQueue.kill();
+        gameCoordinator.setGame(game);
+        client.setGame(game);
+      });
+    });
   });
 });
