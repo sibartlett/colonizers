@@ -23,6 +23,8 @@
     "colonizers-client": "^0.0.3",
     "colonizers-core": "^0.0.3",
     "component-emitter": "^1.2.0",
+    "good": "^6.1.2",
+    "good-console": "^5.0.0",
     "handlebars": "^3.0.1",
     "hapi": "^8.4.0",
     "hapi-auth-basic": "^2.0.0",
