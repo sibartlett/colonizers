@@ -21,6 +21,16 @@ server.connection({
 
 var plugins = [
   {
+    register: require('good'),
+    options: {
+      opsInterval: 1000,
+      reporters: [{
+        reporter: require('good-console'),
+        events: { log: '*', response: '*' }
+      }]
+    }
+  },
+  {
     register: require('./schema')
   },
   {
