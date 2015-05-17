@@ -30,10 +30,10 @@ exports.register = function(server, options, next) {
 
     connection.protocol = uri.protocol + '//';
     connection.server = uri.hostname;
-    connection.vhost = uri.path;
+    connection.vhost = uri.path.substr(1);
 
     if (uri.port) {
-      connection.port = uri.port;
+      connection.port = parseInt(uri.port, 10);
     }
 
     if (uri.auth) {
@@ -42,10 +42,11 @@ exports.register = function(server, options, next) {
       connection.pass = authParts[1];
     }
 
+    delete connection.url;
   }
 
   Rabbit.configure({
-    connection: options.connection
+    connection: connection
   }).then(function() {
 
     function Publisher(rabbus) {
