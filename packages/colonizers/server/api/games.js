@@ -9,13 +9,38 @@ exports.register = function(server, options, next) {
 
   options = Hoek.applyToDefaults({ basePath: '' }, options);
 
-  var RoomStore = server.plugins['room-store'].store;
+  var io = server.plugins['hapi-io'].io;
+
+  io.on('connection', function(socket) {
+    socket.on('join-game', function(roomId) {
+      socket.join('game/' + roomId);
+    });
+  });
+
+  var loadRoom = function(request, reply) {
+    var Room = mongoose.model('Room');
+
+    Room.findById(request.params.roomId, function(err, room) {
+      if (err) {
+        return reply(err);
+      }
+
+      if (!room || room.status === 'open') {
+        return reply(Boom.notFound());
+      }
+
+      reply(room);
+    });
+  };
 
   server.route({
     method: 'GET',
     path: options.basePath + '/rooms/{roomId}/game',
     config: {
       description: 'Returns the current state of a specific game.',
+      plugins: {
+        'hapi-io': 'get-game'
+      },
       validate: {
         params: {
           roomId: server.plugins.validations.roomId.required()
@@ -23,16 +48,14 @@ exports.register = function(server, options, next) {
       },
       auth: {
         strategy: 'cookie'
-      }
+      },
+      pre: [{
+        assign: 'room',
+        method: loadRoom
+      }]
     },
     handler: function(request, reply) {
-      RoomStore.get(request.params.roomId, function(room) {
-        if (!room || !room.doc.gameContext) {
-          return reply(Boom.notFound());
-        }
-
-        reply(room.doc.gameContext.getState());
-      });
+      reply(request.pre.room.game);
     }
   });
 
@@ -48,21 +71,17 @@ exports.register = function(server, options, next) {
       },
       auth: {
         strategy: 'cookie'
-      }
+      },
+      pre: [{
+        assign: 'room',
+        method: loadRoom
+      }]
     },
     handler: function(request, reply) {
-      var Room = mongoose.model('Room');
+      var GameEvent = mongoose.model('GameEvent');
 
-      Room.findById(request.params.roomId, function(err, room) {
-        if (err) {
-          return reply(err);
-        }
-
-        if (!room || room.status === 'open') {
-          return reply(Boom.notFound());
-        }
-
-        reply(room.gameEvents);
+      GameEvent.find({ room: request.pre.room._id }, function(err, events) {
+        reply(err, events);
       });
     }
   });
@@ -86,20 +105,27 @@ exports.register = function(server, options, next) {
       },
       auth: {
         strategy: 'cookie'
-      }
+      },
+      pre: [{
+        assign: 'room',
+        method: loadRoom
+      }]
     },
     handler: function(request, reply) {
-      RoomStore.get(request.params.roomId, function(room) {
-        if (!room || !room.doc.gameContext) {
-          return reply(Boom.notFound());
-        }
+      var room = request.ore.room;
 
-        room.doc.gameContext.pushEvent({
-          playerId: request.auth.credentials.userId.toString(),
-          event: request.payload.event,
-          data: request.payload.data
-        }, reply);
+      var gameContext = room.getGameContext({
+        postEvent: function(event, data) {
+          var io = server.plugins['hapi-io'].io;
+          io.to('game/' + room.id).emit(event, data);
+        }
       });
+
+      gameContext.pushEvent({
+        playerId: request.auth.credentials.userId.toString(),
+        event: request.payload.event,
+        data: request.payload.data
+      }, reply);
     }
   });
 

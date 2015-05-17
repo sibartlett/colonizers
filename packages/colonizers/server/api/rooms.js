@@ -10,8 +10,6 @@ exports.register = function(server, options, next) {
 
   options = Hoek.applyToDefaults({ basePath: '' }, options);
 
-  var RoomStore = server.plugins['room-store'].store;
-
   var findUserInIoRoom = function(io, room, userId) {
     var rooms = io.of('/').adapter.rooms;
 
@@ -32,16 +30,41 @@ exports.register = function(server, options, next) {
   };
 
   var broadcastRoomUsers = function(ctx) {
-    RoomStore.get(ctx.data.id, function(room) {
+    var Room = mongoose.model('Room');
 
-      if (!room) {
+    Room.getUsers(ctx.data.roomId, function(err, users) {
+      if (err) {
         return;
       }
 
-      room.doc.getUsers(function(err, users) {
-        ctx.io.to(ctx.data.id).emit('room-users', users);
-      });
+      ctx.io.to(ctx.data.roomId).emit('room-users', users);
     });
+  };
+
+  var getRoom = function(options) {
+    options = options || {};
+
+    return function(request, reply) {
+      var Room = mongoose.model('Room');
+
+      var find = Room.findById(request.params.roomId);
+
+      if (options.users) {
+        find.populate('users.user');
+      }
+
+      find.exec(function(err, room) {
+        if (err) {
+          return reply(err);
+        }
+
+        if (!room) {
+          return reply(Boom.notFound());
+        }
+
+        reply(room);
+      });
+    };
   };
 
   server.route({
@@ -85,22 +108,45 @@ exports.register = function(server, options, next) {
       },
       auth: {
         strategy: 'cookie'
-      }
+      },
+      pre: [{
+        assign: 'room',
+        method: getRoom()
+      }]
     },
     handler: function(request, reply) {
-      var Room = mongoose.model('Room');
+      reply(request.pre.room);
+    }
+  });
 
-      Room.findById(request.params.roomId, function(err, room) {
-        if (err) {
-          return reply(err);
+  server.route({
+    method: 'GET',
+    path: options.basePath + '/rooms/{roomId}/users',
+    config: {
+      description: 'Returns a list of users for a single room, ' +
+                   'specified by the roomId parameter.',
+      plugins: {
+        'hapi-io': 'room-users'
+      },
+      validate: {
+        params: {
+          roomId: server.plugins.validations.roomId.required()
         }
-
-        if (!room) {
-          return reply(Boom.notFound());
-        }
-
-        reply(room);
+      },
+      auth: {
+        strategy: 'cookie'
+      },
+      pre: [{
+        assign: 'room',
+        method: getRoom({ users: true })
+      }]
+    },
+    handler: function(request, reply) {
+      var users = _.map(request.pre.room.users, function(user) {
+        return user;
       });
+
+      reply(users);
     }
   });
 
@@ -162,8 +208,10 @@ exports.register = function(server, options, next) {
             ctx.socket.join(ctx.data.roomId);
 
             ctx.socket.on('disconnect', function() {
-              RoomStore.get(ctx.data.roomId, function(room) {
-                if (room.doc.status !== 'open') {
+              var Room = mongoose.model('Room');
+
+              Room.findById(ctx.data.roomId, function(err, room) {
+                if (!room || room.status !== 'open') {
                   return;
                 }
 
@@ -188,17 +236,46 @@ exports.register = function(server, options, next) {
         params: {
           roomId: server.plugins.validations.roomId.required()
         }
-      }
+      },
+      pre: [
+        {
+          assign: 'room',
+          method: getRoom()
+        },
+        {
+          assign: 'autoStart',
+          method: function(request, reply) {
+            function autoStart(io, roomId) {
+              return function() {
+                var Room = mongoose.model('Room');
+
+                Room.findById(roomId, function(err, room) {
+                  if (err || !room) {
+                    return;
+                  }
+
+                  room.start(function() {
+                    io.to(room.id).emit('game-started');
+                  });
+                });
+              };
+            }
+
+            reply(
+              autoStart(server.plugins['hapi-io'].io, request.params.roomId)
+            );
+          }
+        }
+      ]
     },
     handler: function(request, reply) {
-      RoomStore.get(request.params.roomId, function(room) {
-        if (!room) {
-          return reply(Boom.notFound());
+      var room = request.pre.room;
+      room.join(request.auth.credentials.userId, function(err, member) {
+        if (member && room.users.length === room.numPlayers) {
+          setTimeout(request.pre.autoStart, 2000);
         }
 
-        room.doc.join(request.auth.credentials.userId, function(err, member) {
-          return reply(err, member);
-        });
+        return reply(err, member);
       });
     }
   });
@@ -225,21 +302,19 @@ exports.register = function(server, options, next) {
         params: {
           roomId: server.plugins.validations.roomId.required()
         }
-      }
+      },
+      pre: [{
+        assign: 'room',
+        method: getRoom()
+      }]
     },
     handler: function(request, reply) {
-      RoomStore.get(request.params.roomId, function(room) {
-        if (!room) {
-          return reply(Boom.notFound());
+      request.pre.room.leave(request.auth.credentials.userId, function(err) {
+        if (err) {
+          return reply(err);
         }
 
-        room.doc.leave(request.auth.credentials.userId, function(err) {
-          if (err) {
-            return reply(err);
-          }
-
-          reply();
-        });
+        reply();
       });
     }
   });

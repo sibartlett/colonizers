@@ -58,15 +58,6 @@ RoomSchema.methods.toJSON = function() {
   };
 };
 
-RoomSchema.methods.getUsers = function(cb) {
-  var User = mongoose.model('User');
-  var userIds = this.users.map(function(member) {
-    return member.user;
-  });
-
-  User.find({ _id: { $in: userIds } }, cb);
-};
-
 RoomSchema.methods.join = function(userId, cb) {
   if (userId === 'string') {
     userId = mongoose.Types.ObjectId(userId);
@@ -97,12 +88,6 @@ RoomSchema.methods.join = function(userId, cb) {
     });
 
     cb(null, result);
-
-    if (this.users.length === this.numPlayers) {
-      setTimeout(function() {
-        this.start();
-      }.bind(this), 2000);
-    }
   }.bind(this));
 };
 
@@ -141,28 +126,11 @@ RoomSchema.methods.preEvent = function(event, data, next) {
 };
 
 RoomSchema.methods.postEvent = function(event, data, next) {
-  this.io.to('game/' + this._id.toString()).emit(event, data);
-  next();
+  this.game = this.gameContext.getState();
+  this.save(next);
 };
 
-RoomSchema.methods.sendGameData = function(emitter) {
-  emitter = emitter || this.io.to('game/' + this._id.toString());
-
-  this.getUsers(function(err, users) {
-    emitter.emit('room_users', users);
-
-    if (this.gameContext) {
-      emitter.emit('GameData', this.gameContext.getState());
-    }
-  }.bind(this));
-};
-
-RoomSchema.methods.onContextReady = function(context) {
-  context.start();
-  this.io.to(this._id.toString()).emit('game-started');
-};
-
-RoomSchema.methods.start = function() {
+RoomSchema.methods.start = function(callback) {
   if (this.status !== 'open') {
     return;
   }
@@ -185,35 +153,48 @@ RoomSchema.methods.start = function() {
   };
 
   this.gameContext = GameContext.fromScenario(options, function(gameContext) {
+    this.gameContext = gameContext;
     this.game = gameContext.getState();
     this.save(function() {
-      this.onContextReady.bind(this)(gameContext);
+      this.gameContext.start();
+      if (callback) {
+        callback(this);
+      }
     }.bind(this));
   }.bind(this));
 };
 
-RoomSchema.methods.postLoad = function() {
+RoomSchema.methods.getGameContext = function(options) {
   if (this.status === 'open') {
-    return;
+    return undefined;
   }
 
-  var GameEvent = mongoose.model('GameEvent');
+  if (this.gameContext) {
+    return this.gameContext;
+  }
 
-  GameEvent.find({ room: this._id}).sort('time').exec(function(err, events) {
-    this.gameContext = GameContext.fromSave({
+  this.gameContext = GameContext.fromSave({
+    game: this.game,
+    preEvent: this.preEvent.bind(this),
+    postEvent: [this.postEvent.bind(this), options.postEvent]
+  });
 
-      game: this.game,
-      preEvent: this.preEvent.bind(this),
-      postEvent: this.postEvent.bind(this),
-      events: events.map(function(e) {
-        return {
-          name: e.event,
-          data: e.data
-        };
-      })
+  return this.gameContext;
+};
 
-    }, this.onContextReady.bind(this));
-  }.bind(this));
+RoomSchema.statics.getUsers = function(roomId, callback) {
+  this.findById(roomId).populate('users.user').exec(function(err, room) {
+
+    if (err || !room) {
+      return callback(err, room);
+    }
+
+    var users = room.users.map(function(member) {
+      return member.user;
+    });
+
+    callback(err, users);
+  });
 };
 
 module.exports = RoomSchema;
