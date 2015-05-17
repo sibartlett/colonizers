@@ -66,6 +66,14 @@ var plugins = [
     }
   },
   {
+    register: require('./pubsub'),
+    options: {
+      connection: {
+        url: process.env.CLOUDAMQP_URL || process.env.RABBITMQ_BIGWIG_URL
+      }
+    }
+  },
+  {
     register: require('hapi-browserify'),
     options: {
       cache: isProd,
