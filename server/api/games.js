@@ -116,8 +116,12 @@ exports.register = function(server, options, next) {
 
       var gameContext = room.getGameContext({
         postEvent: function(event, data) {
-          var io = server.plugins['hapi-io'].io;
-          io.to('game/' + room.id).emit(event, data);
+          var pubsub = server.plugins.pubsub;
+          pubsub.publish({
+            room: 'game/' + room.id,
+            event: event,
+            data: data
+          });
         }
       });
 

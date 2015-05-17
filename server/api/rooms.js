@@ -31,13 +31,18 @@ exports.register = function(server, options, next) {
 
   var broadcastRoomUsers = function(ctx) {
     var Room = mongoose.model('Room');
+    var pubsub = server.plugins.pubsub;
 
     Room.getUsers(ctx.data.roomId, function(err, users) {
       if (err) {
         return;
       }
 
-      ctx.io.to(ctx.data.roomId).emit('room-users', users);
+      pubsub.publish({
+        room: ctx.data.roomId,
+        event: 'room-users',
+        data: users
+      });
     });
   };
 
@@ -245,7 +250,7 @@ exports.register = function(server, options, next) {
         {
           assign: 'autoStart',
           method: function(request, reply) {
-            function autoStart(io, roomId) {
+            function autoStart(pubsub, roomId) {
               return function() {
                 var Room = mongoose.model('Room');
 
@@ -255,14 +260,17 @@ exports.register = function(server, options, next) {
                   }
 
                   room.start(function() {
-                    io.to(room.id).emit('game-started');
+                    pubsub.publish({
+                      room: room.id,
+                      event: 'game-started'
+                    });
                   });
                 });
               };
             }
 
             reply(
-              autoStart(server.plugins['hapi-io'].io, request.params.roomId)
+              autoStart(server.plugins.pubsub, request.params.roomId)
             );
           }
         }
