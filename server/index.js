@@ -135,7 +135,7 @@ var plugins = [
   }
 ];
 
-views(server);
+views(server, isProd);
 
 server.register(plugins, function(err) {
   if (err) {

@@ -10,41 +10,31 @@ exports.register = function(server, options, next) {
 
   options = Hoek.applyToDefaults({ basePath: '' }, options);
 
-  var findUserInIoRoom = function(io, room, userId) {
-    var rooms = io.of('/').adapter.rooms;
-
-    if (!rooms[room]) {
-      return [];
-    }
-
-    var socketIds = _.map(rooms[room], function(val, key) { return key; });
-
-    if (!socketIds.length) {
-      return socketIds;
-    }
-
-    return _.some(io.sockets.sockets, function(socket) {
-      return socketIds.indexOf(socket.id) !== -1 &&
-             socket.credentials.userId.equals(userId);
-    });
-  };
-
-  var broadcastRoomUsers = function(ctx) {
+  var broadcastUsers = function(roomId) {
     var Room = mongoose.model('Room');
     var pubsub = server.plugins.pubsub;
 
-    Room.getUsers(ctx.data.roomId, function(err, users) {
+    Room.getUsers(roomId, function(err, users) {
       if (err) {
         return;
       }
 
       pubsub.publish({
-        room: ctx.data.roomId,
+        room: roomId,
         event: 'room-users',
         data: users
       });
     });
   };
+
+  var io = server.plugins['hapi-io'].io;
+
+  io.on('connection', function(socket) {
+    socket.on('enter-room', function(data) {
+      socket.join(data.roomId);
+      broadcastUsers(data.roomId);
+    });
+  });
 
   var getRoom = function(options) {
     options = options || {};
@@ -203,36 +193,7 @@ exports.register = function(server, options, next) {
     config: {
       description: 'Joins a single room, specified by the roomId parameter.',
       plugins: {
-        'hapi-io': {
-          event: 'join-room',
-          post: function(ctx, next) {
-            if (!ctx.result.id) {
-              return next();
-            }
-
-            ctx.socket.join(ctx.data.roomId);
-
-            ctx.socket.on('disconnect', function() {
-              var Room = mongoose.model('Room');
-
-              Room.findById(ctx.data.roomId, function(err, room) {
-                if (!room || room.status !== 'open') {
-                  return;
-                }
-
-                var here = findUserInIoRoom(ctx.io, ctx.data.roomId,
-                                            ctx.socket.credentials.userId);
-
-                if (!here) {
-                  ctx.trigger('leave-room', ctx.data);
-                }
-              });
-            });
-
-            next();
-            broadcastRoomUsers(ctx);
-          }
-        }
+        'hapi-io': 'join-room'
       },
       auth: {
         strategy: 'cookie'
@@ -279,11 +240,16 @@ exports.register = function(server, options, next) {
     handler: function(request, reply) {
       var room = request.pre.room;
       room.join(request.auth.credentials.userId, function(err, member) {
+        if (err) {
+          return reply(err);
+        }
+
         if (member && room.users.length === room.numPlayers) {
           setTimeout(request.pre.autoStart, 2000);
         }
 
-        return reply(err, member);
+        reply(member);
+        broadcastUsers(room.id);
       });
     }
   });
@@ -294,14 +260,7 @@ exports.register = function(server, options, next) {
     config: {
       description: 'Leaves a single room, specified by the roomId parameter.',
       plugins: {
-        'hapi-io': {
-          event: 'leave-room',
-          post: function(ctx, next) {
-            ctx.socket.leave(ctx.data.roomId);
-            next();
-            broadcastRoomUsers(ctx);
-          }
-        }
+        'hapi-io': 'leave-room'
       },
       auth: {
         strategy: 'cookie'
@@ -317,12 +276,14 @@ exports.register = function(server, options, next) {
       }]
     },
     handler: function(request, reply) {
-      request.pre.room.leave(request.auth.credentials.userId, function(err) {
+      var room = request.pre.room;
+      room.leave(request.auth.credentials.userId, function(err) {
         if (err) {
           return reply(err);
         }
 
         reply();
+        broadcastUsers(room.id);
       });
     }
   });
