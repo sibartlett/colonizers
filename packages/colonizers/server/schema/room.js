@@ -60,11 +60,11 @@ RoomSchema.methods.toJSON = function() {
 
 RoomSchema.methods.join = function(userId, cb) {
   if (userId === 'string') {
-    userId = mongoose.Types.ObjectId(userId);
+    userId = new mongoose.Types.ObjectId(userId);
   }
 
-  var member = _.find(this.users, function(member) {
-    return member.user.equals(userId);
+  var member = _.find(this.users, function(_member) {
+    return _member.user.equals(userId);
   });
 
   if (member) {
@@ -83,8 +83,8 @@ RoomSchema.methods.join = function(userId, cb) {
       return cb(err);
     }
 
-    var result = _.find(this.users, function(member) {
-      return member.user.equals(userId);
+    var result = _.find(this.users, function(_member) {
+      return _member.user.equals(userId);
     });
 
     cb(null, result);
@@ -92,8 +92,8 @@ RoomSchema.methods.join = function(userId, cb) {
 };
 
 RoomSchema.methods.leave = function(userId, cb) {
-  var member = _.find(this.users, function(member) {
-    return member.user.equals(userId);
+  var member = _.find(this.users, function(_member) {
+    return _member.user.equals(userId);
   });
 
   if (!member) {

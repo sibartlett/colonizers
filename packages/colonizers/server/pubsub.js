@@ -15,7 +15,7 @@ exports.register = function(server, options, next) {
     exchange: 'socket-io.exchange',
     queue: 'socket-io.queue',
     routingKey: 'socket-io.key',
-    messageType: 'socket-io.messageType',
+    messageType: 'socket-io.messageType'
   }, options);
 
   options.queue = {

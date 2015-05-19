@@ -67,9 +67,9 @@ exports.register = function(server, options, next) {
           user.setPassword(request.payload.password);
         }
 
-        user.save(function(err) {
-          if (err) {
-            return reply(err);
+        user.save(function(err2) {
+          if (err2) {
+            return reply(err2);
           }
 
           reply(user);
