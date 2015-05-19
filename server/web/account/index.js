@@ -11,7 +11,11 @@ exports.register = function(server, options, next) {
       var User = mongoose.model('User');
 
       User.findById(request.auth.credentials.userId, function(err, user) {
-        reply.view('account/index',  {
+        if (err) {
+          return reply(err);
+        }
+
+        reply.view('account/index', {
           user: user,
           script: 'account/public'
         });

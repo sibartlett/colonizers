@@ -5,8 +5,6 @@ var gulp = require('gulp');
 var concat = require('gulp-concat');
 var insert = require('gulp-insert');
 var replace = require('gulp-replace');
-var jshint = require('gulp-jshint');
-var jscs = require('gulp-jscs');
 var less = require('gulp-less');
 
 // Site
@@ -34,33 +32,6 @@ gulp.task('jquery-plugins', function() {
     .pipe(concat('jquery-plugins.js'))
     .pipe(insert.wrap(head, foot))
     .pipe(gulp.dest('server/assets/js'));
-});
-
-// Code quality
-
-gulp.task('hint', function() {
-  return gulp.src([
-    '**/*.js',
-    '!client/**/*.js',
-    '!core/**/*.js',
-    '!desktop/**/*.js',
-    '!node_modules/**/*.js',
-    '!server/assets/js/jquery-plugins.js'
-  ])
-  .pipe(jshint())
-  .pipe(jshint.reporter('jshint-stylish'));
-});
-
-gulp.task('jscs', function() {
-  return gulp.src([
-    '**/*.js',
-    '!client/**/*.js',
-    '!core/**/*.js',
-    '!desktop/**/*.js',
-    '!node_modules/**/*.js',
-    '!server/assets/js/jquery-plugins.js'
-  ])
-  .pipe(jscs());
 });
 
 gulp.task('default', ['jquery-plugins', 'styles']);

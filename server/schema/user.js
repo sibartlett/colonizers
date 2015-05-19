@@ -57,6 +57,9 @@ UserSchema.methods.toJSON = function() {
 
 UserSchema.methods.authenticate = function(password, cb) {
   bcrypt.compare(password, this.password, function(err, res) {
+    if (err) {
+      return cb(err);
+    }
     // res == true
     if (res) {
       return cb(null, this);

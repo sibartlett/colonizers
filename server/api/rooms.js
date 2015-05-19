@@ -36,15 +36,15 @@ exports.register = function(server, options, next) {
     });
   });
 
-  var getRoom = function(options) {
-    options = options || {};
+  var getRoom = function(opts) {
+    opts = opts || {};
 
     return function(request, reply) {
       var Room = mongoose.model('Room');
 
       var find = Room.findById(request.params.roomId);
 
-      if (options.users) {
+      if (opts.users) {
         find.populate('users.user');
       }
 

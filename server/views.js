@@ -14,12 +14,12 @@ module.exports = function(server, isProd) {
 
   server.views({
     relativeTo: __dirname,
-    path:'./web',
+    path: './web',
     layout: true,
     layoutPath: './web',
 
     engines: {
-      html:{
+      html: {
         module: Handlebars,
         isCached: isProd
       }

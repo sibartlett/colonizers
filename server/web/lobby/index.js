@@ -22,7 +22,7 @@ exports.register = function(server, options, next) {
             room.url = '/room/' + room._id;
           }, this);
 
-          reply.view('lobby/index',  {
+          reply.view('lobby/index', {
             rooms: rooms,
             script: 'lobby/public'
           });

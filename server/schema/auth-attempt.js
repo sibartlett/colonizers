@@ -20,17 +20,17 @@ AuthAttemptSchema.statics.abuseDetected = function(ip, username, callback) {
     }
 
     var query = { ip: ip, username: username.toLowerCase() };
-    this.count(query, function(err, count) {
-      if (err) {
-        return callback(err);
+    this.count(query, function(err2, count2) {
+      if (err2) {
+        return callback(err2);
       }
 
-      if (count > 10) {
+      if (count2 > 10) {
         return callback(null, true);
       }
 
       callback(null, false);
-    }.bind(this));
+    });
   }.bind(this));
 };
 

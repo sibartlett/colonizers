@@ -24,7 +24,7 @@ exports.register = function(server, options, next) {
         }
 
         if (room.status === 'open') {
-          reply.view('room/room',  {
+          reply.view('room/room', {
             context: {
               roomId: request.params.roomId,
               userId: request.auth.credentials.userId
@@ -32,7 +32,7 @@ exports.register = function(server, options, next) {
             script: 'room/room'
           });
         } else {
-          reply.view('room/game',  {
+          reply.view('room/game', {
             context: {
               roomId: request.params.roomId,
               userId: request.auth.credentials.userId
