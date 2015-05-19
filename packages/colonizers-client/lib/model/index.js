@@ -45,8 +45,8 @@ RoomModel.prototype.getPlayers = function() {
   if (game) {
 
     return game.players.map(function(player) {
-      var user = _.find(users, function(user) {
-        return user.id === player.id;
+      var user = _.find(users, function(_user) {
+        return _user.id === player.id;
       });
 
       user = user || {

@@ -10,8 +10,6 @@ var through = require('through');
 var dataurl = require('dataurl');
 var imagemin = require('gulp-imagemin');
 var group = require('gulp-group-files');
-var jshint = require('gulp-jshint');
-var jscs = require('gulp-jscs');
 var less = require('gulp-less');
 var tilesets = {
   modern: [],
@@ -81,26 +79,5 @@ gulp.task('tilesets', group(tilesets, function(tileset) {
              .pipe(combineFiles(tileset))
              .pipe(gulp.dest('./public/tilesets'));
 }));
-
-// Code quality
-
-gulp.task('hint', function() {
-  return gulp.src([
-    '**/*.js',
-    '!node_modules/**/*.js',
-    '!public/**/*.js'
-  ])
-  .pipe(jshint())
-  .pipe(jshint.reporter('jshint-stylish'));
-});
-
-gulp.task('jscs', function() {
-  return gulp.src([
-    '**/*.js',
-    '!node_modules/**/*.js',
-    '!public/**/*.js'
-  ])
-  .pipe(jscs());
-});
 
 gulp.task('default', ['jquery-plugins', 'styles', 'tilesets']);

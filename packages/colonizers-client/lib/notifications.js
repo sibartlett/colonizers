@@ -27,8 +27,8 @@ Notifications.prototype.enable = function(fn) {
   var permission = this.getPermission();
 
   if (permission !== PERMISSION_GRANTED) {
-    this.requestPermission(function(permission) {
-      if (permission === PERMISSION_GRANTED) {
+    this.requestPermission(function(_permission) {
+      if (_permission === PERMISSION_GRANTED) {
         window.localStorage.setItem('settings.notifications', true);
         fn(this.isEnabled = true);
       } else {

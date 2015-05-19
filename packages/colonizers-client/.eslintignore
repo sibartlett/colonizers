@@ -1,0 +1,8 @@
+app/js/theme.js
+app/js/components/d6-images.js
+gulpfile.js
+lib/components/templates.js
+lib/game/observable-arrays.js
+public
+tilesets
+vendor
