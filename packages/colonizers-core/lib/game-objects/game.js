@@ -87,9 +87,9 @@ Game.prototype.getBuildableEdgesForPlayer = function(player, cornerId) {
         owner: this.currentPlayer
       });
 
-      corner = _.find(ownedCorners, function(corner) {
-        var edges = corner.getAdjacentEdges();
-        return _.every(edges, function(edge) {
+      corner = _.find(ownedCorners, function(_corner) {
+        var _edges = _corner.getAdjacentEdges();
+        return _.every(_edges, function(edge) {
           return edge.isBuildable;
         });
       });

@@ -1,3 +1,5 @@
+'use strict';
+
 module.exports = {
   name: 'Base game',
   victoryPoints: 10,

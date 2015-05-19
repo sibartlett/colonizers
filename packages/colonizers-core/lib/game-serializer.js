@@ -197,8 +197,8 @@ GameSerializer.prototype.deserializeBuildings = function(board, data, players) {
       return;
     }
 
-    var player = _.find(players, function(player) {
-      return player.id === corner.owner;
+    var player = _.find(players, function(_player) {
+      return _player.id === corner.owner;
     });
 
     var hexCorner = board.corners.getById(corner.id);
@@ -216,8 +216,8 @@ GameSerializer.prototype.deserializeBuildings = function(board, data, players) {
       return;
     }
 
-    var player = _.find(players, function(player) {
-      return player.id === edge.owner;
+    var player = _.find(players, function(_player) {
+      return _player.id === edge.owner;
     });
 
     var hexEdge = board.edges.getById(edge.id);

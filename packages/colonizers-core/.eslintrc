@@ -1,0 +1,16 @@
+{
+    "globals": {
+        "require": true,
+        "module": true,
+        "exports": true,
+        "setTimeout": true
+    },
+
+    "rules": {
+        "no-underscore-dangle": 0,
+
+        "global-strict": [2, "always"],
+        "quotes": [2, "single"],
+        "strict": [2, "global"]
+    }
+}

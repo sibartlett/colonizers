@@ -124,12 +124,12 @@ module.exports = BaseController.extend({
     }
 
     var adjCorners = edge.getAdjacentCorners();
-    var corner = _.find(adjCorners, function(corner) {
-      if (corner.owner === null || corner.owner !== req.playerId) {
+    var corner = _.find(adjCorners, function(_corner) {
+      if (_corner.owner === null || _corner.owner !== req.playerId) {
         return false;
       } else {
-        return corner.getAdjacentEdges().every(function(edge) {
-          return edge.isBuildable;
+        return _corner.getAdjacentEdges().every(function(_edge) {
+          return _edge.isBuildable;
         });
       }
     });
@@ -169,7 +169,7 @@ module.exports = BaseController.extend({
       }
 
       next();
-    }.bind(this);
+    };
   },
 
   hasAllowance: function(object) {
@@ -316,8 +316,8 @@ module.exports = BaseController.extend({
     });
 
     tiles.forEach(function(tile) {
-      var tiles = tile.getAdjacentCorners();
-      tiles.filter(function(corner) {
+      var _tiles = tile.getAdjacentCorners();
+      _tiles.filter(function(corner) {
         return corner.owner != null;
       })
       .forEach(function(corner) {
