@@ -4,6 +4,7 @@ var async = require('async');
 
 function EmitterQueue(source) {
   this._source = source;
+  this.callbacks = {};
   this._pre = [];
   this._post = [];
   this.processTask = this.processTask.bind(this);
@@ -11,54 +12,35 @@ function EmitterQueue(source) {
 }
 
 EmitterQueue.prototype.getTasks = function(event, data) {
-  this.callbacks = this.callbacks || {};
-
   var listeners = this.callbacks[event] || [];
 
   var pres = this._pre.slice(0).map(function(pre) {
-    if (pre.length === 3) {
-      return function(next) {
-        pre(event, data, function() {
-          setTimeout(next, 0);
-        });
-      };
-    } else {
-      return function(next) {
-        pre(event, data);
+    return function(next) {
+      pre(event, data, function() {
         setTimeout(next, 0);
-      };
-    }
+      });
+    };
   });
 
   var callbacks = listeners.slice(0).map(function(listener) {
-    if (listener.length === 2) {
-      return function(next) {
-        listener(data, function() {
-          setTimeout(next, 0);
-        });
-      };
-    } else {
-      return function(next) {
-        listener(data);
+    return function(next) {
+      listener(data, function() {
         setTimeout(next, 0);
-      };
-    }
+      });
+    };
   });
 
   var posts = this._post.slice(0).map(function(post) {
-    if (post.length === 3) {
-      return function(next) {
-        post(event, data, function() {
-          setTimeout(next, 0);
-        });
-      };
-    } else {
-      return function(next) {
-        post(event, data);
+    return function(next) {
+      post(event, data, function() {
         setTimeout(next, 0);
-      };
-    }
+      });
+    };
   });
+
+  if (!callbacks.length) {
+    return [];
+  }
 
   return pres.concat(callbacks).concat(posts);
 };
@@ -81,8 +63,6 @@ EmitterQueue.prototype.emit = function(event, data) {
 };
 
 EmitterQueue.prototype.on = function(event, fn) {
-  this.callbacks = this.callbacks || {};
-
   if (this.callbacks[event] == null) {
     this.callbacks[event] = [];
     if (this._source) {

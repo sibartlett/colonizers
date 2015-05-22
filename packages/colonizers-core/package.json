@@ -8,7 +8,7 @@
   "repository": "git://github.com/colonizers/colonizers-core",
   "main": "lib/index.js",
   "scripts": {
-    "test": "lab --verbose --lint"
+    "test": "lab --verbose --lint --coverage"
   },
   "dependencies": {
     "async": "1.0.0",
