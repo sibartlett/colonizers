@@ -1,4 +1,11 @@
 language: node_js
-
 node_js:
   - node
+deploy:
+  provider: npm
+  email: simon@sibartlett.com
+  api_key:
+    secure: dqp33kPp/op7kXLiG8EtfX0WqxDHMpfoyuU1c5K7ulLfLvTRi5QG5al1eVFKZW4JohMLzAEo9qNem1fRpP6n2DJyI7+nA1nPyCnzQEyLTVt7gQX4gEoMxxP2ZKjXzLcH1lDd3qYMpnUlhP8l+G50YT3iLt+9sJBSYqDHXO0pu1mM5Xbdkp/7rJFfKn6vVR/d+1Z+M6GU8QaQblo2IQ5h6DXFHfShPhcks7utMpsodgsC55umLApEfuzyYRlR7rZvxqThfWF1KRN6aqrubBP/BqvQQyPfAypdY22JkZh0SjBtdWpOThdy6ZFEIQL821BgXv797xSfKa7CSfep50T2AY5qYF4UYT1jxbO5CAUw4VQBZxeiUMRqXBlPzkX0H87hWjJRlzeM+jkjTlh/cQTfiIUAbjAgcRGZBcrneTyy/ksmZQEocEGMULSOHBpuqq8Jq0flN56ZF7L5ILgiJYUuD8o7QN6GLkRepam3bibjRULXQeHy47MKTwOvM2CYENeJpSQflbiIs5z+XB0/gBoUobXSZhcWgX8DKjl1ow9m0P0yslyrkOO8XEPhMr69UZFxD3rWD5IW5n0CTn3uSTO9/vrR4Q49WV7t9X9nxwVzRRueV8hszWDQRpdiuCzNL3kVAyF4RZ8t2c5fkYiU8NNnHdRLbRL9QrdF6P8DNheNccU=
+  on:
+    tags: true
+    repo: colonizers/colonizers-core
