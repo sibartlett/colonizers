@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+
+  "type": "object",
+
+  "properties": {
+    "allowance": { "$ref": "#/definitions/allowance" },
+    "board": { "$ref": "#/definitions/board" }
+  },
+
+  "required": ["allowance", "board"],
+
+  "definitions": {
+
+    "allowance": {
+      "type": "object",
+      "properties": {
+        "cities": { "type": "number" },
+        "settlements": { "type": "number" },
+        "roads": { "type": "number" }
+      },
+
+      "required": ["cities", "settlements", "roads"]
+
+    },
+
+    "point": {
+      "type": "object",
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      },
+      "required": ["x", "y"]
+    },
+
+    "vector": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/point",
+        "minItems": 2,
+        "maxItems": 2,
+        "uniqueItems": true
+      }
+    },
+
+    "hexInfo": {
+      "type": "object",
+      "properties": {
+        "apothem": { "type": "number" },
+        "circumradius": { "type": "number" }
+      },
+      "required": ["apothem", "circumradius"]
+    },
+
+    "tile": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "center": { "$ref": "#/definitions/point" },
+        "value": { "type": "number" },
+        "type": { "type": "string" }
+      },
+      "required": ["id", "center", "type"]
+    },
+
+    "edge": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "center": { "$ref": "#/definitions/point" },
+        "ends": { "$ref": "#/definitions/vector" }
+      },
+      "required": ["id", "center", "ends"]
+    },
+
+    "corner": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "center": { "$ref": "#/definitions/point" }
+      },
+      "required": ["id", "center"]
+    },
+
+    "board": {
+      "type": "object",
+      "properties": {
+        "width": { "type": "number" },
+        "height": { "type": "number" },
+        "hex": { "$ref": "#/definitions/hexInfo" },
+
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/edge"
+          }
+        },
+
+        "tiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/tile"
+          }
+        },
+
+        "corners": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/corner"
+          }
+        }
+      },
+      "required": ["width", "height", "hex", "edges", "tiles", "corners"]
+    }
+  }
+}
