@@ -9,7 +9,7 @@ function ScenarioBuilder(options) {
     shuffleTerrainTiles: true,
     shuffleNumberTokens: false
   };
-  var gameOptions = _.extend(defaults, options.gameOptions || {});
+  var gameOptions = _.extend(defaults, options.gameOptions);
 
   this.scenario = options.scenario;
   this.players = options.numPlayers;
