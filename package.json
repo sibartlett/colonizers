@@ -32,7 +32,7 @@
     "hapi-auth-cookie": "^2.0.0",
     "hapi-browserify": "^0.0.3",
     "hapi-context-credentials": "^1.0.0",
-    "hapi-io": "^0.0.5",
+    "hapi-io": "^0.0.6",
     "hapi-mongoose-db-connector": "^2.0.1",
     "hoek": "^2.13.0",
     "joi": "^6.4.1",
