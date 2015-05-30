@@ -1,6 +1,7 @@
 language: node_js
 node_js:
 - node
+before_deploy: "gulp"
 deploy:
   provider: npm
   email: simon@sibartlett.com
