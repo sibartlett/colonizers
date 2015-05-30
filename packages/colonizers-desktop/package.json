@@ -11,10 +11,10 @@
     "start": "electron ."
   },
   "dependencies": {
-    "colonizers-client": "^0.0.3",
-    "colonizers-core": "^0.0.3"
+    "colonizers-client": "^0.0.5",
+    "colonizers-core": "^0.0.5"
   },
   "devDependencies": {
-    "electron-prebuilt": "^0.24.0"
+    "electron-prebuilt": "^0.27.1"
   }
 }
