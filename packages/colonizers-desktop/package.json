@@ -8,13 +8,16 @@
   "description": "A Colonizers desktop app (with local play only)",
   "main": "lib/index.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "test": "lab --verbose --lint"
   },
   "dependencies": {
     "colonizers-client": "^0.0.5",
     "colonizers-core": "^0.0.5"
   },
   "devDependencies": {
-    "electron-prebuilt": "^0.27.1"
+    "code": "^1.4.0",
+    "electron-prebuilt": "^0.27.1",
+    "lab": "^5.9.0"
   }
 }
