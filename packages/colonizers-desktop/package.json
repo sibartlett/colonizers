@@ -4,7 +4,7 @@
   "license": "AGPL-3.0",
   "author": "Simon Bartlett",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A Colonizers desktop app (with local play only)",
   "main": "lib/index.js",
   "scripts": {
