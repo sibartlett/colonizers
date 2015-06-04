@@ -64,7 +64,7 @@ UiHexCorner.prototype.buildSettlement = function(player) {
     opacity: 1,
     x: 0,
     y: 0,
-    drawFunc: function(context) {
+    sceneFunc: function(context) {
       context.moveTo(-10, -5);
       context.beginPath();
       context.lineTo(-10, 11);
@@ -99,7 +99,7 @@ UiHexCorner.prototype.buildCity = function(player) {
     opacity: 1,
     x: 0,
     y: 0,
-    drawFunc: function(context) {
+    sceneFunc: function(context) {
       context.moveTo(-19, -9);
       context.beginPath();
       context.lineTo(-19, 17);
