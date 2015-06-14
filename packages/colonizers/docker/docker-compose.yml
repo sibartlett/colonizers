@@ -7,6 +7,8 @@ colonizers1:
     - rabbitmq
   ports:
     - 3001:8080
+  volumes:
+    - ../server:/usr/src/app/server
 
 colonizers2:
   image: colonizers/colonizers:latest
@@ -17,6 +19,8 @@ colonizers2:
     - rabbitmq
   ports:
     - 3002:8080
+  volumes:
+    - ../server:/usr/src/app/server
 
 colonizers3:
   image: colonizers/colonizers:latest
@@ -27,6 +31,8 @@ colonizers3:
     - rabbitmq
   ports:
     - 3003:8080
+  volumes:
+    - ../server:/usr/src/app/server
 
 mongo:
   image: mongo:latest

@@ -32,6 +32,8 @@ ENV NODE_ENV production
 ENV COLONIZERS_MONGO_URL mongodb://mongo/colonizers
 ENV COLONIZERS_RABBITMQ_URL amqp://rabbitmq/
 
+VOLUME /usr/src/app/server
+
 EXPOSE 8080
 
 USER node
