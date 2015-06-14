@@ -30,7 +30,7 @@ exports.register = function(server, options, next) {
     cookie: 'sid',
     isSecure: false,
     redirectTo: '/login',
-    validateFunc: function(data, callback) {
+    validateFunc: function(request, data, callback) {
       findSession({ type: 'web', _id: data.id, token: data.token }, callback);
     }
   });
