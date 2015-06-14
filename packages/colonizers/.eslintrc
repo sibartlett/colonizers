@@ -11,6 +11,10 @@
         "quotes": [2, "single"],
         "strict": [2, "global"],
 
-        "consistent-return": 0
+        "consistent-return": 0,
+
+        "space-in-parens": [2, "never"],
+        "indent": [2, 2],
+        "linebreak-style": [2, "unix"]
     }
 }
