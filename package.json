@@ -33,7 +33,6 @@
     "hapi-browserify": "^0.0.3",
     "hapi-context-credentials": "^1.0.0",
     "hapi-io": "^0.0.6",
-    "hapi-mongoose-db-connector": "^2.0.1",
     "hoek": "^2.14.0",
     "joi": "^6.4.3",
     "jquery": "2.1.4",
