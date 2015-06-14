@@ -11,7 +11,7 @@
     "test": "lab --verbose --lint"
   },
   "dependencies": {
-    "async": "1.0.0",
+    "async": "1.2.1",
     "bootstrap": "3.3.4",
     "colonizers-core": "^0.0.5",
     "component-emitter": "1.2.0",
@@ -27,7 +27,7 @@
   "devDependencies": {
     "code": "^1.4.0",
     "dataurl": "^0.1.0",
-    "gulp": "^3.8.11",
+    "gulp": "^3.9.0",
     "gulp-concat": "^2.5.2",
     "gulp-group-files": "^2.0.0",
     "gulp-imagemin": "^2.2.1",
@@ -36,7 +36,7 @@
     "gulp-replace": "^0.5.3",
     "gulp-util": "^3.0.5",
     "jasny-bootstrap": "git://github.com/jasny/bootstrap#v3.1.3",
-    "lab": "^5.9.0",
+    "lab": "^5.10.0",
     "through": "^2.3.7"
   },
   "browserify": {
