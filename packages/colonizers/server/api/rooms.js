@@ -138,7 +138,7 @@ exports.register = function(server, options, next) {
     },
     handler: function(request, reply) {
       var users = _.map(request.pre.room.users, function(user) {
-        return user;
+        return user.user;
       });
 
       reply(users);
