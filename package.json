@@ -7,9 +7,9 @@
   "description": "",
   "homepage": "http://colonizers.github.io",
   "repository": "git://github.com/colonizers/colonizers",
-  "main": "index.js",
+  "main": "server/index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node server/index.js",
     "test": "lab --verbose --lint"
   },
   "engines": {
