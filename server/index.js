@@ -8,8 +8,8 @@ var isProd = process.env.NODE_ENV === 'production';
 var server = new Hapi.Server();
 
 server.connection({
-  host: process.env.HOST || 'localhost',
-  port: process.env.PORT || 3000,
+  host: process.env.COLONIZERS_HOST || process.env.HOST || 'localhost',
+  port: process.env.COLONIZERS_PORT || process.env.PORT || 3000,
   routes: {
     validate: {
       options: {
@@ -34,9 +34,10 @@ var plugins = [
     register: require('./schema')
   },
   {
-    register: require('hapi-mongoose-db-connector'),
+    register: require('./mongoose'),
     options: {
-      mongodbUrl: process.env.MONGOLAB_URI ||
+      mongodbUrl: process.env.COLONIZERS_MONGO_URL ||
+                  process.env.MONGOLAB_URI ||
                   process.env.MONGOHQ_URL ||
                   'mongodb://localhost/colonizers'
     }
@@ -69,8 +70,11 @@ var plugins = [
     register: require('./pubsub'),
     options: {
       connection: {
-        url: process.env.CLOUDAMQP_URL || process.env.RABBITMQ_BIGWIG_URL
-      }
+        url: process.env.COLONIZERS_RABBITMQ_URL ||
+             process.env.CLOUDAMQP_URL ||
+             process.env.RABBITMQ_BIGWIG_URL
+      },
+      queue: process.env.COLONIZERS_RABBITMQ_QUEUE
     }
   },
   {
