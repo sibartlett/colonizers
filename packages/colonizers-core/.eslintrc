@@ -11,6 +11,10 @@
 
         "global-strict": [2, "always"],
         "quotes": [2, "single"],
-        "strict": [2, "global"]
+        "strict": [2, "global"],
+
+        "space-in-parens": [2, "never"],
+        "indent": [2, 2],
+        "linebreak-style": [2, "unix"]
     }
 }

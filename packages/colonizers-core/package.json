@@ -11,13 +11,13 @@
     "test": "lab --verbose --lint --coverage"
   },
   "dependencies": {
-    "async": "1.0.0",
+    "async": "1.2.1",
     "mersenne-twister": "^1.0.1",
     "underscore": "1.8.3"
   },
   "devDependencies": {
     "code": "^1.4.0",
     "is-my-json-valid": "^2.12.0",
-    "lab": "^5.9.0"
+    "lab": "^5.10.0"
   }
 }
