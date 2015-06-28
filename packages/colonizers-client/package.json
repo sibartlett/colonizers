@@ -2,7 +2,7 @@
   "name": "colonizers-client",
   "license": "AGPL-3.0",
   "author": "Simon Bartlett <simon@sibartlett.com>",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Colonizers client",
   "homepage": "http://colonizers.github.io",
   "repository": "git://github.com/colonizers/colonizers-client",
