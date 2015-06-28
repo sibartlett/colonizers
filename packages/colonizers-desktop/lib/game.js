@@ -1,5 +1,7 @@
 'use strict';
 
+require('babel/register');
+
 var EmitterQueue = require('colonizers-core/lib/emitter-queue');
 var GameContext = require('colonizers-core/lib/game-context');
 var Client = require('colonizers-client');
