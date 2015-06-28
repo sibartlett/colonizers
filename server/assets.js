@@ -1,5 +1,7 @@
 'use strict';
 
+var babelify = require('babelify');
+
 exports.register = function(server, options, next) {
 
   var shared = [
@@ -82,7 +84,8 @@ exports.register = function(server, options, next) {
       browserify: {
         bundle: {
           basedir: './server/web/',
-          external: shared
+          external: shared,
+          transform: babelify
         }
       }
     }
@@ -98,7 +101,8 @@ exports.register = function(server, options, next) {
       browserify: {
         path: './server/assets/js/site.js',
         bundle: {
-          require: shared
+          require: shared,
+          transform: babelify
         }
       }
     }
@@ -112,7 +116,10 @@ exports.register = function(server, options, next) {
     },
     handler: {
       browserify: {
-        path: './server/web/room/game.js'
+        path: './server/web/room/game.js',
+        bundle: {
+          transform: babelify
+        }
       }
     }
   });
