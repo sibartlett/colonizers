@@ -1,5 +1,7 @@
 'use strict';
 
+require('babel/register');
+
 var Hapi = require('hapi');
 var views = require('./views');
 
