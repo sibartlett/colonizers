@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "async": "1.2.1",
-    "bootstrap": "3.3.4",
-    "colonizers-core": "^0.0.5",
+    "bootstrap": "3.3.5",
+    "colonizers-core": "^0.0.6",
     "component-emitter": "1.2.0",
     "hammerjs": "2.0.4",
     "jquery": "2.1.4",
@@ -28,20 +28,21 @@
     "code": "^1.4.0",
     "dataurl": "^0.1.0",
     "gulp": "^3.9.0",
-    "gulp-concat": "^2.5.2",
+    "gulp-concat": "^2.6.0",
     "gulp-group-files": "^2.0.0",
-    "gulp-imagemin": "^2.2.1",
+    "gulp-imagemin": "^2.3.0",
     "gulp-insert": "^0.4.0",
     "gulp-less": "^3.0.3",
     "gulp-replace": "^0.5.3",
-    "gulp-util": "^3.0.5",
+    "gulp-util": "^3.0.6",
     "jasny-bootstrap": "git://github.com/jasny/bootstrap#v3.1.3",
-    "lab": "^5.10.0",
+    "lab": "^5.11.1",
     "through": "^2.3.7"
   },
   "browserify": {
     "transform": [
-      "brfs"
+      "brfs",
+      "babelify"
     ]
   }
 }

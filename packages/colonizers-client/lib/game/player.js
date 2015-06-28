@@ -1,31 +1,29 @@
 'use strict';
 
 var emitter = require('component-emitter');
-var util = require('colonizers-core/lib/util');
 var Player = require('colonizers-core/lib/game-objects/player');
 
-function UiPlayer(factory, options) {
-  Player.apply(this, arguments);
-  emitter(this);
+class UiPlayer extends Player {
+  constructor(factory, options) {
+    super(factory, options);
+    emitter(this);
+    this.color = ['#d9534f', '#5cb85c', '#428bca', '#d9534f'][options.index];
+  }
 
-  this.color = ['#d9534f', '#5cb85c', '#428bca', '#d9534f'][options.index];
+  distribute(resources) {
+    super.distribute(resources);
+    this.emit('updated');
+  }
+
+  spend(resources) {
+    super.spend(resources);
+    this.emit('updated');
+  }
+
+  addVictoryPoint(devCard) {
+    super.addVictoryPoint(devCard);
+    this.emit('updated');
+  }
 }
-
-util.inherits(UiPlayer, Player);
-
-UiPlayer.prototype.distribute = function(resources) {
-  Player.prototype.distribute.call(this, resources);
-  this.emit('updated');
-};
-
-UiPlayer.prototype.spend = function(resources) {
-  Player.prototype.spend.call(this, resources);
-  this.emit('updated');
-};
-
-UiPlayer.prototype.addVictoryPoint = function(devCard) {
-  Player.prototype.addVictoryPoint.call(this, devCard);
-  this.emit('updated');
-};
 
 module.exports = UiPlayer;
