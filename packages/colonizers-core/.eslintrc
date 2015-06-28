@@ -1,4 +1,8 @@
 {
+    "env": {
+      "es6": true
+    },
+
     "globals": {
         "require": true,
         "module": true,

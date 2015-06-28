@@ -2,51 +2,53 @@
 
 var _ = require('underscore');
 
-function QueryableCollection(clauses) {
-  this.items = [];
-  this.clauses = clauses;
-}
-
-QueryableCollection.prototype.push = function(item) {
-  if (Array.isArray(item)) {
-    this.items.push.apply(this, item);
-  } else {
-    this.items.push(item);
+class QueryableCollection {
+  constructor(clauses) {
+    this.items = [];
+    this.clauses = clauses;
   }
-};
 
-QueryableCollection.prototype.forEach = function(callback, thisArg) {
-  this.items.forEach(callback, thisArg);
-};
-
-QueryableCollection.prototype.map = function(map, thisArg) {
-  return this.items.map(map, thisArg);
-};
-
-QueryableCollection.prototype.filter = function(filter, thisArg) {
-  return this.items.filter(filter, thisArg);
-};
-
-QueryableCollection.prototype.all = function() {
-  return this.items;
-};
-
-QueryableCollection.prototype.getById = function(id) {
-  return _.find(this.items, function(item) {
-    return item.id === id;
-  });
-};
-
-QueryableCollection.prototype.query = function(options) {
-  var q = this.items;
-
-  this.clauses.forEach(function(clause) {
-    if (clause.valid(options)) {
-      q = clause.filter(options, q);
+  push(item) {
+    if (Array.isArray(item)) {
+      this.items.push.apply(this, item);
+    } else {
+      this.items.push(item);
     }
-  });
+  }
 
-  return q;
-};
+  forEach(callback, thisArg) {
+    this.items.forEach(callback, thisArg);
+  }
+
+  map(map, thisArg) {
+    return this.items.map(map, thisArg);
+  }
+
+  filter(filter, thisArg) {
+    return this.items.filter(filter, thisArg);
+  }
+
+  all() {
+    return this.items;
+  }
+
+  getById(id) {
+    return _.find(this.items, function(item) {
+      return item.id === id;
+    });
+  }
+
+  query(options) {
+    var q = this.items;
+
+    this.clauses.forEach(function(clause) {
+      if (clause.valid(options)) {
+        q = clause.filter(options, q);
+      }
+    });
+
+    return q;
+  }
+}
 
 module.exports = QueryableCollection;

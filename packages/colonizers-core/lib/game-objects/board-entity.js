@@ -1,20 +1,20 @@
 'use strict';
 
-function BoardEntity(factory, options) {
-  factory.defineProperties(this, {
-    center: options.center,
-    board: null
-  });
-}
+class BoardEntity {
+  constructor(factory, options) {
+    factory.defineProperties(this, {
+      center: options.center,
+      board: null
+    });
+  }
 
-BoardEntity.spatialQuery = function(callback) {
-  return function() {
+  spatialQuery(callback) {
     if (this.board) {
-      return this.board.spatialQuery(callback.bind(this));
+      return this.board.spatialQuery(callback);
     } else {
       return [];
     }
-  };
-};
+  }
+}
 
 module.exports = BoardEntity;

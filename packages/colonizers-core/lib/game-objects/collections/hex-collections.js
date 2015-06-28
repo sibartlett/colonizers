@@ -2,39 +2,41 @@
 
 var QueryableCollection = require('./queryable-collection');
 var clauses = require('./query-clauses');
-var util = require('./../../util');
 
-function HexCornerCollection() {
-  QueryableCollection.call(this, [
-    clauses.owner,
-    clauses.within,
-    clauses.exclude,
-    clauses.buildable,
-    clauses.settlement,
-    clauses.city
-  ]);
+class HexCornerCollection extends QueryableCollection {
+  constructor() {
+    super([
+      clauses.owner,
+      clauses.within,
+      clauses.exclude,
+      clauses.buildable,
+      clauses.settlement,
+      clauses.city
+    ]);
+  }
 }
 
-function HexEdgeCollection() {
-  QueryableCollection.call(this, [
-    clauses.owner,
-    clauses.within,
-    clauses.exclude,
-    clauses.buildable
-  ]);
+class HexEdgeCollection extends QueryableCollection {
+  constructor() {
+    super([
+      clauses.owner,
+      clauses.within,
+      clauses.exclude,
+      clauses.buildable
+    ]);
+  }
 }
 
-function HexTileCollection() {
-  QueryableCollection.call(this, [
-    clauses.within,
-    clauses.exclude,
-    clauses.value
-  ]);
+class HexTileCollection extends QueryableCollection {
+  constructor() {
+    super([
+      clauses.owner,
+      clauses.within,
+      clauses.exclude,
+      clauses.buildable
+    ]);
+  }
 }
-
-util.inherits(HexCornerCollection, QueryableCollection);
-util.inherits(HexEdgeCollection, QueryableCollection);
-util.inherits(HexTileCollection, QueryableCollection);
 
 module.exports = {
   HexCornerCollection: HexCornerCollection,

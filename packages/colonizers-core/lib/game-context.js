@@ -7,57 +7,59 @@ var GameSerializer = require('./game-serializer');
 var GameBuilder = require('./game-builder');
 var GameController = require('./controller');
 
-function GameContext(options, done) {
-  var factory = options.factory || new Factory();
+class GameContext {
+  constructor(options, done) {
+    var factory = options.factory || new Factory();
 
-  this.gameSerializer = new GameSerializer(factory);
-  this.game = this.gameSerializer.deserialize(options.game);
+    this.gameSerializer = new GameSerializer(factory);
+    this.game = this.gameSerializer.deserialize(options.game);
 
-  var emitterQueue = new EmitterQueue();
+    var emitterQueue = new EmitterQueue();
 
-  var doneReplaying = function() {
-    this.controller = new GameController(this.game, emitterQueue);
+    var doneReplaying = () => {
+      this.controller = new GameController(this.game, emitterQueue);
 
-    if (options.preEvent) {
-      emitterQueue.pre(options.preEvent);
+      if (options.preEvent) {
+        emitterQueue.pre(options.preEvent);
+      }
+
+      if (options.postEvent) {
+        emitterQueue.post(options.postEvent);
+      }
+
+      if (done) {
+        done(this);
+      }
+    };
+
+    this.coordinator = new GameCoordinator(emitterQueue, this.game);
+
+    var events = options.events || [];
+
+    if (events.length) {
+      emitterQueue.onceDrain(doneReplaying);
+      events.forEach(function(event) {
+        emitterQueue.emit(event.name, event.data);
+      });
+    } else {
+      doneReplaying();
     }
+  }
 
-    if (options.postEvent) {
-      emitterQueue.post(options.postEvent);
+  start() {
+    if (this.controller) {
+      this.controller.start();
     }
+  }
 
-    if (done) {
-      done(this);
-    }
-  }.bind(this);
+  getState() {
+    return this.gameSerializer.serialize(this.game);
+  }
 
-  this.coordinator = new GameCoordinator(emitterQueue, this.game);
-
-  var events = options.events || [];
-
-  if (events.length) {
-    emitterQueue.onceDrain(doneReplaying);
-    events.forEach(function(event) {
-      emitterQueue.emit(event.name, event.data);
-    });
-  } else {
-    doneReplaying();
+  pushEvent(options, callback) {
+    this.controller.pushEvent(options, callback);
   }
 }
-
-GameContext.prototype.start = function() {
-  if (this.controller) {
-    this.controller.start();
-  }
-};
-
-GameContext.prototype.getState = function() {
-  return this.gameSerializer.serialize(this.game);
-};
-
-GameContext.prototype.pushEvent = function(options, callback) {
-  this.controller.pushEvent(options, callback);
-};
 
 GameContext.fromScenario = function(options, done) {
   var gameBuilder = new GameBuilder();

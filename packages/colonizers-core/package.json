@@ -8,7 +8,7 @@
   "repository": "git://github.com/colonizers/colonizers-core",
   "main": "lib/index.js",
   "scripts": {
-    "test": "lab --verbose --lint --coverage"
+    "test": "lab --verbose --lint --coverage --sourcemaps --transform test/transform.js"
   },
   "dependencies": {
     "async": "1.2.1",
@@ -16,8 +16,14 @@
     "underscore": "1.8.3"
   },
   "devDependencies": {
-    "code": "^1.4.0",
+    "babel-core": "^5.6.15",
+    "code": "^1.4.1",
     "is-my-json-valid": "^2.12.0",
-    "lab": "^5.10.0"
+    "lab": "^5.11.1"
+  },
+  "browserify": {
+    "transform": [
+      "babelify"
+    ]
   }
 }
