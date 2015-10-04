@@ -11,15 +11,15 @@
     "test": "lab --verbose --lint --coverage --sourcemaps --transform test/transform.js"
   },
   "dependencies": {
-    "async": "1.2.1",
+    "async": "1.4.2",
     "mersenne-twister": "^1.0.1",
     "underscore": "1.8.3"
   },
   "devDependencies": {
-    "babel-core": "^5.6.15",
-    "code": "^1.4.1",
-    "is-my-json-valid": "^2.12.0",
-    "lab": "^5.11.1"
+    "babel-core": "^5.8.25",
+    "code": "^1.5.0",
+    "is-my-json-valid": "^2.12.2",
+    "lab": "^6.1.0"
   },
   "browserify": {
     "transform": [

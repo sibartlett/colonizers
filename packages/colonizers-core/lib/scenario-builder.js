@@ -203,23 +203,23 @@ class ScenarioBuilder {
 
     resourceTiles.forEach(function(tile, index) {
       switch (terrainTiles[index]) {
-        case 'd':
-          tile.tileType = 'desert';
-          break;
-        case 'b':
-          tile.tileType = 'brick';
-          break;
-        case 'g':
-          tile.tileType = 'grain';
-          break;
-        case 'l':
-          tile.tileType = 'lumber';
-          break;
-        case 'o':
-          tile.tileType = 'ore';
-          break;
-        case 'w':
-          tile.tileType = 'wool';
+      case 'd':
+        tile.tileType = 'desert';
+        break;
+      case 'b':
+        tile.tileType = 'brick';
+        break;
+      case 'g':
+        tile.tileType = 'grain';
+        break;
+      case 'l':
+        tile.tileType = 'lumber';
+        break;
+      case 'o':
+        tile.tileType = 'ore';
+        break;
+      case 'w':
+        tile.tileType = 'wool';
       }
 
       var value = 0;
