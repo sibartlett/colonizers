@@ -36,7 +36,7 @@ exports.register = function(server, options, next) {
   });
 
   server.auth.strategy('basic', 'basic', {
-    validateFunc: function(username, password, callback) {
+    validateFunc: function(request, username, password, callback) {
       findSession({_id: username, token: password}, callback);
     }
   });

@@ -1,6 +1,8 @@
 'use strict';
 
-require('babel/register');
+require('babel/register')({
+  ignore: [/node_modules(?!.*colonizers)/]
+});
 
 var Hapi = require('hapi');
 var views = require('./views');
@@ -22,6 +24,12 @@ server.connection({
 });
 
 var plugins = [
+  {
+    register: require('inert')
+  },
+  {
+    register: require('vision')
+  },
   {
     register: require('good'),
     options: {
@@ -141,12 +149,12 @@ var plugins = [
   }
 ];
 
-views(server, isProd);
-
 server.register(plugins, function(err) {
   if (err) {
     return console.error('Failed to load a plugin:', err);
   }
+
+  views(server, isProd);
 
   server.start(function() {
     console.log('Server running at:', server.info.uri);
