@@ -13,8 +13,8 @@ $.get('/tilesets/modern.json', function(tileset) {
   var socket = io();
   var emitterQueue = new EmitterQueue(socket);
   var factory = new Factory({
-        tileset: tileset
-      });
+    tileset: tileset
+  });
   var gameCoordinator = new GameCoordinator(emitterQueue);
 
   var client = new Client({
