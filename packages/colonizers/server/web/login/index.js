@@ -118,8 +118,7 @@ exports.register = function(server, options, next) {
           var ip = request.info.remoteAddress;
           var username = request.payload.username;
 
-          AuthAttempt.create({ ip: ip, username: username},
-                             function(err) {
+          AuthAttempt.create({ ip: ip, username: username}, function(err) {
             if (err) {
               return reply(err);
             }
