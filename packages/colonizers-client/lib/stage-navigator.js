@@ -3,8 +3,11 @@
 var $ = require('jquery');
 var emitter = require('component-emitter');
 var Hammer = require('hammerjs');
+var mousewheel = require('jquery-mousewheel');
 
-require('jquery-mousewheel')($);
+if (typeof mousewheel == 'function') {
+  mousewheel($);
+}
 
 function TwoFingerRecognizer() {
   Hammer.AttrRecognizer.apply(this, arguments);
