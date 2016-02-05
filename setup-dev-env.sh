@@ -1,10 +1,10 @@
-git clone git@github.com:colonizers/colonizers-core.git core
+git clone git@github.com:dipernaa/colonizers-core.git core
 cd core
 npm install
 npm link
 cd ..
 
-git clone git@github.com:colonizers/colonizers-client.git client
+git clone git@github.com:dipernaa/colonizers-client.git client
 cd client
 npm link colonizers-core
 npm install
