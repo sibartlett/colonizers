@@ -133,6 +133,38 @@ exports.register = function(server, options, next) {
     }
   });
 
+  server.route({
+    method: 'POST',
+    path: options.basePath + '/rooms/{roomId}/game/message',
+    config: {
+      description: 'Sends a chat message.',
+      plugins: {
+        'hapi-io': {
+          event: 'chat message',
+          post: function(ctx, next) {
+            var payloadObj = JSON.parse(ctx.req.payload);
+            mongoose.model('User').findById(payloadObj['userId'], function(err, user) {
+              var roomId = ctx.req.url.substring(11, 35);
+              ctx.io.sockets.in('game/' + roomId).emit('chat message', payloadObj['message'], user.username);
+              next();
+            });
+          }
+        }
+      },
+      auth: {
+        strategy: 'cookie'
+      },
+      validate: {
+        params: {
+          roomId: server.plugins.validations.roomId.required()
+        }
+      }
+    },
+    handler: function(request, reply) {
+      reply(true);
+    }
+  });
+
   next();
 };
 

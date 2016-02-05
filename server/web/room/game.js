@@ -35,6 +35,10 @@ $.get('/tilesets/modern.json', function(tileset) {
     window.location = '/lobby';
   });
 
+  socket.on('chat message', function(message, user) {
+    $('#chat-messages').append($('<li>').text(user + ': ' + message));
+  });
+
   socket.on('connect', function() {
     var roomId = window.context.roomId;
 

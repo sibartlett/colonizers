@@ -17,7 +17,7 @@
     "npm": "2.x.x"
   },
   "dependencies": {
-    "babel": "^5.8.23",
+    "babel": "^5.8.10",
     "babelify": "^6.3.0",
     "bcryptjs": "^2.3.0",
     "boom": "^2.9.0",
