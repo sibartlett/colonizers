@@ -1,0 +1,23 @@
+{
+    "env": {
+      "es6": true
+    },
+
+    "globals": {
+        "require": true,
+        "module": true,
+        "exports": true,
+        "setTimeout": true
+    },
+
+    "rules": {
+        "no-underscore-dangle": 0,
+
+        "quotes": [2, "single"],
+        "strict": [2, "global"],
+
+        "space-in-parens": [2, "never"],
+        "indent": [2, 2],
+        "linebreak-style": [2, "unix"]
+    }
+}

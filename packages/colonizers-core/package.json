@@ -1,0 +1,34 @@
+{
+  "name": "colonizers-core",
+  "license": "AGPL-3.0",
+  "author": "Simon Bartlett <simon@sibartlett.com>",
+  "version": "0.0.7",
+  "description": "Core library used by Colonizers",
+  "homepage": "http://colonizers.github.io",
+  "repository": "git://github.com/colonizers/colonizers-core",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "lab --verbose --lint --coverage --sourcemaps --transform node_modules/lab-babel -I __core-js_shared__"
+  },
+  "dependencies": {
+    "async": "1.4.2",
+    "mersenne-twister": "^1.0.1",
+    "underscore": "1.8.3"
+  },
+  "devDependencies": {
+    "babel-core": "^6.3.17",
+    "babel-preset-es2015": "^6.3.13",
+    "code": "^2.0.1",
+    "is-my-json-valid": "^2.12.3",
+    "lab": "^8.0.0",
+    "lab-babel": "^1.1.1"
+  },
+  "babel": {
+    "presets": ["es2015"]
+  },
+  "browserify": {
+    "transform": [
+      "babelify"
+    ]
+  }
+}
