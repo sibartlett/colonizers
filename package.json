@@ -1,8 +1,8 @@
 {
-  "name": "colonizers.github.io",
+  "private": true,
+  "name": "gh-pages",
   "license": "AGPL-3.0",
   "author": "Simon Bartlett",
-  "private": true,
   "version": "0.0.0",
   "description": "",
   "dependencies": {
