@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "colonizers-core",
   "license": "AGPL-3.0",
   "author": "Simon Bartlett <simon@sibartlett.com>",

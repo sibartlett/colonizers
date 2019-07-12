@@ -112,7 +112,7 @@ exports.register = function(server, options, next) {
       }]
     },
     handler: function(request, reply) {
-      var room = request.ore.room;
+      var room = request.pre.room;
 
       var gameContext = room.getGameContext({
         postEvent: function(event, data) {

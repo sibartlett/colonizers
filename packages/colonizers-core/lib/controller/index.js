@@ -3,17 +3,36 @@
 var _ = require('underscore');
 var BaseController = require('./base');
 
-module.exports = BaseController.extend({
+module.exports = class Controller extends BaseController {
 
-  init: function() {
+  constructor(game, emitter) {
+    super(game, emitter);
+
+    this.onRoad = this.onRoad.bind(this);
+    this.onSettlement = this.onSettlement.bind(this);
+    this.onCity = this.onCity.bind(this);
+    this.start = this.start.bind(this);
+    this.isCurrentPlayer = this.isCurrentPlayer.bind(this);
+    this.initSettlement = this.initSettlement.bind(this);
+    this.initRoad = this.initRoad.bind(this);
+    this.hasResources = this.hasResources.bind(this);
+    this.hasAllowance = this.hasAllowance.bind(this);
+    this.buildCity = this.buildCity.bind(this);
+    this.buildRoad = this.buildRoad.bind(this);
+    this.buildSettlement = this.buildSettlement.bind(this);
+    this.endTurn = this.endTurn.bind(this);
+    this.rollDice = this.rollDice.bind(this);
+    this.distributeResources = this.distributeResources.bind(this);
+    this.offerTrade = this.offerTrade.bind(this);
+
     this.on('end-turn').then(this.isCurrentPlayer, this.endTurn);
     this.on('trade-offer').then(this.isCurrentPlayer, this.offerTrade);
     this.onRoad();
     this.onSettlement();
     this.onCity();
-  },
+  }
 
-  onRoad: function() {
+  onRoad() {
     this.on('build-road', function(req) {
       return req.game.phase === 'setup';
     })
@@ -30,9 +49,9 @@ module.exports = BaseController.extend({
           this.hasAllowance('road'),
           this.buildRoad
     );
-  },
+  }
 
-  onSettlement: function() {
+  onSettlement() {
     this.on('build-settlement', function(req) {
       return req.game.phase === 'setup';
     })
@@ -48,9 +67,9 @@ module.exports = BaseController.extend({
           this.hasAllowance('settlement'),
           this.buildSettlement
     );
-  },
+  }
 
-  onCity: function() {
+  onCity() {
     this.on('build-city', function(req) {
       return req.game.phase === 'playing';
     })
@@ -59,15 +78,15 @@ module.exports = BaseController.extend({
           this.hasAllowance('city'),
           this.buildCity
     );
-  },
+  }
 
-  start: function() {
+  start() {
     if (this.game.turn < 1) {
       this.emitter.emit('start-turn', this.game.getDataForTurn(1));
     }
-  },
+  }
 
-  isCurrentPlayer: function(req, next) {
+  isCurrentPlayer(req, next) {
     var yes = req.playerId === this.game.currentPlayer.id;
 
     if (!yes) {
@@ -75,9 +94,9 @@ module.exports = BaseController.extend({
     }
 
     next();
-  },
+  }
 
-  initSettlement: function(req, next) {
+  initSettlement(req, next) {
     var board = this.game.board;
     var ownedCorners = board.corners.query({
       owner: req.playerId
@@ -98,9 +117,9 @@ module.exports = BaseController.extend({
       buildId: req.data.buildId
     });
     next();
-  },
+  }
 
-  initRoad: function(req, next) {
+  initRoad(req, next) {
     var board = this.game.board;
     var ownedEdges = board.edges.query({ owner: req.player });
     var distributeResources = ownedEdges.length === 1;
@@ -158,9 +177,9 @@ module.exports = BaseController.extend({
     }
 
     next();
-  },
+  }
 
-  hasResources: function(resources) {
+  hasResources(resources) {
     return function(req, next) {
       var yes = req.player.hasResources(resources);
 
@@ -170,9 +189,9 @@ module.exports = BaseController.extend({
 
       next();
     };
-  },
+  }
 
-  hasAllowance: function(object) {
+  hasAllowance(object) {
     return function(req, next) {
       var objects = [];
       var yes = false;
@@ -209,9 +228,9 @@ module.exports = BaseController.extend({
 
       next();
     }.bind(this);
-  },
+  }
 
-  buildRoad: function(req, next) {
+  buildRoad(req, next) {
     var buildableSpots = this.game.getBuildableEdgesForPlayer(req.player);
 
     var validSpot = buildableSpots.some(function(edge) {
@@ -227,9 +246,9 @@ module.exports = BaseController.extend({
       buildId: req.data.buildId
     });
     next();
-  },
+  }
 
-  buildSettlement: function(req, next) {
+  buildSettlement(req, next) {
     var buildableSpots = this.game.getBuildableCornersForPlayer(req.player);
 
     var validSpot = buildableSpots.some(function(corner) {
@@ -245,9 +264,9 @@ module.exports = BaseController.extend({
       buildId: req.data.buildId
     });
     next();
-  },
+  }
 
-  buildCity: function(req, next) {
+  buildCity(req, next) {
     var buildableSpots = this.game.board.corners.query({
       owner: req.player,
       settlement: true
@@ -266,9 +285,9 @@ module.exports = BaseController.extend({
       buildId: req.data.buildId
     });
     next();
-  },
+  }
 
-  endTurn: function(req, next) {
+  endTurn(req, next) {
     var thisTurn = this.game.getDataForTurn(this.game.turn);
     var nextTurn = this.game.getDataForTurn(this.game.turn + 1);
 
@@ -280,9 +299,9 @@ module.exports = BaseController.extend({
     }
 
     this.rollDice(req, next);
-  },
+  }
 
-  rollDice: function(req, next) {
+  rollDice(req, next) {
     var die1 = this.d6();
     var die2 = this.d6();
     var total = die1 + die2;
@@ -299,9 +318,9 @@ module.exports = BaseController.extend({
     }
 
     this.distributeResources(req, total, next);
-  },
+  }
 
-  distributeResources: function(req, diceTotal, next) {
+  distributeResources(req, diceTotal, next) {
     var data = {};
     var tiles = this.game.board.tiles.query({ value: diceTotal });
 
@@ -331,13 +350,13 @@ module.exports = BaseController.extend({
 
     req.addEvent('distribute-resources', data);
     next();
-  },
+  }
 
-  offerTrade: function(req, next) {
+  offerTrade(req, next) {
     var data = req.data;
     data.playerId = req.playerId;
     req.addEvent('trade-offer', data);
     next();
   }
 
-});
+};

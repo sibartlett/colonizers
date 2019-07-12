@@ -80,8 +80,6 @@ class BaseController {
     for (var i = 0; i < game.rolls; i++) {
       this.generator.random();
     }
-
-    this.init();
   }
 
   d6() {
@@ -114,38 +112,6 @@ class BaseController {
     }, callback);
 
     this.queue.emit(options.event, req);
-  }
-
-  static extend(options) {
-    var controller = function() {
-      _.forEach(this.methods, function(key) {
-        this[key] = this[key].bind(this);
-      }, this);
-
-      BaseController.apply(this, arguments);
-    };
-
-    controller.super_ = BaseController;
-    controller.prototype = Object.create(BaseController.prototype, {
-      constructor: {
-        value: controller,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-
-    controller.prototype.methods = [];
-
-    _.forEach(options, function(value, key) {
-      if (typeof value === 'function') {
-        controller.prototype.methods.push(key);
-      }
-
-      controller.prototype[key] = value;
-    });
-
-    return controller;
   }
 }
 

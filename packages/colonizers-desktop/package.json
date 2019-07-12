@@ -1,9 +1,9 @@
 {
+  "private": true,
   "name": "colonizers-desktop",
   "productName": "Colonizers",
   "license": "AGPL-3.0",
   "author": "Simon Bartlett",
-  "private": true,
   "version": "0.1.0",
   "description": "A Colonizers desktop app (with local play only)",
   "main": "lib/index.js",
@@ -16,9 +16,7 @@
     "osx": "electron-packager . Colonizers --platform=darwin --arch=x64 --version=0.28.3 --asar --out=./__dist__/Colonizers-osx --ignore=./__dist__ --ignore=./node_modules/code --ignore=./node_modules/lab"
   },
   "dependencies": {
-    "babel": "^5.6.14",
-    "colonizers-client": "^0.0.6",
-    "colonizers-core": "^0.0.6"
+    "babel": "^5.6.14"
   },
   "devDependencies": {
     "code": "^1.4.1",

@@ -22,7 +22,7 @@ exports.register = function(server, options, next) {
       directory: {
         path: [
           './server/assets/css',
-          './node_modules/colonizers-client/public/css'
+          '../colonizers-client/public/css'
         ]
       }
     }
@@ -38,7 +38,7 @@ exports.register = function(server, options, next) {
       directory: {
         path: [
           './server/assets/fonts',
-          './node_modules/colonizers-client/public/fonts'
+          '../colonizers-client/public/fonts'
         ]
       }
     }
@@ -53,7 +53,7 @@ exports.register = function(server, options, next) {
     handler: {
       directory: {
         path: [
-          './node_modules/colonizers-client/public/img'
+          '../colonizers-client/public/img'
         ]
       }
     }
@@ -68,7 +68,7 @@ exports.register = function(server, options, next) {
     handler: {
       directory: {
         path: [
-          './node_modules/colonizers-client/public/tilesets'
+          '../colonizers-client/public/tilesets'
         ]
       }
     }

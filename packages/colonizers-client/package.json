@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "colonizers-client",
   "license": "AGPL-3.0",
   "author": "Simon Bartlett <simon@sibartlett.com>",
@@ -13,7 +14,6 @@
   "dependencies": {
     "async": "1.4.2",
     "bootstrap": "3.3.5",
-    "colonizers-core": "^0.0.7",
     "component-emitter": "1.2.0",
     "hammerjs": "2.0.4",
     "jquery": "2.1.4",

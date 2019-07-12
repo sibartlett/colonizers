@@ -1,9 +1,5 @@
 'use strict';
 
-require('babel/register')({
-  ignore: [/node_modules(?!.*colonizers)/]
-});
-
 var Hapi = require('hapi');
 var views = require('./views');
 
@@ -33,11 +29,14 @@ var plugins = [
   {
     register: require('good'),
     options: {
-      opsInterval: 1000,
-      reporters: [{
-        reporter: require('good-console'),
-        events: { log: '*', response: '*' }
-      }]
+      ops: {
+        interval: 1000
+      },
+      reporters: {
+        console: [{
+          module: 'good-console'
+        }]
+      }
     }
   },
   {
@@ -61,7 +60,7 @@ var plugins = [
   {
     register: require('./auth'),
     options: {
-      cookieSecret: process.env.COOKIE_SECRET || 'our little secret'
+      cookieSecret: process.env.COOKIE_SECRET || 'our not soooooo little secret :P'
     }
   },
   {
