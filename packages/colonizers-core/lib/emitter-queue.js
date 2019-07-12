@@ -67,7 +67,7 @@ class EmitterQueue {
     if (this.callbacks[event] == null) {
       this.callbacks[event] = [];
       if (this._source) {
-        this._source.on(event, (data) => {
+        this._source.on(event, data => {
           this.emit(event, data);
         });
       }

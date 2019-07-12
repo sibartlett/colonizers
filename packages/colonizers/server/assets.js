@@ -3,7 +3,6 @@
 var babelify = require('babelify');
 
 exports.register = function(server, options, next) {
-
   var shared = [
     'jquery',
     'component-emitter',
@@ -20,10 +19,7 @@ exports.register = function(server, options, next) {
     },
     handler: {
       directory: {
-        path: [
-          './server/assets/css',
-          '../colonizers-client/public/css'
-        ]
+        path: ['./server/assets/css', '../colonizers-client/public/css']
       }
     }
   });
@@ -36,10 +32,7 @@ exports.register = function(server, options, next) {
     },
     handler: {
       directory: {
-        path: [
-          './server/assets/fonts',
-          '../colonizers-client/public/fonts'
-        ]
+        path: ['./server/assets/fonts', '../colonizers-client/public/fonts']
       }
     }
   });
@@ -52,9 +45,7 @@ exports.register = function(server, options, next) {
     },
     handler: {
       directory: {
-        path: [
-          '../colonizers-client/public/img'
-        ]
+        path: ['../colonizers-client/public/img']
       }
     }
   });
@@ -67,9 +58,7 @@ exports.register = function(server, options, next) {
     },
     handler: {
       directory: {
-        path: [
-          '../colonizers-client/public/tilesets'
-        ]
+        path: ['../colonizers-client/public/tilesets']
       }
     }
   });

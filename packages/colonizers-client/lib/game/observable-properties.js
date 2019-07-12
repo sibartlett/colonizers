@@ -56,13 +56,12 @@ function defineObservableProperties(obj, properties) {
     }.bind(obj);
   }
 
-  var props = Object.getOwnPropertyNames(properties)
-    .map(function(name) {
-      return {
-        name: name,
-        value: properties[name]
-      };
-    });
+  var props = Object.getOwnPropertyNames(properties).map(function(name) {
+    return {
+      name: name,
+      value: properties[name]
+    };
+  });
 
   var simple = props.filter(function(prop) {
     return typeof prop.value !== 'function';
@@ -82,16 +81,16 @@ function copyObservables() {
   var others = Array.prototype.slice.call(arguments, 1);
 
   others
-  .filter(function(item) {
-    return item._observables ? true : false;
-  })
-  .forEach(function(item) {
-    var propNames = Object.getOwnPropertyNames(item);
-    propNames.forEach(function(propName) {
-      var propDescriptor = Object.getOwnPropertyDescriptor(item, propName);
-      Object.defineProperty(obj, propName, propDescriptor);
+    .filter(function(item) {
+      return item._observables ? true : false;
+    })
+    .forEach(function(item) {
+      var propNames = Object.getOwnPropertyNames(item);
+      propNames.forEach(function(propName) {
+        var propDescriptor = Object.getOwnPropertyDescriptor(item, propName);
+        Object.defineProperty(obj, propName, propDescriptor);
+      });
     });
-  });
 }
 
 module.exports = {

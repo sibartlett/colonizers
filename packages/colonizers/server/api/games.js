@@ -6,7 +6,6 @@ var Joi = require('joi');
 var mongoose = require('mongoose');
 
 exports.register = function(server, options, next) {
-
   options = Hoek.applyToDefaults({ basePath: '' }, options);
 
   var io = server.plugins['hapi-io'].io;
@@ -49,10 +48,12 @@ exports.register = function(server, options, next) {
       auth: {
         strategy: 'cookie'
       },
-      pre: [{
-        assign: 'room',
-        method: loadRoom
-      }]
+      pre: [
+        {
+          assign: 'room',
+          method: loadRoom
+        }
+      ]
     },
     handler: function(request, reply) {
       reply(request.pre.room.game);
@@ -72,10 +73,12 @@ exports.register = function(server, options, next) {
       auth: {
         strategy: 'cookie'
       },
-      pre: [{
-        assign: 'room',
-        method: loadRoom
-      }]
+      pre: [
+        {
+          assign: 'room',
+          method: loadRoom
+        }
+      ]
     },
     handler: function(request, reply) {
       var GameEvent = mongoose.model('GameEvent');
@@ -99,17 +102,24 @@ exports.register = function(server, options, next) {
           roomId: server.plugins.validations.roomId.required()
         },
         payload: {
-          event: Joi.string().lowercase().required().description('Event name'),
-          data: Joi.object().optional().description('Event data')
+          event: Joi.string()
+            .lowercase()
+            .required()
+            .description('Event name'),
+          data: Joi.object()
+            .optional()
+            .description('Event data')
         }
       },
       auth: {
         strategy: 'cookie'
       },
-      pre: [{
-        assign: 'room',
-        method: loadRoom
-      }]
+      pre: [
+        {
+          assign: 'room',
+          method: loadRoom
+        }
+      ]
     },
     handler: function(request, reply) {
       var room = request.pre.room;
@@ -125,11 +135,14 @@ exports.register = function(server, options, next) {
         }
       });
 
-      gameContext.pushEvent({
-        playerId: request.auth.credentials.userId.toString(),
-        event: request.payload.event,
-        data: request.payload.data
-      }, reply);
+      gameContext.pushEvent(
+        {
+          playerId: request.auth.credentials.userId.toString(),
+          event: request.payload.event,
+          data: request.payload.data
+        },
+        reply
+      );
     }
   });
 

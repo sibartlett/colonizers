@@ -18,23 +18,13 @@ class HexCornerCollection extends QueryableCollection {
 
 class HexEdgeCollection extends QueryableCollection {
   constructor() {
-    super([
-      clauses.owner,
-      clauses.within,
-      clauses.exclude,
-      clauses.buildable
-    ]);
+    super([clauses.owner, clauses.within, clauses.exclude, clauses.buildable]);
   }
 }
 
 class HexTileCollection extends QueryableCollection {
   constructor() {
-    super([
-      clauses.owner,
-      clauses.within,
-      clauses.exclude,
-      clauses.buildable
-    ]);
+    super([clauses.owner, clauses.within, clauses.exclude, clauses.buildable]);
   }
 }
 

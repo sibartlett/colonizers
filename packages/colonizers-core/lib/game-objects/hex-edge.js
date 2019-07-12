@@ -19,7 +19,7 @@ class HexEdge extends BoardEntity {
   }
 
   getAdjacentCorners() {
-    return this.spatialQuery((board) => {
+    return this.spatialQuery(board => {
       return {
         collection: board.corners,
         radius: board.hexInfo.circumradius * 0.6,
@@ -29,7 +29,7 @@ class HexEdge extends BoardEntity {
   }
 
   getAdjacentEdges() {
-    return this.spatialQuery((board) => {
+    return this.spatialQuery(board => {
       return {
         collection: board.edges,
         radius: board.hexInfo.apothem * 1.1,
@@ -39,7 +39,7 @@ class HexEdge extends BoardEntity {
   }
 
   getAdjacentTiles() {
-    return this.spatialQuery((board) => {
+    return this.spatialQuery(board => {
       return {
         collection: board.tiles,
         radius: board.hexInfo.apothem * 1.1,

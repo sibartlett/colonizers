@@ -33,9 +33,11 @@ var plugins = [
         interval: 1000
       },
       reporters: {
-        console: [{
-          module: 'good-console'
-        }]
+        console: [
+          {
+            module: 'good-console'
+          }
+        ]
       }
     }
   },
@@ -45,10 +47,11 @@ var plugins = [
   {
     register: require('./mongoose'),
     options: {
-      mongodbUrl: process.env.COLONIZERS_MONGO_URL ||
-                  process.env.MONGOLAB_URI ||
-                  process.env.MONGOHQ_URL ||
-                  'mongodb://localhost/colonizers'
+      mongodbUrl:
+        process.env.COLONIZERS_MONGO_URL ||
+        process.env.MONGOLAB_URI ||
+        process.env.MONGOHQ_URL ||
+        'mongodb://localhost/colonizers'
     }
   },
   {
@@ -60,7 +63,8 @@ var plugins = [
   {
     register: require('./auth'),
     options: {
-      cookieSecret: process.env.COOKIE_SECRET || 'our not soooooo little secret :P'
+      cookieSecret:
+        process.env.COOKIE_SECRET || 'our not soooooo little secret :P'
     }
   },
   {
@@ -79,9 +83,10 @@ var plugins = [
     register: require('./pubsub'),
     options: {
       connection: {
-        url: process.env.COLONIZERS_RABBITMQ_URL ||
-             process.env.CLOUDAMQP_URL ||
-             process.env.RABBITMQ_BIGWIG_URL
+        url:
+          process.env.COLONIZERS_RABBITMQ_URL ||
+          process.env.CLOUDAMQP_URL ||
+          process.env.RABBITMQ_BIGWIG_URL
       },
       queue: process.env.COLONIZERS_RABBITMQ_QUEUE
     }

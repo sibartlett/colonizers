@@ -15,7 +15,11 @@ class UiHexTile extends HexTile {
   render(options, tileset) {
     var tileStyle = tileset.tiles[options.type];
     var tileSpacing = tileset.board.tilespacing || 8;
-    var hexagonOpts = this.getHexOptions(tileStyle, tileSpacing, options.hexInfo);
+    var hexagonOpts = this.getHexOptions(
+      tileStyle,
+      tileSpacing,
+      options.hexInfo
+    );
 
     this.numberToken = null;
 
@@ -56,7 +60,7 @@ class UiHexTile extends HexTile {
     if (options.value > 0) {
       this.addNumberToken(options.value);
     }
-  };
+  }
 
   getHexOptions(tileStyle, tileSpacing, hexInfo) {
     var options = {
@@ -70,7 +74,7 @@ class UiHexTile extends HexTile {
     };
 
     if (tileStyle.bgimage) {
-      var patternScale = hexInfo.circumradius * 2 / tileStyle.bgimage.width;
+      var patternScale = (hexInfo.circumradius * 2) / tileStyle.bgimage.width;
       options = _.extend(options, {
         fillPriority: 'pattern',
         fillPatternImage: tileStyle.bgimage,

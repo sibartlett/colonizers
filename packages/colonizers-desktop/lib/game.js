@@ -44,7 +44,9 @@ var client = new Client({
   factory: factory,
   tileset: tileset,
   emitterQueue: queue,
-  clientUsers: players.map(function(user) { return user.id; }),
+  clientUsers: players.map(function(user) {
+    return user.id;
+  }),
   emitEvent: function(playerId, event, data) {
     state.gameContext.pushEvent({
       playerId: playerId,

@@ -102,14 +102,17 @@ class BaseController {
   }
 
   pushEvent(options, callback) {
-    var req = new PlayerRequest({
-      logger: options.logger,
-      playerId: options.playerId,
-      player: this.game.getPlayerById(options.playerId),
-      emitter: this.emitter,
-      game: this.game,
-      data: options.data
-    }, callback);
+    var req = new PlayerRequest(
+      {
+        logger: options.logger,
+        playerId: options.playerId,
+        player: this.game.getPlayerById(options.playerId),
+        emitter: this.emitter,
+        game: this.game,
+        data: options.data
+      },
+      callback
+    );
 
     this.queue.emit(options.event, req);
   }

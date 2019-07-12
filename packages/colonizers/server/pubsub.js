@@ -7,16 +7,18 @@ var Rabbit = require('wascally');
 var Rabbus = require('rabbus');
 
 exports.register = function(server, options, next) {
-
-  options = Hoek.applyToDefaults({
-    connection: {
-      'server': 'localhost'
+  options = Hoek.applyToDefaults(
+    {
+      connection: {
+        server: 'localhost'
+      },
+      exchange: 'socket-io.exchange',
+      queue: 'socket-io.queue',
+      routingKey: 'socket-io.key',
+      messageType: 'socket-io.messageType'
     },
-    exchange: 'socket-io.exchange',
-    queue: 'socket-io.queue',
-    routingKey: 'socket-io.key',
-    messageType: 'socket-io.messageType'
-  }, options);
+    options
+  );
 
   options.queue = {
     name: options.queue,
@@ -48,7 +50,6 @@ exports.register = function(server, options, next) {
   Rabbit.configure({
     connection: connection
   }).then(function() {
-
     function Publisher(rabbus) {
       Rabbus.Publisher.call(this, rabbus, {
         exchange: options.exchange,
@@ -87,7 +88,6 @@ exports.register = function(server, options, next) {
     });
 
     next();
-
   });
 };
 

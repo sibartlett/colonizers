@@ -21,7 +21,6 @@ function formatDates() {
 
 // Form handling
 function displayErrors($form, data) {
-
   $form.find('.form-group').removeClass('has-error');
 
   if (data && data.validation && data.validation.source === 'payload') {

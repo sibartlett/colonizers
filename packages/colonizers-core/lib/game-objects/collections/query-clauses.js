@@ -3,7 +3,6 @@
 var MathHelper = require('./../../math-helper');
 
 module.exports = {
-
   owner: {
     valid: function(options) {
       return options.owner || options.player;
@@ -25,8 +24,9 @@ module.exports = {
     },
 
     filter: function(options, items) {
-      var excludes = Array.isArray(options.exclude) ?
-            options.exclude : [options.exclude];
+      var excludes = Array.isArray(options.exclude)
+        ? options.exclude
+        : [options.exclude];
 
       return items.filter(function(item) {
         return excludes.indexOf(item.id) === -1;
@@ -97,5 +97,4 @@ module.exports = {
       });
     }
   }
-
 };

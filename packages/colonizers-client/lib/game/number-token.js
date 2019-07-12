@@ -58,19 +58,21 @@ class NumberToken {
       fontSize: 16,
       align: 'center'
     });
-    text.setX(text.getWidth() / 2 * -1);
-    text.setY(text.getHeight() / 2 * -1);
+    text.setX((text.getWidth() / 2) * -1);
+    text.setY((text.getHeight() / 2) * -1);
     this.group.add(text);
   }
 
   renderDots(dotInfo) {
     for (var i = 1; i <= dotInfo.count; i++) {
-      this.group.add(new Konva.Circle({
-        x: (4 * i) + dotInfo.offset,
-        y: 12,
-        radius: 1,
-        fill: dotInfo.color
-      }));
+      this.group.add(
+        new Konva.Circle({
+          x: 4 * i + dotInfo.offset,
+          y: 12,
+          radius: 1,
+          fill: dotInfo.color
+        })
+      );
     }
   }
 

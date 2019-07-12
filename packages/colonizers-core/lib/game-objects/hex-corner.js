@@ -29,7 +29,7 @@ class HexCorner extends BoardEntity {
   }
 
   getAdjacentTiles() {
-    return this.spatialQuery((board) => {
+    return this.spatialQuery(board => {
       return {
         collection: board.tiles,
         radius: board.hexInfo.circumradius * 1.1,
@@ -39,7 +39,7 @@ class HexCorner extends BoardEntity {
   }
 
   getAdjacentCorners() {
-    return this.spatialQuery((board) => {
+    return this.spatialQuery(board => {
       return {
         collection: board.corners,
         radius: board.hexInfo.circumradius * 1.1,
@@ -49,7 +49,7 @@ class HexCorner extends BoardEntity {
   }
 
   getAdjacentEdges() {
-    return this.spatialQuery((board) => {
+    return this.spatialQuery(board => {
       return {
         collection: board.edges,
         radius: board.hexInfo.circumradius * 0.6,
@@ -68,7 +68,7 @@ class HexCorner extends BoardEntity {
     corners.forEach(function(corner) {
       corner.isBuildable = false;
     });
-  };
+  }
 
   buildCity(player) {
     var corners = this.getAdjacentCorners();

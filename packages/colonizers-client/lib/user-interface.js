@@ -16,8 +16,7 @@ ko.bindingHandlers.component.preprocess = function(val) {
   if (val) {
     if (val.indexOf('{') < 0) {
       val = '{ name: ' + val + ', params: $root }';
-    }
-    else if (val.indexOf('params') < 0) {
+    } else if (val.indexOf('params') < 0) {
       val = val.replace('}', 'params:$root}');
     }
   }
@@ -54,13 +53,16 @@ function UserInterface(options) {
     onBuildCity: this.onBuildCity
   };
 
-  this.viewModel.subscribe('turn', function() {
-    this.onTurnEnd();
+  this.viewModel.subscribe(
+    'turn',
+    function() {
+      this.onTurnEnd();
 
-    // TODO: Maybe there's a better way to do this?
-    // This method call needs to be delayed to allow model to update first
-    setTimeout(this.onTurnStart.bind(this), 10);
-  }.bind(this));
+      // TODO: Maybe there's a better way to do this?
+      // This method call needs to be delayed to allow model to update first
+      setTimeout(this.onTurnStart.bind(this), 10);
+    }.bind(this)
+  );
 }
 
 UserInterface.prototype.emit = function(event, data) {

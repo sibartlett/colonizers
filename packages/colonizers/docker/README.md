@@ -12,9 +12,9 @@ docker run  --name some-colonizers --link some-mongo:mongo some-rabbitmq:rabbitm
 
 The following environment variables are also honored for configuring your Colonizers instance:
 
-* `-e COLONIZERS_MONGO_URL` (defaults to the linked `mongo` container)
-* `-e COLONIZERS_RABBITMQ_URL` (defaults to the linked `rabbitmq` container)
-* `-e COLONIZERS_RABBITMQ_QUEUE` (useful when running multiple load-balanaced instances)
+- `-e COLONIZERS_MONGO_URL` (defaults to the linked `mongo` container)
+- `-e COLONIZERS_RABBITMQ_URL` (defaults to the linked `rabbitmq` container)
+- `-e COLONIZERS_RABBITMQ_QUEUE` (useful when running multiple load-balanaced instances)
 
 If you'd like to be able to access the instance from the host without the container's IP, standard port mappings can be used:
 

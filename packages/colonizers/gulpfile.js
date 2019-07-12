@@ -10,7 +10,8 @@ var less = require('gulp-less');
 // Site
 
 gulp.task('styles', function() {
-  return gulp.src(['./server/assets/less/site.less'])
+  return gulp
+    .src(['./server/assets/less/site.less'])
     .pipe(less())
     .pipe(gulp.dest('./server/assets/css'));
 });
@@ -21,12 +22,15 @@ gulp.task('jquery-plugins', function() {
     'node_modules/jasny-bootstrap/js/transition.js'
   ];
 
-  var head = 'var jQuery = require(\'jquery\'),\n    $ = jQuery;\n\n';
+  var head = "var jQuery = require('jquery'),\n    $ = jQuery;\n\n";
   var foot = '\n\nmodule.exports = jQuery;\n';
 
-  paths = paths.map(function(p) { return path.join(__dirname, p); });
+  paths = paths.map(function(p) {
+    return path.join(__dirname, p);
+  });
 
-  return gulp.src(paths)
+  return gulp
+    .src(paths)
     .pipe(replace('window.jQuery', 'jQuery'))
     .pipe(replace('window.$', '$'))
     .pipe(concat('jquery-plugins.js'))

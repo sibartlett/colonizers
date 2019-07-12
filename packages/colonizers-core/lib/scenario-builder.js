@@ -18,9 +18,11 @@ class ScenarioBuilder {
   }
 
   getLayout() {
-    return _.find(this.scenario.layouts, (layout) => {
-      return layout.players.min === this.players ||
-        layout.players.max >= this.players;
+    return _.find(this.scenario.layouts, layout => {
+      return (
+        layout.players.min === this.players ||
+        layout.players.max >= this.players
+      );
     });
   }
 
@@ -37,7 +39,7 @@ class ScenarioBuilder {
     });
 
     var max = _.max(counts);
-    var maxIndex = (counts.indexOf(max)) % 2;
+    var maxIndex = counts.indexOf(max) % 2;
 
     tiles.forEach(function(row, index) {
       var length = index % 2 === maxIndex ? max : max - 1;
@@ -48,7 +50,7 @@ class ScenarioBuilder {
     });
 
     var boardHeight = apothem * (tiles.length + 1);
-    var boardWidth = ((max * 2) + (max - 1)) * hexInfo.circumradius;
+    var boardWidth = (max * 2 + (max - 1)) * hexInfo.circumradius;
     var maxOffsetX = -(boardWidth / 2 - circumradius);
     var minOffsetX = circumradius * 1.5 + maxOffsetX;
     var offsetX = [
@@ -161,7 +163,7 @@ class ScenarioBuilder {
         }
 
         tileId++;
-        var x = tileLayout.offsetX[i % 2] + (circumradius * 3) * j;
+        var x = tileLayout.offsetX[i % 2] + circumradius * 3 * j;
         var y = apothem * i + tileLayout.offsetY;
         var center = {
           x: MathHelper.round(x, 3),
@@ -203,23 +205,23 @@ class ScenarioBuilder {
 
     resourceTiles.forEach(function(tile, index) {
       switch (terrainTiles[index]) {
-      case 'd':
-        tile.tileType = 'desert';
-        break;
-      case 'b':
-        tile.tileType = 'brick';
-        break;
-      case 'g':
-        tile.tileType = 'grain';
-        break;
-      case 'l':
-        tile.tileType = 'lumber';
-        break;
-      case 'o':
-        tile.tileType = 'ore';
-        break;
-      case 'w':
-        tile.tileType = 'wool';
+        case 'd':
+          tile.tileType = 'desert';
+          break;
+        case 'b':
+          tile.tileType = 'brick';
+          break;
+        case 'g':
+          tile.tileType = 'grain';
+          break;
+        case 'l':
+          tile.tileType = 'lumber';
+          break;
+        case 'o':
+          tile.tileType = 'ore';
+          break;
+        case 'w':
+          tile.tileType = 'wool';
       }
 
       var value = 0;

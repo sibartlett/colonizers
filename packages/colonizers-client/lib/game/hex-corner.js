@@ -136,10 +136,10 @@ class UiHexCorner extends HexCorner {
 
   addToBoard(board) {
     super.addToBoard(board);
-    board.on('board:rotate', (rotation) => {
+    board.on('board:rotate', rotation => {
       this.group.rotation(-rotation);
     });
-  };
+  }
 }
 
 module.exports = UiHexCorner;

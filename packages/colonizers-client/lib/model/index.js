@@ -27,7 +27,7 @@ function RoomModel(options) {
 }
 
 RoomModel.prototype.getTurn = function() {
-  return this.game && this.game.turn || 0;
+  return (this.game && this.game.turn) || 0;
 };
 
 RoomModel.prototype.isMyTurn = function() {
@@ -43,7 +43,6 @@ RoomModel.prototype.getPlayers = function() {
   var game = this.game;
 
   if (game) {
-
     return game.players.map(function(player) {
       var user = _.find(users, function(_user) {
         return _user.id === player.id;
@@ -58,7 +57,6 @@ RoomModel.prototype.getPlayers = function() {
 
       return new PlayerModel(user, player);
     });
-
   } else {
     return users.map(function(user) {
       var ply = this.factory.createPlayer({

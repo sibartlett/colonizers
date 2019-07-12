@@ -6,7 +6,7 @@ function round(number, dp) {
 }
 
 function getAngle(p1, p2) {
-  return Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI;
+  return (Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180) / Math.PI;
 }
 
 function getDistance(p1, p2) {
@@ -14,7 +14,7 @@ function getDistance(p1, p2) {
 }
 
 function getEndpoint(origin, angle, distance) {
-  var radians = angle * Math.PI / 180;
+  var radians = (angle * Math.PI) / 180;
   return {
     x: round(origin.x + distance * Math.sin(radians), 3),
     y: round(origin.y + distance * Math.cos(radians), 3)

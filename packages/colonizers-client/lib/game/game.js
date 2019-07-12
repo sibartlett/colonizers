@@ -52,19 +52,21 @@ class UiGame extends Game {
   }
 
   hideBuildableEntities() {
-    this.board.corners.query({
-      buildable: true
-    })
-    .forEach(function(corner) {
-      corner.hide();
-    });
+    this.board.corners
+      .query({
+        buildable: true
+      })
+      .forEach(function(corner) {
+        corner.hide();
+      });
 
-    this.board.edges.query({
-      buildable: true
-    })
-    .forEach(function(edge) {
-      edge.hide();
-    });
+    this.board.edges
+      .query({
+        buildable: true
+      })
+      .forEach(function(edge) {
+        edge.hide();
+      });
 
     this.draw();
   }

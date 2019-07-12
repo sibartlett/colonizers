@@ -3,14 +3,13 @@
 var Code = require('code');
 var Lab = require('lab');
 var validator = require('is-my-json-valid');
-var lab = exports.lab = Lab.script();
+var lab = (exports.lab = Lab.script());
 
 var expect = Code.expect;
 var describe = lab.describe;
 var it = lab.it;
 
 describe('ScenarioBuilder', function() {
-
   var ScenarioBuilder = require('../lib/scenario-builder');
   var validateGame = validator(require('../schemas/game.json'));
 
@@ -30,10 +29,7 @@ describe('ScenarioBuilder', function() {
         },
         numberTokens: [5, 2, 6],
         terrainTiles: 'o,g,l',
-        tiles: [
-          '-,t1',
-          ',t3,t2'
-        ]
+        tiles: ['-,t1', ',t3,t2']
       }
     ]
   };
@@ -52,17 +48,12 @@ describe('ScenarioBuilder', function() {
         },
         numberTokens: [5, 2, 6, 3, 8],
         terrainTiles: 'o,g,l',
-        tiles: [
-          ',t1,t3',
-          ',t2'
-        ]
+        tiles: [',t1,t3', ',t2']
       }
     ]
   };
 
-
   describe('getScenario()', function() {
-
     it('returns valid scenario for 3 players, non-random', function(done) {
       var scenarioBuilder = new ScenarioBuilder({
         scenario: baseScenario,
@@ -164,7 +155,5 @@ describe('ScenarioBuilder', function() {
       expect(validGame).to.be.true();
       done();
     });
-
   });
-
 });

@@ -62,7 +62,10 @@ class UiBoard extends Board {
     if (transform.center && !this.transformOffset) {
       this.transformOffset = true;
       this.layer.draggable(false);
-      offset = this.layer.getAbsoluteTransform().invert().point(transform.center);
+      offset = this.layer
+        .getAbsoluteTransform()
+        .invert()
+        .point(transform.center);
       this.layer.position(transform.center);
       this.layer.offset(offset);
     }

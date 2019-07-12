@@ -28,9 +28,11 @@ MenuModel.prototype.toggleFullscreen = function() {
 };
 
 MenuModel.prototype.toggleNotifications = function() {
-  this.notifications.toggle(function(enabled) {
-    return this.notificationsEnabled(enabled);
-  }.bind(this));
+  this.notifications.toggle(
+    function(enabled) {
+      return this.notificationsEnabled(enabled);
+    }.bind(this)
+  );
 };
 
 module.exports = {

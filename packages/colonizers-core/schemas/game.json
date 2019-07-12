@@ -11,7 +11,6 @@
   "required": ["allowance", "board"],
 
   "definitions": {
-
     "allowance": {
       "type": "object",
       "properties": {
@@ -21,7 +20,6 @@
       },
 
       "required": ["cities", "settlements", "roads"]
-
     },
 
     "point": {

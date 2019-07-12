@@ -65,12 +65,15 @@ GameContext.fromScenario = function(options, done) {
   var gameBuilder = new GameBuilder();
   var game = gameBuilder.getGame(options.players, options.gameOptions);
 
-  return new GameContext({
-    game: game,
-    factory: options.factory,
-    postEvent: options.postEvent,
-    preEvent: options.preEvent
-  }, done);
+  return new GameContext(
+    {
+      game: game,
+      factory: options.factory,
+      postEvent: options.postEvent,
+      preEvent: options.preEvent
+    },
+    done
+  );
 };
 
 GameContext.fromSave = function(options, done) {

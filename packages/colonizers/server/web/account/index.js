@@ -3,7 +3,6 @@
 var mongoose = require('mongoose');
 
 exports.register = function(server, options, next) {
-
   server.route({
     method: 'GET',
     path: '/account',

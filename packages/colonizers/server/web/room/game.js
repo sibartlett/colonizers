@@ -9,7 +9,6 @@ var GameCoordinator = require('colonizers-core/lib/game-coordinator');
 var Factory = Client.Factory;
 
 $.get('/tilesets/modern.json', function(tileset) {
-
   var socket = io();
   var emitterQueue = new EmitterQueue(socket);
   var factory = new Factory({

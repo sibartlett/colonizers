@@ -34,8 +34,15 @@
 
 // After each array mutation, fires a notification on the given subscribable
 function wrapStandardArrayMutators(array, subscribable, signal) {
-  var fnNames =
-    ['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'];
+  var fnNames = [
+    'pop',
+    'push',
+    'reverse',
+    'shift',
+    'sort',
+    'splice',
+    'unshift'
+  ];
   fnNames.forEach(function(fnName) {
     var origMutator = array[fnName];
     array[fnName] = function() {
@@ -70,8 +77,7 @@ function addKnockoutArrayMutators(ko, array, subscribable, signal) {
           // Creates a temporary observableArray that can perform the operation.
           var fn = ko.observableArray.fn[fnName];
           result = fn.apply(ko.observableArray(array), arguments);
-        }
-        finally {
+        } finally {
           signal.pause = false;
         }
 

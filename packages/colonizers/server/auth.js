@@ -3,26 +3,27 @@
 var mongoose = require('mongoose');
 
 exports.register = function(server, options, next) {
-
   var findSession = function(criteria, callback) {
     var Session = mongoose.model('Session');
-    Session.findOne(criteria).populate('user').exec(function(err, session) {
-      if (err) {
-        return callback(err);
-      }
+    Session.findOne(criteria)
+      .populate('user')
+      .exec(function(err, session) {
+        if (err) {
+          return callback(err);
+        }
 
-      if (!session || !session.user) {
-        return callback(null, false);
-      }
+        if (!session || !session.user) {
+          return callback(null, false);
+        }
 
-      callback(null, true, {
-        session: session,
-        sessionId: session._id,
-        user: session.user,
-        userId: session.user._id,
-        scope: session.scope
+        callback(null, true, {
+          session: session,
+          sessionId: session._id,
+          user: session.user,
+          userId: session.user._id,
+          scope: session.scope
+        });
       });
-    });
   };
 
   server.auth.strategy('cookie', 'cookie', {
@@ -37,7 +38,7 @@ exports.register = function(server, options, next) {
 
   server.auth.strategy('basic', 'basic', {
     validateFunc: function(request, username, password, callback) {
-      findSession({_id: username, token: password}, callback);
+      findSession({ _id: username, token: password }, callback);
     }
   });
 

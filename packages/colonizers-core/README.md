@@ -8,8 +8,8 @@
 
 This is the core library for Colonizers, responsible for:
 
-* core game logic
-* data serialization formats
+- core game logic
+- data serialization formats
 
 Colonizers is an event-driven implementation of the popular board game ["Catan" (formerly "The Settlers of Catan")](http://en.wikipedia.org/wiki/The_Settlers_of_Catan) by Klaus Teuber.
 

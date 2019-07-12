@@ -5,7 +5,6 @@ var Hoek = require('hoek');
 var mongoose = require('mongoose');
 
 exports.register = function(server, options, next) {
-
   options = Hoek.applyToDefaults({ basePath: '' }, options);
 
   server.route({
@@ -43,11 +42,23 @@ exports.register = function(server, options, next) {
       },
       validate: {
         payload: {
-          username: Joi.string().required().description('Username'),
-          name: Joi.string().required().description('Name'),
-          email: Joi.string().email().required().description('Email'),
-          password: Joi.string().optional().allow('').description('Password'),
-          password2: Joi.string().optional().allow('')
+          username: Joi.string()
+            .required()
+            .description('Username'),
+          name: Joi.string()
+            .required()
+            .description('Name'),
+          email: Joi.string()
+            .email()
+            .required()
+            .description('Email'),
+          password: Joi.string()
+            .optional()
+            .allow('')
+            .description('Password'),
+          password2: Joi.string()
+            .optional()
+            .allow('')
         }
       }
     },

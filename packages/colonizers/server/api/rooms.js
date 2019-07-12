@@ -7,7 +7,6 @@ var mongoose = require('mongoose');
 var _ = require('underscore');
 
 exports.register = function(server, options, next) {
-
   options = Hoek.applyToDefaults({ basePath: '' }, options);
 
   var broadcastUsers = function(roomId) {
@@ -104,10 +103,12 @@ exports.register = function(server, options, next) {
       auth: {
         strategy: 'cookie'
       },
-      pre: [{
-        assign: 'room',
-        method: getRoom()
-      }]
+      pre: [
+        {
+          assign: 'room',
+          method: getRoom()
+        }
+      ]
     },
     handler: function(request, reply) {
       reply(request.pre.room);
@@ -118,8 +119,9 @@ exports.register = function(server, options, next) {
     method: 'GET',
     path: options.basePath + '/rooms/{roomId}/users',
     config: {
-      description: 'Returns a list of users for a single room, ' +
-                   'specified by the roomId parameter.',
+      description:
+        'Returns a list of users for a single room, ' +
+        'specified by the roomId parameter.',
       plugins: {
         'hapi-io': 'room-users'
       },
@@ -131,10 +133,12 @@ exports.register = function(server, options, next) {
       auth: {
         strategy: 'cookie'
       },
-      pre: [{
-        assign: 'room',
-        method: getRoom({ users: true })
-      }]
+      pre: [
+        {
+          assign: 'room',
+          method: getRoom({ users: true })
+        }
+      ]
     },
     handler: function(request, reply) {
       var users = _.map(request.pre.room.users, function(user) {
@@ -158,10 +162,15 @@ exports.register = function(server, options, next) {
       },
       validate: {
         payload: {
-          scenario: Joi.string().required()
-                       .description('Colonizers scenario ID'),
-          numPlayers: Joi.number().integer().required().min(3).max(4)
-                         .description('Number of players')
+          scenario: Joi.string()
+            .required()
+            .description('Colonizers scenario ID'),
+          numPlayers: Joi.number()
+            .integer()
+            .required()
+            .min(3)
+            .max(4)
+            .description('Number of players')
         }
       }
     },
@@ -230,9 +239,7 @@ exports.register = function(server, options, next) {
               };
             }
 
-            reply(
-              autoStart(server.plugins.pubsub, request.params.roomId)
-            );
+            reply(autoStart(server.plugins.pubsub, request.params.roomId));
           }
         }
       ]
@@ -270,10 +277,12 @@ exports.register = function(server, options, next) {
           roomId: server.plugins.validations.roomId.required()
         }
       },
-      pre: [{
-        assign: 'room',
-        method: getRoom()
-      }]
+      pre: [
+        {
+          assign: 'room',
+          method: getRoom()
+        }
+      ]
     },
     handler: function(request, reply) {
       var room = request.pre.room;

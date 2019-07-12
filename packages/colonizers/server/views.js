@@ -3,7 +3,6 @@
 var Handlebars = require('handlebars');
 
 module.exports = function(server, isProd) {
-
   Handlebars.registerHelper('json', function(obj) {
     return new Handlebars.SafeString(JSON.stringify(obj));
   });
@@ -25,5 +24,4 @@ module.exports = function(server, isProd) {
       }
     }
   });
-
 };

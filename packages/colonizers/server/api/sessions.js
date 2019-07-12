@@ -5,7 +5,6 @@ var Hoek = require('hoek');
 var mongoose = require('mongoose');
 
 exports.register = function(server, options, next) {
-
   options = Hoek.applyToDefaults({ basePath: '' }, options);
 
   server.route({
@@ -21,13 +20,15 @@ exports.register = function(server, options, next) {
       var Session = mongoose.model('Session');
 
       var criteria = { user: request.auth.credentials.userId };
-      Session.find(criteria).sort('-lastActive').exec(function(err, user) {
-        if (err) {
-          return reply(err);
-        }
+      Session.find(criteria)
+        .sort('-lastActive')
+        .exec(function(err, user) {
+          if (err) {
+            return reply(err);
+          }
 
-        reply(user);
-      });
+          reply(user);
+        });
     }
   });
 
@@ -41,8 +42,9 @@ exports.register = function(server, options, next) {
       },
       validate: {
         params: {
-          sessionId: server.plugins.validations.mongoId.required()
-                           .description('Session ID')
+          sessionId: server.plugins.validations.mongoId
+            .required()
+            .description('Session ID')
         }
       }
     },
@@ -78,8 +80,9 @@ exports.register = function(server, options, next) {
       },
       validate: {
         params: {
-          sessionId: server.plugins.validations.mongoId.required()
-                           .description('Session ID')
+          sessionId: server.plugins.validations.mongoId
+            .required()
+            .description('Session ID')
         }
       }
     },

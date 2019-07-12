@@ -23,7 +23,7 @@ class HexTile extends BoardEntity {
   }
 
   getAdjacentTiles() {
-    return this.spatialQuery((board) => {
+    return this.spatialQuery(board => {
       return {
         collection: board.tiles,
         radius: board.hexInfo.apothem * 2.1,
@@ -33,7 +33,7 @@ class HexTile extends BoardEntity {
   }
 
   getAdjacentCorners() {
-    return this.spatialQuery((board) => {
+    return this.spatialQuery(board => {
       return {
         collection: board.corners,
         radius: board.hexInfo.circumradius * 1.1,

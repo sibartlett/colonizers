@@ -47,7 +47,8 @@ function combineFiles(tileset) {
 }
 
 gulp.task('styles', function() {
-  return gulp.src(['./less/game.less'])
+  return gulp
+    .src(['./less/game.less'])
     .pipe(less())
     .pipe(gulp.dest('./public/css'));
 });
@@ -61,23 +62,30 @@ gulp.task('jquery-plugins', function() {
     'node_modules/jasny-bootstrap/js/transition.js'
   ];
 
-  var head = 'var jQuery = require(\'jquery\'),\n    $ = jQuery;\n\n';
+  var head = "var jQuery = require('jquery'),\n    $ = jQuery;\n\n";
   var foot = '\n\nmodule.exports = jQuery;\n';
 
-  paths = paths.map(function(p) { return path.join(__dirname, p); });
+  paths = paths.map(function(p) {
+    return path.join(__dirname, p);
+  });
 
-  return gulp.src(paths)
+  return gulp
+    .src(paths)
     .pipe(replace('window.jQuery', 'jQuery'))
     .pipe(replace('window.$', '$'))
     .pipe(concat('jquery-plugins.js'))
     .pipe(insert.wrap(head, foot));
 });
 
-gulp.task('tilesets', group(tilesets, function(tileset) {
-  return gulp.src('./tilesets/' + tileset + '/*.@(gif|png)')
-             .pipe(imagemin())
-             .pipe(combineFiles(tileset))
-             .pipe(gulp.dest('./public/tilesets'));
-}));
+gulp.task(
+  'tilesets',
+  group(tilesets, function(tileset) {
+    return gulp
+      .src('./tilesets/' + tileset + '/*.@(gif|png)')
+      .pipe(imagemin())
+      .pipe(combineFiles(tileset))
+      .pipe(gulp.dest('./public/tilesets'));
+  })
+);
 
 gulp.task('default', ['jquery-plugins', 'styles', 'tilesets']);

@@ -97,7 +97,6 @@ class Game {
       }
 
       return corner ? corner.getAdjacentEdges() : [];
-
     } else {
       var edges = this.board.edges.query({
         owner: this.currentPlayer

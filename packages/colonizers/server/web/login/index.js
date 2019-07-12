@@ -4,7 +4,6 @@ var Joi = require('joi');
 var mongoose = require('mongoose');
 
 exports.register = function(server, options, next) {
-
   server.route({
     method: 'GET',
     path: '/logout',
@@ -46,9 +45,11 @@ exports.register = function(server, options, next) {
         return reply.redirect('/lobby');
       }
 
-      reply.view('login/index', {
-        script: 'login/public'
-      }).header('x-auth-required', true);
+      reply
+        .view('login/index', {
+          script: 'login/public'
+        })
+        .header('x-auth-required', true);
     }
   });
 
@@ -58,7 +59,9 @@ exports.register = function(server, options, next) {
     config: {
       validate: {
         payload: {
-          username: Joi.string().lowercase().required(),
+          username: Joi.string()
+            .lowercase()
+            .required(),
           password: Joi.string().required()
         }
       },
@@ -71,80 +74,94 @@ exports.register = function(server, options, next) {
         mode: 'try',
         strategy: 'cookie'
       },
-      pre: [{
-        assign: 'abuseDetected',
-        method: function(request, reply) {
-          var AuthAttempt = mongoose.model('AuthAttempt');
-          var ip = request.info.remoteAddress;
-          var username = request.payload.username;
+      pre: [
+        {
+          assign: 'abuseDetected',
+          method: function(request, reply) {
+            var AuthAttempt = mongoose.model('AuthAttempt');
+            var ip = request.info.remoteAddress;
+            var username = request.payload.username;
 
-          AuthAttempt.abuseDetected(ip, username, function(err, detected) {
-            if (err) {
-              return reply(err);
-            }
+            AuthAttempt.abuseDetected(ip, username, function(err, detected) {
+              if (err) {
+                return reply(err);
+              }
 
-            if (detected) {
-              return reply({
-                message: 'Maximum number of auth attempts reached. Please try again later.'
-              }).takeover().code(400);
-            }
+              if (detected) {
+                return reply({
+                  message:
+                    'Maximum number of auth attempts reached. Please try again later.'
+                })
+                  .takeover()
+                  .code(400);
+              }
 
-            reply();
-          });
-        }
-      }, {
-        assign: 'user',
-        method: function(request, reply) {
-          var User = mongoose.model('User');
-          var username = request.payload.username;
-          var password = request.payload.password;
-
-          User.authenticate(username, password, function(err, user) {
-            if (err) {
-              return reply(err);
-            }
-
-            reply(err || user);
-          });
-        }
-      }, {
-        assign: 'logAttempt',
-        method: function(request, reply) {
-          if (request.pre.user) {
-            return reply();
+              reply();
+            });
           }
+        },
+        {
+          assign: 'user',
+          method: function(request, reply) {
+            var User = mongoose.model('User');
+            var username = request.payload.username;
+            var password = request.payload.password;
 
-          var AuthAttempt = mongoose.model('AuthAttempt');
-          var ip = request.info.remoteAddress;
-          var username = request.payload.username;
+            User.authenticate(username, password, function(err, user) {
+              if (err) {
+                return reply(err);
+              }
 
-          AuthAttempt.create({ ip: ip, username: username}, function(err) {
-            if (err) {
-              return reply(err);
+              reply(err || user);
+            });
+          }
+        },
+        {
+          assign: 'logAttempt',
+          method: function(request, reply) {
+            if (request.pre.user) {
+              return reply();
             }
 
-            return reply({
-              message: 'Username and password combination not found ' +
-                       'or account is inactive.'
-            }).takeover().code(400);
-          });
-        }
-      }, {
-        assign: 'session',
-        method: function(request, reply) {
-          var Session = mongoose.model('Session');
+            var AuthAttempt = mongoose.model('AuthAttempt');
+            var ip = request.info.remoteAddress;
+            var username = request.payload.username;
 
-          Session.create({
-            user: request.pre.user._id
-          }, function(err, session) {
-            if (err) {
-              return reply(err);
-            }
+            AuthAttempt.create({ ip: ip, username: username }, function(err) {
+              if (err) {
+                return reply(err);
+              }
 
-            return reply(session);
-          });
+              return reply({
+                message:
+                  'Username and password combination not found ' +
+                  'or account is inactive.'
+              })
+                .takeover()
+                .code(400);
+            });
+          }
+        },
+        {
+          assign: 'session',
+          method: function(request, reply) {
+            var Session = mongoose.model('Session');
+
+            Session.create(
+              {
+                user: request.pre.user._id
+              },
+              function(err, session) {
+                if (err) {
+                  return reply(err);
+                }
+
+                return reply(session);
+              }
+            );
+          }
         }
-      }]
+      ]
     },
     handler: function(request, reply) {
       var result = request.pre.session.toSession();
@@ -169,84 +186,102 @@ exports.register = function(server, options, next) {
       validate: {
         payload: {
           name: Joi.string().required(),
-          email: Joi.string().email().lowercase().required(),
-          username: Joi.string().token().lowercase().required(),
+          email: Joi.string()
+            .email()
+            .lowercase()
+            .required(),
+          username: Joi.string()
+            .token()
+            .lowercase()
+            .required(),
           password: Joi.string().required()
         }
       },
-      pre: [{
-        assign: 'usernameCheck',
-        method: function(request, reply) {
-          var User = mongoose.model('User');
+      pre: [
+        {
+          assign: 'usernameCheck',
+          method: function(request, reply) {
+            var User = mongoose.model('User');
 
-          var conditions = {
-            username: request.payload.username
-          };
+            var conditions = {
+              username: request.payload.username
+            };
 
-          User.findOne(conditions, function(err, user) {
-            if (err) {
-              return reply(err);
-            }
+            User.findOne(conditions, function(err, user) {
+              if (err) {
+                return reply(err);
+              }
 
-            if (user) {
-              var response = {
-                message: 'Username already in use.'
-              };
+              if (user) {
+                var response = {
+                  message: 'Username already in use.'
+                };
 
-              return reply(response).takeover().code(409);
-            }
+                return reply(response)
+                  .takeover()
+                  .code(409);
+              }
 
-            reply(true);
-          });
+              reply(true);
+            });
+          }
+        },
+        {
+          assign: 'emailCheck',
+          method: function(request, reply) {
+            var User = mongoose.model('User');
+            var conditions = {
+              email: request.payload.email
+            };
+
+            User.findOne(conditions, function(err, user) {
+              if (err) {
+                return reply(err);
+              }
+
+              if (user) {
+                var response = {
+                  message: 'Email already in use.'
+                };
+
+                return reply(response)
+                  .takeover()
+                  .code(409);
+              }
+
+              reply(true);
+            });
+          }
+        },
+        {
+          assign: 'user',
+          method: function(request, reply) {
+            var User = mongoose.model('User');
+            var user = new User({
+              username: request.payload.username,
+              email: request.payload.email,
+              name: request.payload.name,
+              password: request.payload.password
+            });
+
+            user.save(function(err) {
+              reply(err || user);
+            });
+          }
+        },
+        {
+          assign: 'session',
+          method: function(request, reply) {
+            var Session = mongoose.model('Session');
+            Session.create(
+              {
+                user: request.pre.user._id
+              },
+              reply
+            );
+          }
         }
-      }, {
-        assign: 'emailCheck',
-        method: function(request, reply) {
-          var User = mongoose.model('User');
-          var conditions = {
-            email: request.payload.email
-          };
-
-          User.findOne(conditions, function(err, user) {
-            if (err) {
-              return reply(err);
-            }
-
-            if (user) {
-              var response = {
-                message: 'Email already in use.'
-              };
-
-              return reply(response).takeover().code(409);
-            }
-
-            reply(true);
-          });
-        }
-      }, {
-        assign: 'user',
-        method: function(request, reply) {
-          var User = mongoose.model('User');
-          var user = new User({
-            username: request.payload.username,
-            email: request.payload.email,
-            name: request.payload.name,
-            password: request.payload.password
-          });
-
-          user.save(function(err) {
-            reply(err || user);
-          });
-        }
-      }, {
-        assign: 'session',
-        method: function(request, reply) {
-          var Session = mongoose.model('Session');
-          Session.create({
-            user: request.pre.user._id
-          }, reply);
-        }
-      }]
+      ]
     },
     handler: function(request, reply) {
       var result = request.pre.session.toSession();

@@ -2,7 +2,7 @@
 
 var _ = require('underscore');
 
-class GameSerializer{
+class GameSerializer {
   constructor(factory) {
     this.factory = factory;
   }
@@ -206,8 +206,7 @@ class GameSerializer{
 
       if (corner.isSettlement) {
         hexCorner.buildSettlement(player);
-      }
-      else if (corner.isCity) {
+      } else if (corner.isCity) {
         hexCorner.buildCity(player);
       }
     });

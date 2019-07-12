@@ -4,7 +4,6 @@ var Joi = require('joi');
 var mongoose = require('mongoose');
 
 exports.register = function(server, options, next) {
-
   server.route({
     method: 'GET',
     path: '/room/{roomId}',
@@ -32,15 +31,19 @@ exports.register = function(server, options, next) {
             script: 'room/room'
           });
         } else {
-          reply.view('room/game', {
-            context: {
-              roomId: request.params.roomId,
-              userId: request.auth.credentials.userId
+          reply.view(
+            'room/game',
+            {
+              context: {
+                roomId: request.params.roomId,
+                userId: request.auth.credentials.userId
+              },
+              script: 'room/game'
             },
-            script: 'room/game'
-          }, {
-            layout: false
-          });
+            {
+              layout: false
+            }
+          );
         }
       });
     }

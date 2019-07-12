@@ -6,7 +6,6 @@ var ko = require('knockout');
 var _ = require('underscore');
 
 $(function() {
-
   var socket = io();
 
   var viewModel = {

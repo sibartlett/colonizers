@@ -1,13 +1,30 @@
 {
-    "private": true,
-    "license": "AGPL-3.0",
-    "workspaces": [
-        "packages/colonizers",
-        "packages/colonizers-client",
-        "packages/colonizers-core",
-        "packages/colonizers-desktop"
-    ],
-    "scripts": {
-      "start": "yarn workspace colonizers start"
+  "private": true,
+  "license": "AGPL-3.0",
+  "workspaces": [
+    "packages/colonizers",
+    "packages/colonizers-client",
+    "packages/colonizers-core",
+    "packages/colonizers-desktop"
+  ],
+  "scripts": {
+    "start": "yarn workspace colonizers start",
+    "prettier": "prettier \"**/*.{js,json,md}\" --single-quote --write"
+  },
+  "devDependencies": {
+    "husky": "^3.0.0",
+    "lint-staged": "^9.2.0",
+    "prettier": "1.18.2"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
     }
+  },
+  "lint-staged": {
+    "*.{js,json,md}": [
+      "prettier --single-quote --write",
+      "git add"
+    ]
+  }
 }

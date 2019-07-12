@@ -4,7 +4,6 @@ var _ = require('underscore');
 var BaseController = require('./base');
 
 module.exports = class Controller extends BaseController {
-
   constructor(game, emitter) {
     super(game, emitter);
 
@@ -35,48 +34,41 @@ module.exports = class Controller extends BaseController {
   onRoad() {
     this.on('build-road', function(req) {
       return req.game.phase === 'setup';
-    })
-    .then(this.isCurrentPlayer,
-          this.initRoad,
-          this.endTurn
-    );
+    }).then(this.isCurrentPlayer, this.initRoad, this.endTurn);
 
     this.on('build-road', function(req) {
       return req.game.phase === 'playing';
-    })
-    .then(this.isCurrentPlayer,
-          this.hasResources({ lumber: 1, brick: 1 }),
-          this.hasAllowance('road'),
-          this.buildRoad
+    }).then(
+      this.isCurrentPlayer,
+      this.hasResources({ lumber: 1, brick: 1 }),
+      this.hasAllowance('road'),
+      this.buildRoad
     );
   }
 
   onSettlement() {
     this.on('build-settlement', function(req) {
       return req.game.phase === 'setup';
-    })
-    .then(this.isCurrentPlayer,
-          this.initSettlement
-    );
+    }).then(this.isCurrentPlayer, this.initSettlement);
 
     this.on('build-settlement', function(req) {
       return req.game.phase === 'playing';
-    })
-    .then(this.isCurrentPlayer,
-          this.hasResources({ lumber: 1, brick: 1, wool: 1, grain: 1 }),
-          this.hasAllowance('settlement'),
-          this.buildSettlement
+    }).then(
+      this.isCurrentPlayer,
+      this.hasResources({ lumber: 1, brick: 1, wool: 1, grain: 1 }),
+      this.hasAllowance('settlement'),
+      this.buildSettlement
     );
   }
 
   onCity() {
     this.on('build-city', function(req) {
       return req.game.phase === 'playing';
-    })
-    .then(this.isCurrentPlayer,
-          this.hasResources({ ore: 3, grain: 2 }),
-          this.hasAllowance('city'),
-          this.buildCity
+    }).then(
+      this.isCurrentPlayer,
+      this.hasResources({ ore: 3, grain: 2 }),
+      this.hasAllowance('city'),
+      this.buildCity
     );
   }
 
@@ -336,16 +328,17 @@ module.exports = class Controller extends BaseController {
 
     tiles.forEach(function(tile) {
       var _tiles = tile.getAdjacentCorners();
-      _tiles.filter(function(corner) {
-        return corner.owner != null;
-      })
-      .forEach(function(corner) {
-        data[corner.owner][tile.type]++;
-
-        if (corner.isCity) {
+      _tiles
+        .filter(function(corner) {
+          return corner.owner != null;
+        })
+        .forEach(function(corner) {
           data[corner.owner][tile.type]++;
-        }
-      });
+
+          if (corner.isCity) {
+            data[corner.owner][tile.type]++;
+          }
+        });
     });
 
     req.addEvent('distribute-resources', data);
@@ -358,5 +351,4 @@ module.exports = class Controller extends BaseController {
     req.addEvent('trade-offer', data);
     next();
   }
-
 };

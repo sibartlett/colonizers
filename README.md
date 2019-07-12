@@ -11,13 +11,13 @@ Works across multiple devices (desktops, tablets, and mobile phones).
 
 ![Screenshot](http://i.imgur.com/j91XT2y.png)
 
-
 ## Running locally
 
 Make sure you have the following installed:
-* Node.js 8
-* MongoDB
-* RabbitMQ
+
+- Node.js 8
+- MongoDB
+- RabbitMQ
 
 ```sh
 git clone https://github.com/colonizers/colonizers.git
@@ -39,8 +39,8 @@ The app should now be running at [http://localhost:3000](http://localhost:3000)
 
 This application uses the following Colonizers modules:
 
-* [core](https://github.com/colonizers/colonizers-core) - core game logic and data formats
-* [client](https://github.com/colonizers/colonizers-client) - gameplay user interface
+- [core](https://github.com/colonizers/colonizers-core) - core game logic and data formats
+- [client](https://github.com/colonizers/colonizers-client) - gameplay user interface
 
 ## A work in progress!
 

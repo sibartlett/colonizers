@@ -78,17 +78,19 @@ RoomSchema.methods.join = function(userId, cb) {
 
   this.users.push(member);
 
-  this.save(function(err) {
-    if (err) {
-      return cb(err);
-    }
+  this.save(
+    function(err) {
+      if (err) {
+        return cb(err);
+      }
 
-    var result = _.find(this.users, function(_member) {
-      return _member.user.equals(userId);
-    });
+      var result = _.find(this.users, function(_member) {
+        return _member.user.equals(userId);
+      });
 
-    cb(null, result);
-  }.bind(this));
+      cb(null, result);
+    }.bind(this)
+  );
 };
 
 RoomSchema.methods.leave = function(userId, cb) {
@@ -118,11 +120,14 @@ RoomSchema.methods.leave = function(userId, cb) {
 RoomSchema.methods.preEvent = function(event, data, next) {
   var GameEvent = mongoose.model('GameEvent');
 
-  GameEvent.create({
-    room: this._id,
-    event: event,
-    data: data
-  }, next);
+  GameEvent.create(
+    {
+      room: this._id,
+      event: event,
+      data: data
+    },
+    next
+  );
 };
 
 RoomSchema.methods.postEvent = function(event, data, next) {
@@ -152,16 +157,21 @@ RoomSchema.methods.start = function(callback) {
     })
   };
 
-  this.gameContext = GameContext.fromScenario(options, function(gameContext) {
-    this.gameContext = gameContext;
-    this.game = gameContext.getState();
-    this.save(function() {
-      this.gameContext.start();
-      if (callback) {
-        callback(this);
-      }
-    }.bind(this));
-  }.bind(this));
+  this.gameContext = GameContext.fromScenario(
+    options,
+    function(gameContext) {
+      this.gameContext = gameContext;
+      this.game = gameContext.getState();
+      this.save(
+        function() {
+          this.gameContext.start();
+          if (callback) {
+            callback(this);
+          }
+        }.bind(this)
+      );
+    }.bind(this)
+  );
 };
 
 RoomSchema.methods.getGameContext = function(options) {
@@ -183,18 +193,19 @@ RoomSchema.methods.getGameContext = function(options) {
 };
 
 RoomSchema.statics.getUsers = function(roomId, callback) {
-  this.findById(roomId).populate('users.user').exec(function(err, room) {
+  this.findById(roomId)
+    .populate('users.user')
+    .exec(function(err, room) {
+      if (err || !room) {
+        return callback(err, room);
+      }
 
-    if (err || !room) {
-      return callback(err, room);
-    }
+      var users = room.users.map(function(member) {
+        return member.user;
+      });
 
-    var users = room.users.map(function(member) {
-      return member.user;
+      callback(err, users);
     });
-
-    callback(err, users);
-  });
 };
 
 module.exports = RoomSchema;

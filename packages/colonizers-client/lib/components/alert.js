@@ -25,16 +25,18 @@ function AlertModel(roomModel) {
 
 AlertModel.prototype.isYou = function() {
   var thisPlayerId = this.roomModel.thisPlayer && this.roomModel.thisPlayer.id;
-  var currentPlayerId = this.roomModel.currentPlayer &&
-                        this.roomModel.currentPlayer.id;
+  var currentPlayerId =
+    this.roomModel.currentPlayer && this.roomModel.currentPlayer.id;
 
-  return this.roomModel.clientUsers.length === 1 &&
-         thisPlayerId === currentPlayerId;
+  return (
+    this.roomModel.clientUsers.length === 1 && thisPlayerId === currentPlayerId
+  );
 };
 
 AlertModel.prototype.getColor = function() {
-  return this.roomModel.currentPlayer &&
-         this.roomModel.currentPlayer.player.color;
+  return (
+    this.roomModel.currentPlayer && this.roomModel.currentPlayer.player.color
+  );
 };
 
 AlertModel.prototype.dismiss = function() {
@@ -57,7 +59,7 @@ AlertModel.prototype.onNextTurn = function(data, next) {
   if (this.you) {
     this.message = 'Your turn';
   } else {
-    this.message = currentPlayer.user.name + '\'s turn';
+    this.message = currentPlayer.user.name + "'s turn";
   }
 
   if (next) {
