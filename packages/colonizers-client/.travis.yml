@@ -1,0 +1,12 @@
+language: node_js
+node_js:
+- node
+before_deploy: "gulp"
+deploy:
+  provider: npm
+  email: simon@sibartlett.com
+  api_key:
+    secure: nVL5v+BAvgAsWQ+4np2ohhGq9p6gavraL7MnM5glrfjzt8dt/95Gvp+hBxkGY1m1QJBETFFVSUoLm2RCc6f3C3DtR0QAIWbHPNxa3QLJ1BgefV2X3GZIIn+6+Njc0x8MtEYrvHvfp2t2yxXWd+RX+gt0Y9p5Uj2Xm0opuSrLJT6kJ9XN++JFh2q+YUMoMs67UQUbQR3EQrcSV3mzBdNygEnnQQkPb7MddX61+hDmAVB5XUYifGct5Oswff5Mc3wRg7ouW3Aa4Uc5F9fCa+s0qG2eEUHYYJIsOSzv96N/4fr31QTqmWlb7OjkTvnhkUQL/Uy13kUk9Igr4JucfDTuZTUuJV6z0n8ACtqumbB14axdKIlA4K88c00x3fvUosXvYZirzSl3GqWT+innv6u0+nh0d8zsUWYsX2PA4Wk19Vlvu3sI4p3TfO5paw5pXXmZ+48w/VEnC0otJk0SxDI8zOmRSPC3UjnKt7cK6UIQMofwtvRmlIT/IF25RlqvSN/I+9QKH6NM2gad9aDYqE1mrRuhEvCg4XhgbK6kqZ0n2y6//uwZ29EbAKzuopGNR9ZeuGMfZ1f3Z8DKdzAabs5ZzFmDU0IwrMyBNTi5AleHA1cwgT3C2EeBkYCcE34T1cZ43afPzlZ1SAXC3LK2UgPAVtmJK5e+MQEqFI3DPnYyicI=
+  on:
+    tags: true
+    repo: colonizers/colonizers-client
