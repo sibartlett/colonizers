@@ -1,0 +1,23 @@
+{
+  "name": "Colonizers",
+  "description": "A game based on \"The Settlers of Catan\" by Klaus Teuber.",
+  "repository": "https://github.com/sibartlett/colonizers",
+  "addons": [
+    "cloudamqp",
+    "mongolab"
+  ],
+  "env": {
+    "NODE_ENV": {
+      "description": "Configures Express for production",
+      "value": "production"
+    },
+    "COOKIE_SECRET": {
+      "description": "Session cookies are signed with this secret to prevent tampering",
+      "generator": "secret"
+    },
+    "HOST": {
+      "description": "The host that the application will bind to",
+      "value": "0.0.0.0"
+    }
+  }
+}

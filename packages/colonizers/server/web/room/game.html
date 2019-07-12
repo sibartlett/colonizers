@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html class="game">
+<head>
+  <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, minimal-ui" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Colonizers">
+  <meta name="msapplication-tap-highlight" content="no" />
+  <title>Colonizers</title>
+  <link rel="stylesheet" type="text/css" href="/css/game.css">
+</head>
+<body>
+
+  <div class="container-fluid top-container">
+    <div class="row">
+      <div class="col-xs-12 col-sm-8 col-md-9 canvas">
+        <div data-bind="component: 'alert'"></div>
+        <stage params="game: game"></stage>
+      </div>
+      <div class="col-xs-12 col-sm-4 col-md-3 sidebar offcanvas-xs">
+        <ul class="nav nav-pills">
+          <li class="active">
+            <a href="#players" data-toggle="tab">Players</a>
+          </li>
+          <li>
+            <a href="#chat" data-toggle="tab">Chat</a>
+          </li>
+          <li>
+            <a href="#log" data-toggle="tab">Log</a>
+          </li>
+          <li>
+            <a class="menu" href="#menu" data-toggle="tab">
+              <span class="menu-bar"></span>
+              <span class="menu-bar"></span>
+              <span class="menu-bar"></span>
+            </a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="players">
+            <div data-bind="component: 'players'"></div>
+          </div>
+          <div class="tab-pane" id="chat">
+          </div>
+          <div class="tab-pane" id="log">
+          </div>
+          <div class="tab-pane" id="menu">
+            <div data-bind="component: 'game-menu'"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-bind="component: 'player'"></div>
+  <div data-bind="component: 'build-modal'"></div>
+  <div data-bind="component: 'trade-modal'"></div>
+
+  {{#if context}}<script>window.context = {{json context}}</script>{{/if}}
+  <script src="/room.js" charset="utf-8"></script>
+</body>
+</html>

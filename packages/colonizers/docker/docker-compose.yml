@@ -1,0 +1,57 @@
+colonizers1:
+  image: colonizers/colonizers:latest
+  environment:
+    - COLONIZERS_RABBITMQ_QUEUE=colonizers1
+  links:
+    - mongo
+    - rabbitmq
+  ports:
+    - 3001:8080
+  volumes:
+    - ../server:/usr/src/app/server
+
+colonizers2:
+  image: colonizers/colonizers:latest
+  environment:
+    - COLONIZERS_RABBITMQ_QUEUE=colonizers2
+  links:
+    - mongo
+    - rabbitmq
+  ports:
+    - 3002:8080
+  volumes:
+    - ../server:/usr/src/app/server
+
+colonizers3:
+  image: colonizers/colonizers:latest
+  environment:
+    - COLONIZERS_RABBITMQ_QUEUE=colonizers3
+  links:
+    - mongo
+    - rabbitmq
+  ports:
+    - 3003:8080
+  volumes:
+    - ../server:/usr/src/app/server
+
+mongo:
+  image: mongo:latest
+
+rabbitmq:
+  image: rabbitmq:management
+  hostname: rabbitmq
+  environment:
+    - RABBITMQ_NODENAME=colonizers
+
+nginx:
+  image: nginx:latest
+  links:
+    - colonizers1
+    - colonizers2
+    - colonizers3
+    - rabbitmq
+  ports:
+    - 3000:3000
+    - 15672:15672
+  volumes:
+    - nginx.conf:/etc/nginx/nginx.conf:ro

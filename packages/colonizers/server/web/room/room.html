@@ -1,0 +1,31 @@
+<div class="container">
+  <div class="row">
+    <div class="col-lg-4 col-lg-offset-4">
+
+      <ul class="list-group" data-bind="foreach: users">
+        <li class="list-group-item">
+          <div class="media">
+            <div class="media-left media-middle">
+              <img class="img-circle" width="64"
+                data-bind="attr: { src: avatarUrl }">
+            </div>
+            <div class="media-body media-middle">
+              <h3 class="media-heading" data-bind="text: name"></h3>
+            </div>
+          </div>
+        </li>
+      </ul>
+
+      <button type="button" class="btn btn-success btn-block"
+              data-bind="visible: showJoinBtn, click: clickJoinBtn">
+        Join Game
+      </button>
+
+      <button type="button" class="btn btn-danger btn-block"
+              data-bind="visible: showLeaveBtn, click: clickLeaveBtn">
+        Leave Game
+      </button>
+
+    </div>
+  </div>
+</div>
