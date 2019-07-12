@@ -1,0 +1,23 @@
+language: node_js
+node_js:
+- node
+before_deploy:
+  - npm dedupe
+  - npm run build
+  - cd __dist__
+  - zip --symlinks -r Colonizers-linux-x86.zip Colonizers-linux-x86
+  - zip --symlinks -r Colonizers-linux-x64.zip Colonizers-linux-x64
+  - zip --symlinks -r Colonizers-osx.zip Colonizers-osx
+  - cd ..
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: t4tL1ZBXUa7Mxkp0H74C+/Q9iD0oxDajOFUuzHJXF4xC03zFXhaaiXioNYZeNpBzNhdImjEqaU/zHRUv1c9iGYwCdzVv9nG30luPu8M3Peuj6610Beur/esQ8hYFBU5qlzaQEXZ+U1KMyaFdy9puBN0Dks+gm5fTGMx4jBdAKMDhMg4MlC6H3bNskEFeW777zrhFfeUiW6MzzmOKHpRkwWJoQCQPyLuZDAr9tmZPH2NKVnodoGlMK0TcWN2iF2SkGU0jOy6DNSJBe27+Hg5HrBWCfCpNebe4LIL98TwJ5aRJI79b5m2aAJk3CwWKTBX5uCsAoUtBXsCtpyhlLhf1aZbsHcoxbPlYfI1O4fBkmm51Xe8EmRELRl+ZAsj82lERn2rWEr7k9t3wgRTJG5Mv2rnCtrDTR3E9lliXMnvOspDoY26NCT6yAnpgAba0FQ2Te+rniS7lzJ3NZpIPsPsHtODF4e3LLfNZ/HVhXIHDLt+yBdyK702w3mA82RNcjbz4S5YG2hQ+kQmsFpuwnckidDnvOWHfgJYoNxHqRrvzgFyasCXVxz3BfehXdolG2+3YgV0o2ZNpZIsAmSJIFFHg4J9rC7++oeSq9B1qQgf/WjMvp2gMITqtPKEKYFNPeovWHETYR4myO7mSKBfKjIAreLWnqALaVII0LZR7guhpjjM=
+  file:
+    - __dist__/Colonizers-linux-x86.zip
+    - __dist__/Colonizers-linux-x64.zip
+    - __dist__/Colonizers-osx.zip
+  on:
+    repo: colonizers/colonizers-desktop
+    tags: true
