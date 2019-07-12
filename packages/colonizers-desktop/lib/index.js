@@ -1,7 +1,7 @@
 'use strict';
 
-var app = require('app');
-var BrowserWindow = require('browser-window');
+var app = require('electron').app;
+var BrowserWindow = require('electron').BrowserWindow;
 
 var mainWindow = null;
 
@@ -16,12 +16,12 @@ app.on('ready', function() {
     title: 'Colonizers',
     width: 768,
     height: 500,
-    'min-width': 768,
-    'min-height': 500,
+    minWidth: 768,
+    minHeight: 500,
     center: true
   });
 
-  mainWindow.loadUrl('file://' + __dirname + '/game.html');
+  mainWindow.loadURL('file://' + __dirname + '/game.html');
 
   mainWindow.on('closed', function() {
     mainWindow = null;
