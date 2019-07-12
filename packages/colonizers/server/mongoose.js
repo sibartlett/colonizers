@@ -17,7 +17,7 @@ exports.register = function(server, options, next) {
   );
 
   server.expose('mongoose', mongoose);
-  mongoose.connect(options.mongodbUrl, next);
+  mongoose.connect(options.mongodbUrl, { useNewUrlParser: true }, next);
 };
 
 exports.register.attributes = {
