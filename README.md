@@ -35,13 +35,6 @@ The app should now be running at [http://localhost:3000](http://localhost:3000)
 
 [![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy) -->
 
-## Related Modules
-
-This application uses the following Colonizers modules:
-
-- [core](https://github.com/colonizers/colonizers-core) - core game logic and data formats
-- [client](https://github.com/colonizers/colonizers-client) - gameplay user interface
-
 ## A work in progress!
 
 Colonizers is very much a work in progress, with several critical gameplay
