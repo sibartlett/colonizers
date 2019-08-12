@@ -1,7 +1,7 @@
 'use strict';
 
 var async = require('async');
-var template = require('./templates').alert;
+var template = require('./html-templates').alert;
 var observableProps = require('./../game/observable-properties');
 var DieModel = require('./d6');
 

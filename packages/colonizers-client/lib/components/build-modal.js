@@ -1,7 +1,7 @@
 'use strict';
 
 var $ = require('jquery');
-var template = require('./templates').buildModal;
+var template = require('./html-templates').buildModal;
 var observableProps = require('./../game/observable-properties');
 
 function BuildModalModel(roomModel) {

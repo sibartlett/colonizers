@@ -1,11 +1,6 @@
 'use strict';
 
-var $ = require('jquery');
-var io = require('socket.io-client');
-var ko = require('knockout');
-var _ = require('underscore');
-
-$(function() {
+window.run = ({ $, _, io, ko }) => {
   var socket = io();
 
   var viewModel = {
@@ -50,4 +45,4 @@ $(function() {
   socket.on('connect', function() {
     socket.emit('enter-room', { roomId: window.context.roomId });
   });
-});
+};

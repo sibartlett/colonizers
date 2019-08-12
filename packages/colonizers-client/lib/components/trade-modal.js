@@ -1,6 +1,6 @@
 'use strict';
 
-var template = require('./templates').tradeModal;
+var template = require('./html-templates').tradeModal;
 var observableProps = require('./../game/observable-properties');
 
 function ResourceModel(key, player) {

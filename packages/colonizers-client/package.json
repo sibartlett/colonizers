@@ -36,11 +36,5 @@
     "gulp-util": "^3.0.7",
     "jasny-bootstrap": "git://github.com/jasny/bootstrap#v3.1.3",
     "through": "^2.3.8"
-  },
-  "browserify": {
-    "transform": [
-      "brfs",
-      "babelify"
-    ]
   }
 }

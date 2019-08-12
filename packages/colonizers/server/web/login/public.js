@@ -1,9 +1,6 @@
 'use strict';
 
-var $ = require('jquery');
-var swal = require('sweetalert');
-
-$(function() {
+window.run = ({ $, swal }) => {
   $('form.login').form(
     function() {
       swal({
@@ -37,4 +34,4 @@ $(function() {
 
     $('form.signup input').val('');
   });
-});
+};

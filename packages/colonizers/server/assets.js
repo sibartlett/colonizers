@@ -1,15 +1,18 @@
 'use strict';
 
-var babelify = require('babelify');
-
 exports.register = function(server, options, next) {
-  var shared = [
-    'jquery',
-    'component-emitter',
-    'socket.io-client',
-    'knockout',
-    'sweetalert'
-  ];
+  server.route({
+    method: 'GET',
+    path: '/bundles/{param*}',
+    config: {
+      auth: false
+    },
+    handler: {
+      directory: {
+        path: ['./dist']
+      }
+    }
+  });
 
   server.route({
     method: 'GET',
@@ -70,45 +73,8 @@ exports.register = function(server, options, next) {
       auth: false
     },
     handler: {
-      browserify: {
-        bundle: {
-          basedir: './server/web/',
-          external: shared,
-          transform: babelify
-        }
-      }
-    }
-  });
-
-  server.route({
-    method: 'GET',
-    path: '/site.js',
-    config: {
-      auth: false
-    },
-    handler: {
-      browserify: {
-        path: './server/assets/js/site.js',
-        bundle: {
-          require: shared,
-          transform: babelify
-        }
-      }
-    }
-  });
-
-  server.route({
-    method: 'GET',
-    path: '/room.js',
-    config: {
-      auth: false
-    },
-    handler: {
-      browserify: {
-        path: './server/web/room/game.js',
-        bundle: {
-          transform: babelify
-        }
+      directory: {
+        path: ['./server/web/']
       }
     }
   });

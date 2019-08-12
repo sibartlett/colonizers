@@ -1,9 +1,6 @@
 'use strict';
 
-var $ = require('jquery');
-var swal = require('sweetalert');
-
-$(function() {
+window.run = ({ $, swal }) => {
   $('form').form(function(room) {
     swal({
       title: 'Room created',
@@ -14,4 +11,4 @@ $(function() {
       window.location = '/room/' + room.id;
     }, 2000);
   });
-});
+};

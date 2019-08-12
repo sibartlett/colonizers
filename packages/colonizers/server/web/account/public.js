@@ -1,13 +1,10 @@
 'use strict';
 
-var $ = require('jquery');
-var swal = require('sweetalert');
-
-$(function() {
+window.run = ({ $, swal }) => {
   $('form').form(function() {
     swal({
       title: 'Account Updated',
       type: 'success'
     });
   });
-});
+};

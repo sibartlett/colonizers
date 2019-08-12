@@ -92,13 +92,6 @@ var plugins = [
     }
   },
   {
-    register: require('hapi-browserify'),
-    options: {
-      cache: isProd,
-      precompile: isProd
-    }
-  },
-  {
     register: require('hapi-context-credentials')
   },
   {

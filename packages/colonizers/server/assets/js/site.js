@@ -4,6 +4,10 @@ require('./jquery-plugins');
 
 var $ = require('jquery');
 var moment = require('moment');
+var swal = require('sweetalert');
+var io = require('socket.io-client');
+var ko = require('knockout');
+var _ = require('underscore');
 
 // Date formatting
 
@@ -59,4 +63,14 @@ $.fn.form = function(done, fail) {
 $(function() {
   formatDates();
   setInterval(formatDates, 5000);
+
+  if (window.run) {
+    window.run({
+      $,
+      _,
+      io,
+      ko,
+      swal
+    });
+  }
 });
