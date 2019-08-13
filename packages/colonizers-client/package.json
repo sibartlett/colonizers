@@ -16,12 +16,12 @@
     "bootstrap": "3.3.5",
     "component-emitter": "1.2.0",
     "hammerjs": "2.0.4",
-    "jquery": "2.1.4",
+    "jquery": "3.4.1",
     "jquery-mousewheel": "3.1.13",
-    "knockout": "3.3.0",
+    "knockout": "3.5.0",
     "konva": "^0.9.5",
     "lodash": "^4.17.15",
-    "moment": "2.10.6",
+    "moment": "2.24.0",
     "screenfull": "2.0.0"
   },
   "devDependencies": {
