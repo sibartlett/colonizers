@@ -9,7 +9,7 @@
   "repository": "git://github.com/colonizers/colonizers-core",
   "main": "lib/index.js",
   "scripts": {
-    "test": "lab --verbose --lint --coverage --sourcemaps --transform node_modules/lab-babel -I __core-js_shared__"
+    "test": "lab --verbose --lint --coverage --sourcemaps --transform ../../node_modules/lab-babel -I __core-js_shared__"
   },
   "dependencies": {
     "async": "1.4.2",

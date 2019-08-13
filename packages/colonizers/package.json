@@ -14,8 +14,8 @@
     "test": "lab --verbose --lint"
   },
   "dependencies": {
-    "babel-core": "^6.3.17",
-    "babel-preset-es2015": "^6.3.13",
+    "@babel/core": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
     "bcryptjs": "^2.4.3",
     "boom": "^5.2.0",
     "bootstrap": "3.3.5",
