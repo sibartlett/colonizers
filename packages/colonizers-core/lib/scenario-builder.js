@@ -1,6 +1,6 @@
 'use strict';
 
-var _ = require('underscore');
+var _ = require('lodash');
 var MathHelper = require('./math-helper');
 var hexInfo = require('./hex-info');
 
@@ -18,27 +18,22 @@ class ScenarioBuilder {
   }
 
   getLayout() {
-    return _.find(this.scenario.layouts, layout => {
-      return (
+    return this.scenario.layouts.find(
+      layout =>
         layout.players.min === this.players ||
         layout.players.max >= this.players
-      );
-    });
+    );
   }
 
   getTileLayout(layout) {
     var circumradius = hexInfo.circumradius;
     var apothem = hexInfo.apothem;
 
-    var tiles = layout.tiles.map(function(row) {
-      return row.split(',');
-    });
+    var tiles = layout.tiles.map(row => row.split(','));
 
-    var counts = tiles.map(function(row) {
-      return row.length;
-    });
+    var counts = tiles.map(row => row.length);
 
-    var max = _.max(counts);
+    var max = Math.max(...counts);
     var maxIndex = counts.indexOf(max) % 2;
 
     tiles.forEach(function(row, index) {

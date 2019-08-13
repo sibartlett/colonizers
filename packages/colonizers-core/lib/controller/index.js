@@ -1,6 +1,5 @@
 'use strict';
 
-var _ = require('underscore');
 var BaseController = require('./base');
 
 module.exports = class Controller extends BaseController {
@@ -135,7 +134,7 @@ module.exports = class Controller extends BaseController {
     }
 
     var adjCorners = edge.getAdjacentCorners();
-    var corner = _.find(adjCorners, function(_corner) {
+    var corner = adjCorners.find(_corner => {
       if (_corner.owner === null || _corner.owner !== req.playerId) {
         return false;
       } else {

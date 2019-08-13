@@ -41,7 +41,6 @@
     "socket.io": "^2.0.3",
     "socket.io-client": "^2.0.3",
     "sweetalert": "^1.1.0",
-    "underscore": "1.8.3",
     "vision": "^3.0.0",
     "wascally": "^0.2.7"
   },

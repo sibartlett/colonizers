@@ -7,7 +7,6 @@ var moment = require('moment');
 var swal = require('sweetalert');
 var io = require('socket.io-client');
 var ko = require('knockout');
-var _ = require('underscore');
 
 // Date formatting
 
@@ -67,7 +66,6 @@ $(function() {
   if (window.run) {
     window.run({
       $,
-      _,
       io,
       ko,
       swal

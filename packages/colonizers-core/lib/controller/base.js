@@ -1,6 +1,5 @@
 'use strict';
 
-var _ = require('underscore');
 var async = require('async');
 var MersenneTwister = require('mersenne-twister');
 var EmitterQueue = require('../emitter-queue');

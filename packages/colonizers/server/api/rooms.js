@@ -4,7 +4,6 @@ var Boom = require('boom');
 var Hoek = require('hoek');
 var Joi = require('joi');
 var mongoose = require('mongoose');
-var _ = require('underscore');
 
 exports.register = function(server, options, next) {
   options = Hoek.applyToDefaults({ basePath: '' }, options);
@@ -141,9 +140,7 @@ exports.register = function(server, options, next) {
       ]
     },
     handler: function(request, reply) {
-      var users = _.map(request.pre.room.users, function(user) {
-        return user.user;
-      });
+      var users = request.pre.room.users.map(x => x.user);
 
       reply(users);
     }

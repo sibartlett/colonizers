@@ -1,7 +1,5 @@
 'use strict';
 
-var _ = require('underscore');
-
 class QueryableCollection {
   constructor(clauses) {
     this.items = [];
@@ -33,9 +31,7 @@ class QueryableCollection {
   }
 
   getById(id) {
-    return _.find(this.items, function(item) {
-      return item.id === id;
-    });
+    return this.items.find(item => item.id === id);
   }
 
   query(options) {

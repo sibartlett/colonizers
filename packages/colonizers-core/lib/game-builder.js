@@ -1,6 +1,6 @@
 'use strict';
 
-var _ = require('underscore');
+var _ = require('lodash');
 var ScenarioBuilder = require('./scenario-builder');
 var scenarioFile = require('../scenarios/default');
 

@@ -1,6 +1,6 @@
 'use strict';
 
-var _ = require('underscore');
+var _ = require('lodash');
 
 class Game {
   constructor(factory, options) {
@@ -35,9 +35,7 @@ class Game {
   }
 
   getPlayerById(id) {
-    return _.find(this.players, function(player) {
-      return player.id === id;
-    });
+    return this.players.find(player => player.id === id);
   }
 
   getDataForTurn(turn) {
@@ -88,12 +86,9 @@ class Game {
           owner: this.currentPlayer
         });
 
-        corner = _.find(ownedCorners, function(_corner) {
-          var _edges = _corner.getAdjacentEdges();
-          return _.every(_edges, function(edge) {
-            return edge.isBuildable;
-          });
-        });
+        corner = ownedCorners.find(_corner =>
+          _corner.getAdjacentEdges().every(edge => edge.isBuildable)
+        );
       }
 
       return corner ? corner.getAdjacentEdges() : [];

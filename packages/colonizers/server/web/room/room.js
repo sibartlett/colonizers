@@ -1,6 +1,6 @@
 'use strict';
 
-window.run = ({ $, _, io, ko }) => {
+window.run = ({ $, io, ko }) => {
   var socket = io();
 
   var viewModel = {
@@ -29,7 +29,7 @@ window.run = ({ $, _, io, ko }) => {
   ko.applyBindings(viewModel);
 
   socket.on('room-users', function(users) {
-    var joined = _.some(users, function(user) {
+    var joined = users.some(function(user) {
       return user.id === window.context.userId;
     });
 

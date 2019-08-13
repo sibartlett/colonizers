@@ -1,7 +1,5 @@
 'use strict';
 
-var _ = require('underscore');
-
 class GameSerializer {
   constructor(factory) {
     this.factory = factory;
@@ -198,9 +196,7 @@ class GameSerializer {
         return;
       }
 
-      var player = _.find(players, function(_player) {
-        return _player.id === corner.owner;
-      });
+      var player = players.find(_player => _player.id === corner.owner);
 
       var hexCorner = board.corners.getById(corner.id);
 
@@ -216,9 +212,7 @@ class GameSerializer {
         return;
       }
 
-      var player = _.find(players, function(_player) {
-        return _player.id === edge.owner;
-      });
+      var player = players.find(_player => _player.id === edge.owner);
 
       var hexEdge = board.edges.getById(edge.id);
       hexEdge.build(player);

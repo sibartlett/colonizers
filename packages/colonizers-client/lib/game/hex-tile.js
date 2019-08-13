@@ -1,6 +1,6 @@
 'use strict';
 
-var _ = require('underscore');
+var _ = require('lodash');
 var Konva = require('konva');
 var HexTile = require('colonizers-core/lib/game-objects/hex-tile');
 var NumberToken = require('./number-token');

@@ -1,7 +1,6 @@
 'use strict';
 
-var _ = require('underscore');
-var PlayerModel = require('./player.js');
+var PlayerModel = require('./player');
 var observableProps = require('./../game/observable-properties');
 
 function RoomModel(options) {
@@ -43,10 +42,8 @@ RoomModel.prototype.getPlayers = function() {
   var game = this.game;
 
   if (game) {
-    return game.players.map(function(player) {
-      var user = _.find(users, function(_user) {
-        return _user.id === player.id;
-      });
+    return game.players.map(player => {
+      var user = users.find(_user => _user.id === player.id);
 
       user = user || {
         id: player.id,
@@ -58,12 +55,12 @@ RoomModel.prototype.getPlayers = function() {
       return new PlayerModel(user, player);
     });
   } else {
-    return users.map(function(user) {
+    return users.map(user => {
       var ply = this.factory.createPlayer({
         id: user.id
       });
       return new PlayerModel(user, ply);
-    }, this);
+    });
   }
 };
 
@@ -73,9 +70,7 @@ RoomModel.prototype.getCurrentPlayer = function() {
   var currentPlayerId = currentPlayer.id || null;
 
   if (currentPlayerId) {
-    return _.find(this.players, function(player) {
-      return player.id === currentPlayerId;
-    });
+    return this.players.find(player => player.id === currentPlayerId);
   } else {
     return null;
   }
@@ -90,9 +85,7 @@ RoomModel.prototype.getThisPlayer = function() {
 
   if (this.clientUsers.length === 1) {
     userId = this.clientUsers[0];
-    return _.find(this.players, function(player) {
-      return player.id === userId;
-    });
+    return this.players.find(player => player.id === userId);
   }
 
   var game = this.game || {};
@@ -103,17 +96,13 @@ RoomModel.prototype.getThisPlayer = function() {
     return;
   }
 
-  userId = _.find(this.clientUsers, function(id) {
-    return id === currentPlayerId;
-  });
+  userId = this.clientUsers.find(id => id === currentPlayerId);
 
   if (!userId) {
     return;
   }
 
-  return _.find(this.players, function(player) {
-    return player.id === userId;
-  });
+  return this.players.find(player => player.id === userId);
 };
 
 RoomModel.prototype.getThisPlayerOrEmpty = function() {

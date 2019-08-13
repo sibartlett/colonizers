@@ -1,7 +1,6 @@
 'use strict';
 
 var mongoose = require('mongoose');
-var _ = require('underscore');
 var GameContext = require('colonizers-core/lib/game-context');
 var Schema = mongoose.Schema;
 
@@ -63,9 +62,7 @@ RoomSchema.methods.join = function(userId, cb) {
     userId = new mongoose.Types.ObjectId(userId);
   }
 
-  var member = _.find(this.users, function(_member) {
-    return _member.user.equals(userId);
-  });
+  var member = this.users.find(x => x.user.equals(userId));
 
   if (member) {
     return cb(null, member);
@@ -84,9 +81,7 @@ RoomSchema.methods.join = function(userId, cb) {
         return cb(err);
       }
 
-      var result = _.find(this.users, function(_member) {
-        return _member.user.equals(userId);
-      });
+      var result = this.users.find(x => x.user.equals(userId));
 
       cb(null, result);
     }.bind(this)
@@ -94,9 +89,7 @@ RoomSchema.methods.join = function(userId, cb) {
 };
 
 RoomSchema.methods.leave = function(userId, cb) {
-  var member = _.find(this.users, function(_member) {
-    return _member.user.equals(userId);
-  });
+  var member = this.users.find(x => x.user.equals(userId));
 
   if (!member) {
     return cb();
@@ -150,11 +143,9 @@ RoomSchema.methods.start = function(callback) {
     gameOptions: this.gameOptions,
     preEvent: this.preEvent.bind(this),
     postEvent: this.postEvent.bind(this),
-    players: this.users.map(function(member) {
-      return {
-        id: member.user.toString()
-      };
-    })
+    players: this.users.map(member => ({
+      id: member.user.toString()
+    }))
   };
 
   this.gameContext = GameContext.fromScenario(
@@ -200,9 +191,7 @@ RoomSchema.statics.getUsers = function(roomId, callback) {
         return callback(err, room);
       }
 
-      var users = room.users.map(function(member) {
-        return member.user;
-      });
+      var users = room.users.map(member => member.user);
 
       callback(err, users);
     });

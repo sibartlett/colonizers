@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "async": "1.4.2",
-    "mersenne-twister": "^1.0.1",
-    "underscore": "1.8.3"
+    "lodash": "^4.17.15",
+    "mersenne-twister": "^1.0.1"
   },
   "devDependencies": {
     "babel-core": "^6.3.17",
