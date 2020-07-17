@@ -20,7 +20,7 @@
     "jquery-mousewheel": "3.1.13",
     "knockout": "3.5.0",
     "konva": "^0.9.5",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "moment": "2.24.0",
     "screenfull": "2.0.0"
   },
