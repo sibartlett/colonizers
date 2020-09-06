@@ -22,7 +22,7 @@
     "component-emitter": "^1.2.0",
     "good": "^7.3.0",
     "good-console": "^6.4.1",
-    "handlebars": "^4.0.3",
+    "handlebars": "^4.5.3",
     "hapi": "^16.7.0",
     "hapi-auth-basic": "^4.2.0",
     "hapi-auth-cookie": "^7.1.0",
