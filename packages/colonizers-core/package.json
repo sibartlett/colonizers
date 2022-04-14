@@ -12,7 +12,7 @@
     "test": "lab --verbose --lint --coverage --sourcemaps --transform ../../node_modules/lab-babel -I __core-js_shared__"
   },
   "dependencies": {
-    "async": "1.4.2",
+    "async": "3.2.2",
     "lodash": "^4.17.15",
     "mersenne-twister": "^1.0.1"
   },
