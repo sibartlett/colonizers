@@ -16,7 +16,7 @@
     "osx": "electron-packager . Colonizers --platform=darwin --arch=x64 --electron-version=1.8.8 --asar --out=./__dist__/Colonizers-osx --ignore=./__dist__"
   },
   "devDependencies": {
-    "electron": "^1.8.8",
+    "electron": "^15.5.5",
     "electron-packager": "^14.0.1"
   }
 }
