@@ -18,7 +18,7 @@
     "@babel/preset-env": "^7.5.5",
     "bcryptjs": "^2.4.3",
     "boom": "^5.2.0",
-    "bootstrap": "3.3.5",
+    "bootstrap": "3.4.1",
     "component-emitter": "^1.2.0",
     "good": "^7.3.0",
     "good-console": "^6.4.1",

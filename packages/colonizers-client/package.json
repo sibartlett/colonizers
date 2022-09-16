@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "async": "1.4.2",
-    "bootstrap": "3.3.5",
+    "bootstrap": "3.4.1",
     "component-emitter": "1.2.0",
     "hammerjs": "2.0.4",
     "jquery": "3.4.1",
